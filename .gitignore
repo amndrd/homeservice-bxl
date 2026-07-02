@@ -1,0 +1,19 @@
+# Archive locale d'images non utilisées par le site (cf. recap perf) -
+# jamais à publier. Le déploiement Netlify est branché sur ce repo git,
+# donc ce .gitignore suffit : le dossier n'est jamais commité, donc jamais
+# cloné/déployé par Netlify.
+images-archive/
+
+# Fichiers système / éditeur
+.DS_Store
+Thumbs.db
+*.swp
+*~
+
+# Au cas où un outil (npx, etc.) installerait des dépendances localement -
+# le site n'a besoin d'aucun build, ces dossiers ne doivent jamais être commités.
+node_modules/
+
+# Config locale de l'outil Claude Code (spécifique à cette machine, pas au site)
+.claude/settings.local.json
+

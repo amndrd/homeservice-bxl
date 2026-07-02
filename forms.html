@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <title>Détection formulaire Netlify</title>
+</head>
+<body>
+
+  <!--
+    Ce fichier sert uniquement à la détection statique par Netlify au moment du build.
+    Le formulaire "devis" est rendu dynamiquement en JS dans index.html ;
+    Netlify a besoin d'une copie HTML statique pour l'enregistrer.
+    Ce fichier n'est pas destiné aux visiteurs.
+  -->
+
+  <form name="devis" data-netlify="true" action="/">
+    <input type="hidden" name="form-name" value="devis" />
+
+    <input type="text"  name="service"      placeholder="Service demandé" />
+    <input type="text"  name="prenom"       placeholder="Prénom" />
+    <input type="text"  name="nom"          placeholder="Nom" />
+    <input type="email" name="email"        placeholder="Email" />
+    <input type="tel"   name="telephone"    placeholder="Téléphone" />
+    <input type="text"  name="localisation" placeholder="Code postal ou adresse" />
+    <input type="text"  name="dates"        placeholder="Date(s) souhaitée(s)" />
+    <textarea           name="details"      placeholder="Détails spécifiques au service"></textarea>
+    <textarea           name="description"  placeholder="Description du besoin"></textarea>
+
+    <button type="submit">Envoyer</button>
+  </form>
+
+</body>
+</html>

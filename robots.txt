@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+Disallow: /forms.html
+Disallow: /images-archive/
+
+Sitemap: https://homeservicebxl.com/sitemap.xml

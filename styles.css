@@ -1,0 +1,3784 @@
+/* =============================================
+   HOMESERVICE – styles.css
+   ============================================= */
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* Sans ceci, l'attribut hidden posé en JS (ex. devisAddressGroupBxl/Be,
+   devisDistanceNote, devisCalNav dans script.js) reste sans effet sur tout
+   élément dont une classe définit déjà `display` (flex/grid) : même à
+   spécificité égale, une règle auteur l'emporte toujours sur le défaut
+   `[hidden]{display:none}` de la feuille de style du navigateur. */
+[hidden] {
+  display: none !important;
+}
+
+/* Posée en JS (initHeroPageTransition) tant que les animations sont actives :
+   le scroll natif du document est remplacé par la transition accueil ↔
+   services, pilotée à la molette/au tactile/au clavier. */
+html.is-paged {
+  overflow: hidden;
+  height: 100%;
+}
+
+:root {
+  --green-bg: #EFF7EB;
+  --green-light: #D6EDD0;
+  --green-mid: #5A9A3A;
+  --green-dark: #2D6A2D;
+  --black: #111111;
+  --grey: #555555;
+  --grey-light: #AAAAAA;
+  --white: #FFFFFF;
+  --navy: #4274D9;
+  --navy-light: #454A5E;
+  --radius: 20px;
+  --radius-sm: 12px;
+  --shadow: 0 8px 32px rgba(0,0,0,0.10);
+  --shadow-lg: 0 20px 60px rgba(0,0,0,0.14);
+  --font-display: 'Poppins', sans-serif;
+  --font-body: 'Inter', sans-serif;
+}
+
+html {
+  scroll-behavior: smooth;
+  /* Filet de sécurité en plus de body.overflow-x (cf. plus bas) : sur iOS
+     Safari, le geste de swipe horizontal peut faire glisser le document
+     même avec overflow-x:hidden posé seulement sur body — le poser aussi
+     ici bloque le scroll horizontal côté html, le véritable conteneur de
+     scroll racine sur mobile Safari. */
+  overflow-x: hidden;
+}
+
+body {
+  font-family: var(--font-body);
+  background: var(--white);
+  color: var(--black);
+  overflow-x: hidden;
+}
+
+body.is-loading {
+  overflow: hidden;
+}
+
+/* Le préchargeur reste affiché au moins 500ms (cf. initPreloader) et parfois
+   bien plus sur une connexion lente : sans ceci, les animations d'arrivée
+   du carton/objets/contenu démarreraient dès le chargement du DOM et
+   tourneraient en partie cachées derrière l'écran de chargement. En pause
+   tant que body.is-loading est présent, elles ne démarrent (avec leur délai
+   propre repartant de zéro) qu'au retrait de cette classe, au moment exact
+   où la page se révèle. */
+body.is-loading .cardboard-box,
+body.is-loading .float-enter,
+body.is-loading .carton-content h1,
+body.is-loading .carton-content p,
+body.is-loading .carton-content .hero-actions {
+  animation-play-state: paused;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+}
+
+/* =============================================
+   PRÉCHARGEUR
+   ============================================= */
+.preloader {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1.6rem;
+  background: var(--white);
+  /* Fondu de sortie : 0.3s (délibérément pas plus court, cf. recap perf) -
+     même easing linéaire "ease" qu'avant, seule la durée a changé. Le
+     setTimeout de secours dans initPreloader() (script.js) reste calé
+     juste après cette durée, pour ne jamais couper le fondu court. */
+  transition: opacity 0.3s ease;
+}
+
+.preloader--hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.preloader-logo {
+  width: 96px;
+  height: auto;
+  object-fit: contain;
+}
+
+.preloader-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid var(--green-light);
+  border-top-color: var(--green-mid);
+  border-radius: 50%;
+  animation: preloader-spin 0.8s linear infinite;
+}
+
+@keyframes preloader-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* =============================================
+   NAV
+   ============================================= */
+.nav {
+  position: fixed;
+  top: 0.75rem;
+  left: 1rem;
+  right: 1rem;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  padding: 0.7rem 1.4rem;
+}
+
+.nav-logo {
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+  flex-shrink: 0;
+  transition: opacity 0.35s ease;
+}
+
+.nav-links,
+.nav > .btn-primary,
+.nav-burger {
+  transition: opacity 0.35s ease;
+}
+
+/* Pendant que la page Devis est affichée (cf. openDevisPage/closeDevisPage,
+   script.js), seuls les liens et le bouton "Devis gratuit" s'effacent en
+   fondu : le logo reste visible et cliquable pour revenir à l'accueil. */
+.nav.nav-devis .nav-links,
+.nav.nav-devis > .btn-primary,
+.nav.nav-devis .nav-burger {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.logo-img {
+  height: 54px;
+  width: auto;
+  object-fit: contain;
+}
+
+.logo-img--small {
+  height: 40px;
+}
+
+.nav-links {
+  display: flex;
+  gap: 2rem;
+  list-style: none;
+  margin-left: auto;
+}
+
+.nav-links a {
+  text-decoration: none;
+  color: var(--grey);
+  font-size: 0.95rem;
+  font-weight: 500;
+  transition: color 0.3s ease;
+}
+
+.nav-links a:hover {
+  color: var(--black);
+}
+
+/* Bouton "Devis gratuit" dupliqué dans la carte du menu mobile (cf.
+   index.html) : sur ordinateur, .nav-links s'affiche à l'horizontale dans la
+   barre de nav elle-même, où le vrai bouton "Devis gratuit" (juste à côté)
+   suffit déjà — masqué ici, réaffiché uniquement dans la media query mobile. */
+.nav-links-cta {
+  display: none;
+}
+
+/* nav-on-dark retiré : la vague de transition est désormais blanche,
+   les liens de navigation restent foncés sur fond blanc. */
+
+.nav-burger {
+  display: none;
+  flex-direction: column;
+  gap: 5px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  margin-left: auto;
+}
+
+.nav-burger span {
+  display: block;
+  width: 24px;
+  height: 2px;
+  background: var(--black);
+  border-radius: 2px;
+  transition: transform 0.32s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.2s ease;
+}
+
+/* Transforme les 3 barres en croix : gap (5px) + hauteur (2px) d'une barre
+   = 7px, donc translater la 1ère de +7px et la 3e de -7px les superpose
+   exactement sur la position de la 2e (qu'on efface) avant de les faire
+   pivoter à 45°/-45°. */
+.nav-burger.open span:nth-child(1) {
+  transform: translateY(7px) rotate(45deg);
+}
+.nav-burger.open span:nth-child(2) {
+  opacity: 0;
+  transform: scaleX(0);
+}
+.nav-burger.open span:nth-child(3) {
+  transform: translateY(-7px) rotate(-45deg);
+}
+
+/* =============================================
+   BUTTONS
+   ============================================= */
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  background: linear-gradient(135deg, #141414 0%, #2e2e2e 100%);
+  color: var(--white);
+  border: none;
+  border-radius: 100px;
+  padding: 0.8rem 1.65rem;
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  text-decoration: none;
+  position: relative;
+  overflow: hidden;
+  transition:
+    transform   0.22s cubic-bezier(0.34, 1.56, 0.64, 1),
+    box-shadow  0.22s ease,
+    background  0.22s ease;
+}
+
+
+.btn-primary:hover {
+  transform: translateY(-2px) scale(1.025);
+  background: linear-gradient(135deg, #222 0%, #3a3a3a 100%);
+}
+
+.btn-primary:active {
+  transform: translateY(0) scale(0.97);
+  transition-duration: 0.08s;
+}
+
+.btn-outline {
+  display: inline-flex;
+  align-items: center;
+  border: 2px solid var(--black);
+  border-radius: 100px;
+  padding: 0.72rem 1.5rem;
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--black);
+  cursor: pointer;
+  text-decoration: none;
+  position: relative;
+  overflow: hidden;
+  /* Fond noir qui s'étend de gauche à droite au hover */
+  background-color: transparent;
+  background-image: linear-gradient(var(--black), var(--black));
+  background-size: 0% 100%;
+  background-repeat: no-repeat;
+  background-position: left center;
+  transition:
+    background-size 0.28s ease,
+    color           0.28s ease,
+    transform       0.22s cubic-bezier(0.34, 1.56, 0.64, 1),
+    box-shadow      0.22s ease;
+}
+
+.btn-outline:hover {
+  background-size: 100% 100%;
+  color: var(--white);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0,0,0,0.14);
+}
+
+.btn-outline:active {
+  transform: translateY(0) scale(0.97);
+  transition-duration: 0.08s;
+}
+
+.btn-white {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  background: var(--white);
+  color: var(--black);
+  border: none;
+  border-radius: 100px;
+  padding: 0.85rem 1.8rem;
+  font-family: var(--font-body);
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    transform  0.22s cubic-bezier(0.34, 1.56, 0.64, 1),
+    box-shadow 0.22s ease;
+}
+
+.btn-white:hover {
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 10px 28px rgba(0,0,0,0.18);
+}
+
+.btn-white:active {
+  transform: translateY(0) scale(0.97);
+  transition-duration: 0.08s;
+}
+
+.btn-full {
+  width: 100%;
+  justify-content: center;
+  font-size: 1rem;
+  padding: 1rem;
+  margin-top: 0.5rem;
+}
+
+/* Flèche animée */
+.btn-arrow {
+  display: inline-block;
+  transition: transform 0.2s ease;
+}
+.btn-primary:hover .btn-arrow,
+.btn-white:hover .btn-arrow {
+  transform: translateX(4px);
+}
+
+/* Ripple au clic */
+.btn-ripple {
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.22);
+  transform: scale(0);
+  animation: rippleAnim 0.55s linear forwards;
+  pointer-events: none;
+}
+
+@keyframes rippleAnim {
+  to { transform: scale(1); opacity: 0; }
+}
+
+/* =============================================
+   HERO
+   ============================================= */
+
+/* Conteneur de scroll : sa hauteur excédentaire (au-delà de 100vh) définit
+   la distance de scroll pendant laquelle le hero reste épinglé et la vague
+   progresse. 100vh de pin + 50vh de course pour la vague — volontairement
+   compact pour que "Nos services" démarre tôt dans le document. */
+/* Plus un conteneur de scroll-pin : la page "accueil" et la page "services"
+   (cf. #services) sont chacune un écran plein viewport fixe ; c'est
+   initHeroPageTransition() (script.js) qui bascule de l'une à l'autre via
+   une animation rejouée intégralement (jamais interrompue à mi-course),
+   déclenchée par la molette/le tactile/le clavier plutôt que par le scroll
+   natif du document. */
+.hero-scroll-stage {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100vh;
+  height: 100dvh;
+}
+
+.hero {
+  position: relative;
+  z-index: 1;
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  padding-top: 96px;
+  background: var(--white);
+}
+
+/* Lumières chaudes du hero : mêmes principes que .services-ambient-light
+   (blobs flous en tons ambrés/dorés qui dérivent doucement), activées par
+   .hero-lights-active (ajoutée en JS, cf. initHeroAmbientLight) une fois que
+   le carton ET les objets flottants ont fini leur animation d'arrivée —
+   jamais avant, pour ne pas distraire de cette entrée. position:absolute
+   (pas fixed comme sur #services) : reste clippée par .hero{overflow:hidden}
+   plutôt que plaquée sur tout le viewport, puisque sur mobile .hero est un
+   simple bloc du flux et non un "écran" plein page. z-index 0 = tout en bas
+   de la pile du hero, derrière .tilt-zone (z-index 2) et la vague (z-index 5). */
+.hero-ambient-light {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  /* S'efface vers le bas du hero : garantit un bord inférieur toujours
+     blanc, pour se fondre avec #services (blanc lui aussi) sans ligne de
+     démarcation visible, quelle que soit la position exacte des blobs. */
+  -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 65%, transparent 96%);
+  mask-image: linear-gradient(to bottom, #000 0%, #000 65%, transparent 96%);
+  /* .is-fading (mobile, cf. initHeroPageTransition/servicesIntro dans
+     script.js) : fondu déclenché une seule fois quand #services entre à
+     l'écran, pour une transition douce vers la section suivante plutôt
+     qu'une coupure nette. */
+  transition: opacity 1.1s ease;
+}
+
+.hero-ambient-light.is-fading {
+  opacity: 0;
+}
+
+/* vmax (pas vw) : sur mobile (écran étroit mais haut), une taille en vw
+   donnait des taches minuscules — vmax se cale sur la plus grande des deux
+   dimensions, donc reste généreux quelle que soit l'orientation. Flou
+   important + dégradé qui s'étend loin (35% → 75% plutôt que 18% → 72%) et
+   large chevauchement entre les 4 taches : se lit comme un bain de lumière
+   continu sur tout l'arrière-plan plutôt que des ronds de couleur nets. */
+.hero-ambient-blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(140px);
+  opacity: 0;
+  will-change: transform, opacity;
+  transition: opacity 2s ease;
+  animation: heroAmbientDrift 21s ease-in-out infinite;
+}
+
+.hero.hero-lights-active .hero-ambient-blob-1 { opacity: 0.30; transition-delay: 0s;    }
+.hero.hero-lights-active .hero-ambient-blob-2 { opacity: 0.24; transition-delay: 0.4s;  }
+.hero.hero-lights-active .hero-ambient-blob-3 { opacity: 0.26; transition-delay: 0.8s;  }
+.hero.hero-lights-active .hero-ambient-blob-4 { opacity: 0.20; transition-delay: 1.2s;  }
+
+.hero-ambient-blob-1 {
+  top: -30%;
+  left: -25%;
+  width: 90vmax;
+  height: 90vmax;
+  background: radial-gradient(circle, #FFC368 0%, #FFC368 35%, rgba(255,195,104,0) 75%);
+  animation-duration: 23s;
+}
+
+.hero-ambient-blob-2 {
+  top: 5%;
+  right: -35%;
+  width: 80vmax;
+  height: 80vmax;
+  background: radial-gradient(circle, #FF8A65 0%, #FF8A65 35%, rgba(255,138,101,0) 75%);
+  animation-duration: 27s;
+  animation-delay: -8s;
+}
+
+.hero-ambient-blob-3 {
+  bottom: -35%;
+  left: 0%;
+  width: 85vmax;
+  height: 85vmax;
+  background: radial-gradient(circle, #FFD479 0%, #FFD479 35%, rgba(255,212,121,0) 75%);
+  animation-duration: 19s;
+  animation-delay: -12s;
+}
+
+.hero-ambient-blob-4 {
+  top: 25%;
+  left: 20%;
+  width: 65vmax;
+  height: 65vmax;
+  background: radial-gradient(circle, #FF6F91 0%, #FF6F91 35%, rgba(255,111,145,0) 75%);
+  animation-duration: 17s;
+  animation-delay: -3s;
+}
+
+@keyframes heroAmbientDrift {
+  0%   { transform: translate(0,    0)    scale(1);    }
+  20%  { transform: translate(5%,  -7%)   scale(1.12); }
+  45%  { transform: translate(-4%,  5%)   scale(0.94); }
+  70%  { transform: translate(7%,   4%)   scale(1.08); }
+  100% { transform: translate(0,    0)    scale(1);    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-ambient-blob { animation: none; }
+}
+
+/* Vague de transition pilotée par le scroll (remplace la vague statique
+   pour cette seule transition hero → services). */
+.hero-wave-rise {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 5;
+}
+
+.hero-wave-rise-inner {
+  display: block;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: calc(100% + 160px);
+  /* État initial : entièrement masquée sous le bas de l'écran (le JS
+     reprend ensuite la main avec un translateY en px). */
+  transform: translateY(100%);
+  will-change: transform;
+}
+
+/* Hero CTA card */
+.hero-card {
+  position: relative;
+  z-index: 2;
+  background: linear-gradient(155deg, #ffffff 52%, rgba(214,237,208,0.5) 100%);
+  border-radius: 28px;
+  box-shadow:
+    0 0 0 1px rgba(90,154,58,0.10),
+    0 4px 16px rgba(0,0,0,0.05),
+    0 20px 56px rgba(0,0,0,0.09),
+    0 48px 96px rgba(0,0,0,0.04);
+  padding: 2.8rem 3.2rem 2.6rem;
+  max-width: 570px;
+  width: 90%;
+  text-align: center;
+  overflow: hidden;
+  animation: heroCardIn 0.75s cubic-bezier(0.22, 1, 0.36, 1) 0.05s both;
+}
+
+
+@keyframes heroCardIn {
+  from {
+    opacity: 0;
+    transform: translateY(28px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Badge "disponible" avec point pulsant */
+.hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  background: rgba(45,106,45,0.07);
+  border: 1px solid rgba(90,154,58,0.22);
+  border-radius: 100px;
+  padding: 0.32rem 0.9rem;
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: var(--green-dark);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  margin-bottom: 1.5rem;
+}
+
+.hero-badge-dot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: #4caf50;
+  flex-shrink: 0;
+  animation: badgePulse 2.2s ease-in-out infinite;
+}
+
+@keyframes badgePulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(76,175,80,0.5); }
+  60%       { box-shadow: 0 0 0 6px rgba(76,175,80,0); }
+}
+
+.hero-card h1 {
+  font-family: var(--font-display);
+  font-size: clamp(2.1rem, 5vw, 3.1rem);
+  font-weight: 800;
+  line-height: 1.12;
+  color: var(--black);
+  margin-bottom: 1.1rem;
+}
+
+
+.hero-card p {
+  font-size: 1.02rem;
+  color: var(--grey);
+  line-height: 1.65;
+}
+
+.hero-actions {
+  display: flex;
+  gap: 0.85rem;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-top: 2rem;
+}
+
+/* Rangée de réassurance sous les boutons */
+.hero-trust {
+  display: flex;
+  gap: 1.2rem;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-top: 1.6rem;
+  padding-top: 1.4rem;
+  border-top: 1px solid rgba(0,0,0,0.07);
+}
+
+.hero-trust span {
+  font-size: 0.77rem;
+  color: var(--grey-light);
+  font-weight: 500;
+}
+
+/* =============================================
+   CARDBOARD BOX (Hero CTA)
+   ============================================= */
+
+/* Zone de détection invisible.
+   width:100% + flex centrage nécessaires : sans ça, le % de largeur sur .cardboard-scene
+   se calcule de façon circulaire (90% × max-width au lieu de 90% × viewport). */
+.tilt-zone {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  /* Opacité/transform pilotés en JS (disparition liée au scroll, cf.
+     initHeroWaveScroll) : will-change pour rester fluide. */
+  will-change: opacity, transform;
+}
+
+/* Scène : crée le contexte de perspective pour l'effet tilt souris.
+   clamp(min, préféré, max) : s'adapte à toutes les tailles d'écran sans media query.
+   610px = ~19% de plus que la taille affichée précédente (513px). */
+.cardboard-scene {
+  position: relative;
+  perspective: 1200px;
+  perspective-origin: 50% 50%;
+  width: clamp(280px, 90%, 610px);
+  /* Les objets flottants dépassent surtout vers le haut (cf. .float-objects) ;
+     ce centrage flex ne tient compte que de la boîte du carton, donc sans
+     cette marge l'ensemble carton+objets paraît plaqué trop haut dans le
+     hero. Marge asymétrique = redescend le tout pour rééquilibrer. */
+  margin-top: 56px;
+}
+
+/* Arrivée du carton « en vol » depuis le haut de l'écran : chute + légère
+   rotation + zoom-in, fondu simultané. Sur #cardboardBox (pas .cardboard-scene,
+   qui doit rester immobile pour ne pas entraîner .float-objects avec elle) ;
+   sans `forwards`/`both`, l'animation arrête d'influencer `transform` une
+   fois terminée et redonne la main au tilt souris piloté en JS — comme la
+   dernière image (rotate(0) translateY(0) scale(1)) équivaut à `none`,
+   aucun saut visuel à la bascule. */
+.cardboard-box {
+  position: relative;
+  aspect-ratio: 577 / 433;
+  animation: heroCardIn 0.95s cubic-bezier(0.22, 1, 0.36, 1) 0.05s backwards;
+}
+
+@keyframes heroCardIn {
+  from {
+    opacity: 0;
+    transform: translateY(-200px) rotate(-4deg) scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) rotate(0deg) scale(1);
+  }
+}
+
+/* Objets flottants : calque placé dans .cardboard-scene (pas dans
+   .cardboard-box), donc à côté du carton dans le DOM et non à l'intérieur.
+   Il n'est jamais touché par le tilt souris en JS (qui ne transforme que
+   #cardboardBox) et reste pourtant calé sur les mêmes bords que le carton
+   (.cardboard-scene a exactement la taille de .cardboard-box, cf. plus
+   haut), donc les % / px de chaque objet restent relatifs au carton.
+   Ordre du DOM (float-objects avant cardboard-box) = empilement derrière,
+   sans z-index explicite nécessaire. */
+.float-objects {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+/* Chaque objet = deux éléments empilés pour deux animations indépendantes
+   sur `transform` (deux animations sur LE MÊME élément/propriété se
+   court-circuiteraient, la dernière de la liste écrasant l'autre) :
+   - .float-enter (ce wrapper) : position/taille réelles + arrivée one-shot
+     depuis hors-écran (--fe-x/--fe-y), fondu inclus.
+   - .float-obj (l'image, à l'intérieur) : rotation propre + flottement
+     infini, qui démarre juste après la fin de l'arrivée (cf. --fo-delay
+     calculé en HTML = --fe-delay + durée de l'arrivée). */
+.float-enter {
+  position: absolute;
+  width: var(--fo-w, 18%);
+  opacity: 0;
+  transform: translate(var(--fe-x, 0), var(--fe-y, 0));
+  /* backwards seulement (pas "forwards") : une fois l'arrivée terminée, le
+     script reprend la main sur opacity/transform en inline style (mêmes
+     valeurs, donc sans saut — cf. initFloatEnterSettle) pour pouvoir ensuite
+     piloter la dispersion au scroll (initHeroWaveScroll) sans qu'une
+     animation CSS "forwards" ne la court-circuite. */
+  animation: floatEnter 0.85s cubic-bezier(0.22, 1, 0.36, 1) var(--fe-delay, 0s) backwards;
+  pointer-events: none;
+}
+
+@keyframes floatEnter {
+  to {
+    opacity: 1;
+    transform: translate(0, 0);
+  }
+}
+
+.float-obj {
+  display: block;
+  width: 100%;
+  height: auto;
+  /* Double ombre (même principe que .carton-img, en plus marqué) : une
+     ombre proche et serrée donne la profondeur par rapport à la carte,
+     une seconde, large et décalée vers le bas, suggère que l'objet est
+     surélevé au-dessus du fond blanc plutôt que posé à plat dessus. */
+  filter:
+    drop-shadow(0 4px 6px rgba(0,0,0,0.20))
+    drop-shadow(0 26px 28px rgba(0,0,0,0.26));
+  pointer-events: none;
+  user-select: none;
+  /* --fo-flip (1 ou -1) : miroir horizontal optionnel, utilisé en mobile
+     pour réorienter un objet (ex. la perceuse) quand il change de côté par
+     rapport à la version desktop. 1 par défaut = aucun effet. */
+  transform: scaleX(var(--fo-flip, 1)) rotate(var(--fo-rot, 0deg));
+  /* backwards : pendant le délai (--fo-delay), applique déjà l'état du
+     premier keyframe (rotate(fo-rot - 2deg)) au lieu du transform statique
+     ci-dessus — sans ça, au déclenchement de l'animation l'objet "sautait"
+     brusquement de fo-rot à fo-rot-2deg (la micro-rotation visible au
+     chargement). */
+  animation: floatBob var(--fo-dur, 6s) ease-in-out var(--fo-delay, 0s) infinite backwards;
+  will-change: transform;
+}
+
+/* Léger flottement vertical + une oscillation de rotation de ±2° autour de
+   l'angle propre à chaque objet, pour un mouvement organique, asynchrone
+   d'un objet à l'autre (durée/délai propres définis en inline style). */
+@keyframes floatBob {
+  0%, 100% { transform: scaleX(var(--fo-flip, 1)) rotate(calc(var(--fo-rot, 0deg) - 2deg)) translateY(0); }
+  50%      { transform: scaleX(var(--fo-flip, 1)) rotate(calc(var(--fo-rot, 0deg) + 2deg)) translateY(var(--fo-bob, -10px)); }
+}
+
+/* Image PNG carton : fixe la hauteur du bloc, drop-shadow sur sa forme réelle */
+.carton-img {
+  display: block;
+  width: 100%;
+  height: auto;
+  filter:
+    drop-shadow(0 5px 10px rgba(0,0,0,0.18))
+    drop-shadow(0 24px 38px rgba(0,0,0,0.15));
+  pointer-events: none;
+  user-select: none;
+  /* Calque de composition dédié, indépendant de l'animation de scale/rotate
+     jouée par l'ancêtre .cardboard-box : sans ça, certains moteurs (Safari)
+     mettent en cache le rendu du filtre au tout premier paint (souvent à une
+     échelle encore réduite par `backwards`) et ne le rafraîchissent pas une
+     fois la mise à l'échelle terminée, laissant un contour crénelé visible. */
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+/* Contenu superposé : centré sur l'image.
+   Padding en % (relatif à la largeur) pour rester dans la zone pleine du carton
+   quelle que soit la taille d'affichage. Marges calculées sur carton.png 577×433. */
+.carton-content {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 8% 9%;
+  text-align: center;
+}
+
+/* Le contenu s'affiche par-dessus le carton avec son propre petit fondu +
+   montée, décalé dans le temps (titre, puis texte, puis boutons) — composé
+   normalement avec l'arrivée du carton (cf. heroCardIn sur #cardboardBox)
+   puisque ce sont des éléments différents, pas la même propriété du même
+   nœud : aucun conflit d'animation. */
+.carton-content h1,
+.carton-content p,
+.carton-content .hero-actions {
+  animation: contentRise 0.6s ease-out backwards;
+}
+
+.carton-content h1            { animation-delay: 0.5s; }
+.carton-content p              { animation-delay: 0.62s; }
+.carton-content .hero-actions  { animation-delay: 0.74s; }
+
+@keyframes contentRise {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* clamp(min, préféré, max) : taille fluide calée sur vw.
+   À 570 px affichés (desktop max) → 4vw ≈ 43 px = ~2.7 rem.
+   "Besoin d'un coup" tient sur ~430 px dans la zone sûre de 467 px. */
+.carton-content h1 {
+  font-family: var(--font-display);
+  font-size: clamp(1.65rem, 4.0vw, 2.7rem);
+  font-weight: 800;
+  line-height: 1.12;
+  color: #1a0800;
+  margin-bottom: 0.9rem;
+  text-shadow: 0 1px 0 rgba(255,255,255,0.15);
+}
+
+/* Réduit pour tenir sur 2 lignes dans 467 px (~59 chars/ligne à 0.9 rem). */
+.carton-content p {
+  font-size: 0.9rem;
+  color: #5a3010;
+  line-height: 1.65;
+}
+
+/* =============================================
+   SECTIONS
+   ============================================= */
+.section {
+  position: relative;
+  padding: 6rem 2rem;
+}
+
+.section-alt {
+  background: var(--green-light);
+}
+
+#services {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100vh;
+  height: 100dvh;
+  overflow-y: auto;
+  z-index: 10;
+  /* Reste invisible tant que la vague n'a pas entièrement recouvert l'écran :
+     opacity/pointer-events pilotés par initHeroPageTransition() (script.js),
+     qui ne la révèle qu'à la toute fin de la transition vers l'avant — état
+     initial masqué ici en CSS pour éviter un flash avant l'exécution du JS.
+     La transition d'opacité ne fait qu'adoucir ce dernier instant, jamais
+     toute la montée de la vague. */
+  opacity: 0;
+  transition: opacity 0.18s ease;
+  pointer-events: none;
+}
+
+/* padding-top fixe = garde-fou qui dégage toujours la navbar fixe, quel
+   que soit l'espace disponible ; justify-content:center n'apporte un vrai
+   centrage que lorsque le contenu est plus court que 100vh (petits écrans
+   larges ou grille plus courte) — avec 7 cartes le contenu dépasse déjà
+   100vh, donc il s'écoule naturellement sous ce padding sans jamais
+   chevaucher le menu. */
+#services .section-inner {
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding-top: 140px;
+}
+
+.section-navy {
+  background: var(--white);
+}
+
+.section-navy .eyebrow {
+  color: var(--grey);
+  background: rgba(0,0,0,0.06);
+}
+
+.section-navy h2,
+.section-navy h3 {
+  color: var(--black);
+}
+
+.section-navy .section-sub {
+  color: var(--grey);
+}
+
+/* =============================================
+   LUMIÈRES CHAUDES – SECTION SERVICES
+   Blobs flous en tons ambrés/dorés qui dérivent doucement en arrière-plan.
+   Activés par .lights-active (ajouté en JS une fois la transition terminée).
+   ============================================= */
+.services-ambient-light {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+}
+
+#services .section-inner {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: calc(100vh - 12rem); /* compense le padding .section (6rem × 2) */
+  min-height: calc(100dvh - 12rem);
+  width: 100%;
+  padding-bottom: 4rem;
+}
+
+.services-ambient-blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(100px);
+  opacity: 0;
+  will-change: transform, opacity;
+  transition: opacity 2s ease;
+  animation: servicesAmbientDrift 20s ease-in-out infinite;
+}
+
+#services.lights-active .services-ambient-blob-1 { opacity: 0.38; transition-delay: 0s;    }
+#services.lights-active .services-ambient-blob-2 { opacity: 0.30; transition-delay: 0.5s;  }
+#services.lights-active .services-ambient-blob-3 { opacity: 0.34; transition-delay: 1.0s;  }
+#services.lights-active .services-ambient-blob-4 { opacity: 0.26; transition-delay: 1.5s;  }
+
+.services-ambient-blob-1 {
+  top: -15%;
+  left: -10%;
+  width: 65vw;
+  height: 65vw;
+  background: radial-gradient(circle, #FFCF7D 0%, #FFCF7D 18%, rgba(255,207,125,0) 72%);
+  animation-duration: 22s;
+}
+
+.services-ambient-blob-2 {
+  top: 25%;
+  right: -14%;
+  width: 58vw;
+  height: 58vw;
+  background: radial-gradient(circle, #FFB35C 0%, #FFB35C 18%, rgba(255,179,92,0) 72%);
+  animation-duration: 26s;
+  animation-delay: -7s;
+}
+
+.services-ambient-blob-3 {
+  bottom: -10%;
+  left: 18%;
+  width: 62vw;
+  height: 62vw;
+  background: radial-gradient(circle, #FFE4A0 0%, #FFE4A0 18%, rgba(255,228,160,0) 72%);
+  animation-duration: 19s;
+  animation-delay: -13s;
+}
+
+.services-ambient-blob-4 {
+  top: 42%;
+  left: 32%;
+  width: 46vw;
+  height: 46vw;
+  background: radial-gradient(circle, #FFBE6A 0%, #FFBE6A 18%, rgba(255,190,106,0) 72%);
+  animation-duration: 17s;
+  animation-delay: -4s;
+}
+
+@keyframes servicesAmbientDrift {
+  0%   { transform: translate(0,    0)    scale(1);    }
+  20%  { transform: translate(5%,  -7%)   scale(1.12); }
+  45%  { transform: translate(-4%,  5%)   scale(0.94); }
+  70%  { transform: translate(7%,   4%)   scale(1.08); }
+  100% { transform: translate(0,    0)    scale(1);    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .services-ambient-blob { animation: none; }
+}
+
+/* =============================================
+   CARTES – SECTION SERVICES
+   Accordéon horizontal : une seule carte "élargie" à la fois, affichant son
+   contenu, pendant que les deux autres restent réduites et vides. La carte
+   active tourne automatiquement en boucle (cf. initServicesAccordion,
+   script.js), qui ajoute/retire .is-expanded sur les 3 cartes.
+   ============================================= */
+
+/* Layout : 3 cartes flex en ligne, centré verticalement, hauteur fixe */
+.services-cards {
+  position: relative;
+  display: flex;
+  gap: 0.5rem;
+  width: 100%;
+  max-width: 860px;
+  height: 260px;
+  margin-top: 1.6rem;
+}
+
+/* Carte : réduite par défaut (flex-grow:1), s'élargit via .is-expanded.
+   min-width:0 est nécessaire pour qu'un enfant flex puisse rétrécir en
+   dessous de la largeur intrinsèque de son contenu (le titre le plus
+   long sinon). */
+.service-card {
+  position: relative;
+  z-index: 1;
+  flex: 1 1 0%;
+  min-width: 0;
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(0, 0, 0, 0.055);
+  border-radius: 22px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.04),
+    0 6px 20px rgba(0, 0, 0, 0.06),
+    0 20px 44px rgba(0, 0, 0, 0.04);
+  /* La transition flex-grow/box-shadow est déclarée sur .svc-reveal (plus
+     bas) et non ici : ces cartes portent aussi la classe .svc-reveal, et
+     comme les deux règles ont la même spécificité, celle déclarée en
+     dernier dans la feuille de style (.svc-reveal) l'emporterait entière-
+     ment sur le raccourci "transition" posé ici, l'annulant silencieusement
+     (le raccourci CSS "transition" ne se fusionne pas entre règles : une
+     seule gagne la cascade). D'où la fusion des deux listes au même endroit. */
+  cursor: default;
+}
+
+.service-card.is-expanded {
+  flex-grow: 4;
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.05),
+    0 10px 28px rgba(0, 0, 0, 0.08),
+    0 28px 56px rgba(0, 0, 0, 0.06);
+}
+
+/* Contenu texte : piloté par .content-visible (et non .is-expanded
+   directement), une classe distincte que le JS (cf. goTo, script.js)
+   ajoute/retire à des moments précis pour enchaîner 3 étapes bien
+   séparées plutôt que de les superposer : 1) le contenu de la carte
+   active disparaît (fade out), 2) une fois disparu, la largeur des
+   cartes change, 3) une fois la largeur stabilisée, le contenu de la
+   nouvelle carte élargie apparaît (fade in). Pas de délai ici : le JS
+   retarde lui-même l'ajout/retrait de .content-visible au bon moment. */
+.service-card-content {
+  max-width: 320px;
+  text-align: center;
+  opacity: 0;
+  transform: translateY(6px);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.service-card.content-visible .service-card-content {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.service-card-title {
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--black);
+  line-height: 1.3;
+  white-space: nowrap;
+}
+
+.service-card-accent {
+  display: block;
+  width: 28px;
+  height: 3px;
+  border-radius: 2px;
+  background: #FF7A29;
+  margin: 0.7rem auto;
+}
+
+.service-card-sub {
+  font-size: 0.86rem;
+  color: var(--grey);
+  line-height: 1.55;
+}
+
+/* ── Apparition en cascade (déclenchée par .lights-active), + transition
+   flex-grow/box-shadow de l'accordéon (cf. commentaire sur .service-card
+   ci-dessus pour la raison de leur présence ici plutôt que là-bas). ── */
+.svc-reveal {
+  opacity: 0;
+  transform: translateY(30px);
+  transition: opacity 0.7s cubic-bezier(0.22, 1, 0.36, 1),
+              transform 0.7s cubic-bezier(0.22, 1, 0.36, 1),
+              flex-grow 0.85s cubic-bezier(0.65, 0, 0.35, 1),
+              box-shadow 0.35s ease;
+}
+
+#services.lights-active .svc-reveal   { opacity: 1; transform: translateY(0); }
+/* Liste de délais à 4 valeurs (une par propriété listée dans .svc-reveal :
+   opacity, transform, flex-grow, box-shadow, dans cet ordre) : le délai en
+   cascade ne s'applique qu'à l'apparition (opacity/transform) et JAMAIS à
+   flex-grow/box-shadow. Une seule valeur ici serait réappliquée aux 4
+   propriétés (règle CSS de répétition de liste), ce qui décalerait aussi le
+   début de la transition de largeur d'une carte par rapport aux autres et
+   désynchroniserait le glissement des séparations de l'accordéon. */
+#services.lights-active .svc-reveal-1 { transition-delay: 0.25s, 0.25s, 0s, 0s; }
+#services.lights-active .svc-reveal-2 { transition-delay: 0.45s, 0.45s, 0s, 0s; }
+#services.lights-active .svc-reveal-3 { transition-delay: 0.65s, 0.65s, 0s, 0s; }
+#services.lights-active .svc-reveal-4 { transition-delay: 0.85s, 0.85s, 0s, 0s; }
+
+/* Mobile : mêmes proportions, gabarit plus compact */
+@media (max-width: 768px) {
+  .services-cards {
+    max-width: 400px;
+    height: 220px;
+    margin-top: 1.2rem;
+    gap: 0.4rem;
+  }
+  .service-card {
+    padding: 1.1rem;
+  }
+  .service-card-title {
+    font-size: 0.95rem;
+    white-space: normal;
+  }
+}
+
+/* ═══════════════════════════════════════════
+   TEXTE SCROLL-REVEAL – SECTION SERVICES
+   Chaque mot est un <span> injecté en JS.
+   Opacité faible par défaut → noire quand
+   le mot passe au-dessus du seuil de lecture.
+   ═══════════════════════════════════════════ */
+.services-about {
+  width: 100%;
+  max-width: 720px;
+  margin-top: 7.5rem;
+  padding-bottom: 2rem;
+}
+
+.services-about-text {
+  font-family: var(--font-display);
+  font-size: clamp(1.25rem, 2.4vw, 1.9rem);
+  font-weight: 500;
+  line-height: 1.7;
+  color: var(--black);
+  text-align: center;
+  letter-spacing: -0.015em;
+}
+
+/* Les mots sont injectés par JS en <span class="reveal-word"> */
+.reveal-word {
+  display: inline;
+  opacity: 0.12;
+  transition: opacity 0.18s ease;
+  will-change: opacity;
+}
+
+.reveal-word.is-lit {
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal-word { transition: none; opacity: 1; }
+}
+
+@media (max-width: 768px) {
+  .services-about {
+    margin-top: 3.5rem;
+    padding-bottom: 3.5rem;
+  }
+}
+
+/* ═══════════════════════════════════════════════
+   CARROUSEL DE SERVICES – icônes, pas d'images
+   ═══════════════════════════════════════════════ */
+
+/* Apparition au scroll (depuis le bas, fade-in) */
+.carousel-wrap {
+  width: 100%;
+  max-width: 860px;
+  margin-top: 2.5rem;
+  padding-bottom: 6rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2.2rem;
+  opacity: 0;
+  transform: translateY(48px);
+  transition:
+    opacity   0.85s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.85s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.carousel-wrap.is-revealed {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ── Visual track ── */
+.carousel-visual {
+  position: relative;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 400px;
+  user-select: none;
+}
+
+.carousel-track {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Carte (sans image, fond gradient défini en JS) */
+.carousel-photo {
+  position: absolute;
+  border-radius: 24px;
+  overflow: hidden;
+  will-change: transform, opacity, filter;
+  transition:
+    transform  0.75s cubic-bezier(0.22, 1, 0.36, 1),
+    opacity    0.75s ease,
+    filter     0.75s ease,
+    width      0.75s cubic-bezier(0.22, 1, 0.36, 1),
+    height     0.75s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.75s ease;
+}
+
+/* Icône centrée dans la carte */
+.carousel-card-inner {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-bottom: 3.5rem; /* espace pour le label */
+}
+
+.carousel-card-icon {
+  font-size: 3.8rem;
+  transition: font-size 0.75s cubic-bezier(0.22, 1, 0.36, 1);
+  line-height: 1;
+}
+
+/* Label en bas de chaque carte */
+.carousel-photo-label {
+  margin: 0;
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 0 1rem 1.2rem;
+  text-align: center;
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  pointer-events: none;
+  transition: font-size 0.75s ease, opacity 0.35s ease;
+}
+
+/* Carte centrale */
+.carousel-photo.role-main {
+  width: 250px;
+  height: 360px;
+  transform: translateX(0) scale(1);
+  opacity: 1;
+  filter: none;
+  box-shadow:
+    0 20px 56px rgba(0,0,0,0.13),
+    0 6px 20px rgba(0,0,0,0.08);
+  z-index: 3;
+  cursor: pointer;
+}
+
+.carousel-photo.role-main .carousel-card-icon { font-size: 4.8rem; }
+.carousel-photo.role-main .carousel-photo-label { font-size: 1.1rem; }
+
+.carousel-photo.role-main:hover {
+  box-shadow:
+    0 28px 72px rgba(0,0,0,0.17),
+    0 10px 28px rgba(0,0,0,0.10);
+}
+
+/* Cartes latérales */
+.carousel-photo.role-prev {
+  width: 185px;
+  height: 260px;
+  transform: translateX(-248px);
+  opacity: 0.55;
+  filter: saturate(0.5) brightness(0.85);
+  z-index: 2;
+  cursor: pointer;
+}
+
+.carousel-photo.role-next {
+  width: 185px;
+  height: 260px;
+  transform: translateX(248px);
+  opacity: 0.55;
+  filter: saturate(0.5) brightness(0.85);
+  z-index: 2;
+  cursor: pointer;
+}
+
+.carousel-photo.role-prev .carousel-card-icon,
+.carousel-photo.role-next .carousel-card-icon { font-size: 3rem; }
+
+.carousel-photo.role-prev .carousel-photo-label,
+.carousel-photo.role-next .carousel-photo-label { font-size: 0.82rem; }
+
+/* Hors-champ */
+.carousel-photo.role-offstage-left {
+  width: 185px;
+  height: 260px;
+  transform: translateX(-660px) scale(0.8);
+  opacity: 0;
+  z-index: 1;
+}
+
+.carousel-photo.role-offstage-right {
+  width: 185px;
+  height: 260px;
+  transform: translateX(660px) scale(0.8);
+  opacity: 0;
+  z-index: 1;
+}
+
+/* Flash blanc au clic */
+.carousel-photo.is-flashing::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: #fff;
+  border-radius: inherit;
+  animation: photoFlash 0.42s ease forwards;
+}
+
+@keyframes photoFlash {
+  0%   { opacity: 0; }
+  45%  { opacity: 0.9; }
+  100% { opacity: 0.9; }
+}
+
+/* ── Flèches ── */
+.carousel-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 10;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.88);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(0,0,0,0.07);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.09);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--black);
+  transition: background 0.2s, box-shadow 0.2s, transform 0.2s;
+}
+
+.carousel-arrow:hover {
+  background: #fff;
+  box-shadow: 0 6px 22px rgba(0,0,0,0.13);
+  transform: translateY(-50%) scale(1.1);
+}
+
+.carousel-arrow:active { transform: translateY(-50%) scale(0.94); }
+.carousel-arrow--prev { left: 2px; }
+.carousel-arrow--next { right: 2px; }
+
+/* ── Panels – rôle logique JS, invisibles ── */
+.carousel-panels { display: none; }
+
+/* ── Segments de progression ── */
+.carousel-segments-bar {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.carousel-segment {
+  height: 4px;
+  width: 22px;
+  border-radius: 3px;
+  background: rgba(0,0,0,0.10);
+  cursor: pointer;
+  overflow: hidden;
+  transition: width 0.38s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.carousel-segment.is-active { width: 50px; }
+
+.carousel-segment-fill {
+  height: 100%;
+  width: 0%;
+  background: var(--green-dark);
+  border-radius: 3px;
+}
+
+@keyframes carouselFill {
+  from { width: 0%; }
+  to   { width: 100%; }
+}
+
+/* ═══════════════════════════════════════════════
+   SERVICE DETAIL OVERLAY
+   S'ouvre au clic sur la carte centrale.
+   Backdrop + panel qui scale-up depuis le centre.
+   ═══════════════════════════════════════════════ */
+.svc-detail-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 300;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.svc-detail-overlay.is-open {
+  pointer-events: auto;
+}
+
+/* Backdrop sombre */
+.svc-detail-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(10, 12, 18, 0.55);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+
+.svc-detail-overlay.is-open .svc-detail-backdrop {
+  opacity: 1;
+}
+
+/* Panneau de détail */
+.svc-detail-panel {
+  position: relative;
+  z-index: 1;
+  background: #fff;
+  border-radius: 26px;
+  width: min(560px, 92vw);
+  max-height: 88vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 32px 80px rgba(0,0,0,0.24), 0 8px 24px rgba(0,0,0,0.10);
+  opacity: 0;
+  transform: scale(0.86) translateY(24px);
+  transition:
+    opacity  0.48s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.48s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.svc-detail-overlay.is-open .svc-detail-panel {
+  opacity: 1;
+  transform: scale(1) translateY(0);
+  transition-delay: 0.08s;
+}
+
+/* Fermeture : scale vers 0 */
+.svc-detail-overlay.is-closing .svc-detail-backdrop {
+  opacity: 0;
+  transition-duration: 0.3s;
+}
+
+.svc-detail-overlay.is-closing .svc-detail-panel {
+  opacity: 0;
+  transform: scale(0.9) translateY(16px);
+  transition: opacity 0.28s ease, transform 0.28s ease;
+  transition-delay: 0s;
+}
+
+/* Hero – fond gradient + icône centrée */
+.svc-detail-hero {
+  width: 100%;
+  height: 220px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.45s ease 0.2s;
+}
+
+.svc-detail-overlay.is-open .svc-detail-hero {
+  opacity: 1;
+}
+
+.svc-detail-hero-icon {
+  font-size: 5.5rem;
+  line-height: 1;
+}
+
+/* Corps du panneau */
+.svc-detail-body {
+  padding: 2rem 2.2rem 2.4rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  overflow-y: auto;
+}
+
+.svc-detail-eyebrow {
+  margin: 0;
+  opacity: 0;
+  transform: translateY(10px);
+  transition: opacity 0.4s ease 0.25s, transform 0.4s ease 0.25s;
+}
+
+.svc-detail-overlay.is-open .svc-detail-eyebrow {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.svc-detail-title {
+  font-family: var(--font-display);
+  font-size: 1.65rem;
+  font-weight: 800;
+  color: var(--black);
+  line-height: 1.15;
+  margin: 0;
+  opacity: 0;
+  transform: translateY(12px);
+  transition: opacity 0.45s ease 0.32s, transform 0.45s ease 0.32s;
+}
+
+.svc-detail-overlay.is-open .svc-detail-title {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.svc-detail-desc {
+  font-size: 0.97rem;
+  color: var(--grey);
+  line-height: 1.6;
+  margin: 0;
+  opacity: 0;
+  transform: translateY(10px);
+  transition: opacity 0.4s ease 0.42s, transform 0.4s ease 0.42s;
+}
+
+.svc-detail-overlay.is-open .svc-detail-desc {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.svc-detail-cta {
+  align-self: flex-start;
+  margin-top: 0.4rem;
+  opacity: 0;
+  transform: translateY(10px);
+  transition: opacity 0.4s ease 0.52s, transform 0.4s ease 0.52s;
+}
+
+.svc-detail-overlay.is-open .svc-detail-cta {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Bouton fermer */
+.svc-detail-close {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  z-index: 5;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.85);
+  border: 1px solid rgba(0,0,0,0.09);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.10);
+  font-size: 0.95rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--black);
+  transition: background 0.2s ease, transform 0.2s ease;
+  opacity: 0;
+  transition: opacity 0.35s ease 0.4s, background 0.2s ease, transform 0.15s ease;
+}
+
+.svc-detail-overlay.is-open .svc-detail-close {
+  opacity: 1;
+}
+
+.svc-detail-close:hover {
+  background: var(--black);
+  color: #fff;
+  transform: scale(1.08);
+}
+
+/* =============================================
+   WAVE DIVIDERS
+   Vague organique et asymétrique en haut de chaque
+   section dont le fond change de couleur. Le remplissage
+   reprend toujours la couleur de la section précédente,
+   pour donner l'impression qu'elle "s'efface" en ondulant
+   pour révéler la nouvelle couleur en dessous.
+   ============================================= */
+.wave-divider {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: clamp(36px, 7vw, 90px);
+  overflow: hidden;
+  line-height: 0;
+  pointer-events: none;
+}
+
+.wave-divider svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.wave-divider--from-white path  { fill: var(--white); }
+.wave-divider--from-navy path   { fill: var(--navy); }
+.wave-divider--from-green-light path { fill: var(--green-light); }
+
+.section-inner {
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.eyebrow {
+  display: inline-block;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--green-dark);
+  background: rgba(45,106,45,0.1);
+  border-radius: 100px;
+  padding: 0.3rem 0.8rem;
+  margin-bottom: 1rem;
+}
+
+.section h2 {
+  font-family: var(--font-display);
+  font-size: clamp(1.8rem, 4vw, 2.6rem);
+  font-weight: 800;
+  margin-bottom: 1rem;
+  line-height: 1.2;
+}
+
+.section-sub {
+  font-size: 1.05rem;
+  color: var(--grey);
+  max-width: 540px;
+  line-height: 1.6;
+  margin-bottom: 3rem;
+}
+
+/* =============================================
+   SERVICES CAROUSEL (ancien bloc supprimé — voir les nouvelles règles
+   .carousel-wrap / .carousel-visual / etc. avant WAVE DIVIDERS)
+   ============================================= */
+/* =============================================
+   SERVICE PERSONNALISÉ
+   ============================================= */
+.custom-cta-section {
+  padding: 1rem 2rem 6rem;
+}
+
+.custom-cta {
+  max-width: 760px;
+  margin: 0 auto;
+  background: linear-gradient(135deg, #F2E6CE 0%, #E3CEA3 100%);
+  border: 1px solid rgba(120, 90, 40, 0.18);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-lg);
+  padding: 3.5rem 3rem;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.custom-cta-icon {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: var(--white);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.7rem;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.1);
+  margin-bottom: 1.2rem;
+}
+
+.custom-cta h3 {
+  font-family: var(--font-display);
+  font-size: clamp(1.4rem, 3vw, 1.8rem);
+  font-weight: 800;
+  margin-bottom: 0.75rem;
+}
+
+.custom-cta p {
+  font-size: 1rem;
+  color: var(--grey);
+  line-height: 1.6;
+  max-width: 480px;
+  margin-bottom: 1.75rem;
+}
+
+/* =============================================
+   SCROLL REVEAL
+   ============================================= */
+.reveal {
+  opacity: 0;
+  transform: translateY(28px);
+  transition:
+    opacity   0.7s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.reveal.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Effet décalé (stagger) à l'entrée de "Nos services" : titre d'abord,
+   puis le carrousel suit. */
+.section-navy h2.reveal             { transition-delay: 0.1s; }
+.services-carousel.reveal           { transition-delay: 0.3s; }
+
+/* =============================================
+   WHY GRID
+   ============================================= */
+.why-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(440px, 1fr));
+  gap: 2rem;
+  margin-top: 1rem;
+}
+
+.why-item {
+  display: flex;
+  gap: 1.2rem;
+  align-items: flex-start;
+}
+
+.why-num {
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--green-dark);
+  color: var(--white);
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.why-item h3 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.05rem;
+  margin-bottom: 0.4rem;
+}
+
+.why-item p {
+  font-size: 0.9rem;
+  color: var(--grey);
+  line-height: 1.6;
+}
+
+/* =============================================
+   PRICING
+   ============================================= */
+.pricing-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1.5rem;
+  margin-top: 1rem;
+  align-items: start;
+}
+
+.pricing-card {
+  background: var(--white);
+  border-radius: var(--radius-sm);
+  padding: 2rem;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+  border: 1px solid rgba(90,154,58,0.12);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.pricing-card--featured {
+  border: 2px solid var(--green-mid);
+  box-shadow: 0 8px 30px rgba(90,154,58,0.18);
+}
+
+.badge {
+  display: inline-block;
+  background: var(--green-mid);
+  color: var(--white);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  border-radius: 100px;
+  padding: 0.25rem 0.7rem;
+  width: fit-content;
+}
+
+.pricing-card h3 {
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  font-weight: 700;
+}
+
+.price {
+  font-family: var(--font-display);
+  font-size: 2.5rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.price span {
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--grey);
+}
+
+.pricing-card p {
+  font-size: 0.9rem;
+  color: var(--grey);
+  line-height: 1.6;
+}
+
+.pricing-card ul {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.pricing-card ul li {
+  font-size: 0.88rem;
+  color: var(--grey);
+}
+
+/* =============================================
+   CONTACT STRIP
+   ============================================= */
+.contact-strip {
+  position: relative;
+  background: var(--green-dark);
+  padding: 6rem 2rem 4rem;
+}
+
+.contact-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2rem;
+  flex-wrap: wrap;
+}
+
+.contact-inner h2 {
+  color: var(--white);
+  font-family: var(--font-display);
+  font-size: clamp(1.4rem, 3vw, 2rem);
+  font-weight: 800;
+  margin-bottom: 0.4rem;
+}
+
+.contact-inner p {
+  color: rgba(255,255,255,0.7);
+  font-size: 1rem;
+}
+
+/* =============================================
+   FOOTER
+   ============================================= */
+.footer {
+  background: var(--black);
+  padding: 3rem 2rem 1.5rem;
+  color: rgba(255,255,255,0.6);
+}
+
+.footer-inner {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 2rem;
+  flex-wrap: wrap;
+  padding-bottom: 2rem;
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+  margin-bottom: 1.5rem;
+}
+
+.footer-logo p {
+  font-size: 0.85rem;
+  margin-top: 0.75rem;
+  line-height: 1.5;
+}
+
+.footer-links {
+  display: flex;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.footer-links a {
+  color: rgba(255,255,255,0.6);
+  text-decoration: none;
+  font-size: 0.9rem;
+  transition: color 0.2s;
+  cursor: pointer;
+}
+
+.footer-links a:hover {
+  color: var(--white);
+}
+
+.footer-bottom p {
+  font-size: 0.8rem;
+}
+
+/* Réutilisé dans #services (panneau à largeur contrainte, cf.
+   .section-inner) plutôt qu'en pleine largeur de viewport comme un footer
+   de document classique : coins arrondis pour que le bloc se lise comme une
+   carte intentionnelle plutôt qu'un rectangle mal coupé. */
+.footer {
+  border-radius: var(--radius);
+  margin-top: 3rem;
+}
+
+/* =============================================
+   FAQ + CONTENU SEO
+   Section FAQ visible (miroir du schéma FAQPage en JSON-LD) + paragraphe
+   récapitulatif riche en mots-clés, sous le carrousel de services. Discret
+   (petite taille, gris) mais jamais display:none/hors-écran : Google traite
+   ça comme du texte caché, une pratique à éviter plutôt qu'un vrai gain SEO.
+   ============================================= */
+.seo-faq,
+.seo-content {
+  max-width: 760px;
+  margin: 4rem auto 0;
+  padding: 0 0.5rem;
+}
+
+.seo-faq h2,
+.seo-content h2 {
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: var(--black);
+  margin-bottom: 1.1rem;
+}
+
+.seo-faq details {
+  border-bottom: 1px solid rgba(0,0,0,0.08);
+  padding: 0.9rem 0;
+}
+
+.seo-faq summary {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: var(--black);
+  cursor: pointer;
+  list-style: none;
+}
+
+.seo-faq summary::-webkit-details-marker {
+  display: none;
+}
+
+.seo-faq summary::before {
+  content: '+';
+  display: inline-block;
+  width: 1.2em;
+  color: var(--navy);
+  font-weight: 700;
+}
+
+.seo-faq details[open] summary::before {
+  content: '\2212';
+}
+
+.seo-faq details p {
+  margin: 0.6rem 0 0 1.2em;
+  color: var(--grey);
+  font-size: 0.88rem;
+  line-height: 1.6;
+}
+
+.seo-content p {
+  color: var(--grey);
+  font-size: 0.86rem;
+  line-height: 1.65;
+  margin-bottom: 0.6rem;
+}
+
+.seo-content p strong {
+  color: var(--black);
+}
+
+/* =============================================
+   VAGUE BLANCHE (transition vers la page Devis)
+   Même mécanisme que .hero-wave-rise (cf. plus haut), mais miroir : ancrée
+   en bas de son conteneur plein écran, elle descend depuis au-dessus de
+   l'écran (translateY négatif) plutôt que de monter depuis dessous. La
+   courbe se referme sur le bord inférieur du viewBox (au lieu du supérieur)
+   une fois la descente terminée, pour les mêmes raisons que la vague bleue :
+   sans ça, un écart resterait visible en bas de l'écran.
+   ============================================= */
+.devis-wave-fall {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 50;
+}
+
+.devis-wave-fall-inner {
+  display: block;
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: calc(100% + 160px);
+  /* État initial : entièrement masquée au-dessus du haut de l'écran. */
+  transform: translateY(-100%);
+  filter: drop-shadow(0 -3px 6px rgba(0,0,0,0.12));
+  will-change: transform;
+}
+
+/* =============================================
+   PAGE DEVIS (remplace l'ancienne modale)
+   Plein écran comme #services : révélée par initHeroPageTransition()
+   (script.js) une fois la vague blanche arrivée en bas, jamais par un
+   simple toggle d'affichage.
+   ============================================= */
+.devis-page {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100vh;
+  height: 100dvh;
+  overflow-y: auto;
+  /* Masque la barre de scroll native : avec les transitions des cartes
+     (transform sur les .devis-stagger-item), la hauteur scrollable
+     fluctue de quelques px pendant l'animation, ce qui suffit à faire
+     clignoter la barre native. Le scroll (molette/tactile) reste actif. */
+  scrollbar-width: none;
+  background: var(--white);
+  z-index: 60;
+  opacity: 0;
+  transition: opacity 0.18s ease;
+  pointer-events: none;
+  /* Déclarée ici (et non sur .devis-ambient-light) pour être héritée à la
+     fois par les lumières d'arrière-plan ET par les cartes de réponse (cf.
+     .devis-choice:hover) — sert d'ancre commune pour que le survol d'une
+     carte reprenne la couleur d'arrière-plan actuelle. Pilotée en JS par
+     shiftDevisAmbientHue (script.js). */
+  --devis-hue: 0deg;
+}
+
+.devis-page::-webkit-scrollbar {
+  display: none;
+}
+
+/* devis.html (mobile) : le devis y est une page à part entière, plus un
+   calque superposé sur index.html — cf. navigateToDevisMobile (script.js).
+   Le document doit rester scrollable nativement (position:static, pas de
+   scroll interne) pour que Safari mobile puisse rétracter sa barre
+   d'adresse, comme pour #services (cf. media query mobile plus bas). Reste
+   compatible avec .devis-reveal/.is-open : c'est toujours l'ajout de
+   .is-open (au chargement de devis.html) qui déclenche le fondu + léger
+   slide des cartes, seule la mise en page du conteneur change ici. */
+.devis-page.devis-standalone {
+  position: static;
+  height: auto;
+  min-height: 100vh;
+  min-height: 100dvh;
+  overflow-x: hidden;
+  overflow-y: visible;
+  opacity: 1;
+  transition: none;
+  pointer-events: auto;
+}
+
+.devis-page-inner {
+  position: relative;
+  z-index: 1;
+  min-height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 7rem 1.5rem 4.5rem;
+}
+
+/* Lumières chaudes flottant derrière le formulaire, centrées sur la page :
+   taches de couleur saturée + flou important, qui apparaissent en fondu à
+   l'ouverture (transition opacity pilotée par .is-open) puis dérivent en
+   continu (cf. devisAmbientDrift). Purement décoratif, masqué aux lecteurs
+   d'écran (aria-hidden côté HTML). */
+.devis-ambient-light {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  z-index: 0;
+  pointer-events: none;
+  /* Teinte héritée de --devis-hue (cf. .devis-page) et pilotée en JS à
+     chaque changement de question (shiftDevisAmbientHue, script.js), en
+     même temps que la nouvelle carte est construite : tourne lentement
+     plutôt que de sauter, pour que la transition se joue pendant
+     l'animation d'apparition des cartes. */
+  filter: hue-rotate(var(--devis-hue));
+  transition: filter 1.3s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.35s ease;
+}
+
+/* Fondu déclenché juste avant que la vague blanche ne monte (cf. closeDevis,
+   script.js) : sans ce fondu dédié sur le calque entier, les lumières
+   disparaissaient instantanément avec le reste de la page (.devis-page
+   passe à opacity:0 en 0.18s dès que window.HSDevis.close() démarre). */
+.devis-ambient-light.is-hiding {
+  opacity: 0;
+}
+
+/* Conteneur d'un jeu de taches (scene a/b) : seul celui marqué .is-active
+   est visible (cf. opacité ci-dessous) ; l'autre est repositionné en JS
+   pendant qu'il est invisible, prêt pour le prochain fondu croisé. */
+.devis-ambient-scene {
+  position: absolute;
+  inset: 0;
+}
+
+.devis-ambient-blob {
+  position: absolute;
+  border-radius: 50%;
+  /* Flou large : avec des taches agrandies + un dégradé qui s'étend plus
+     loin (cf. stops ci-dessous), l'effet se lit comme un bain de lumière
+     continu plutôt que des ronds nets posés sur du blanc — sans pour
+     autant couvrir l'écran d'un aplat de couleur saturé. */
+  filter: blur(80px);
+  opacity: 0;
+  will-change: transform, opacity;
+  transition: opacity 1.6s ease;
+  animation: devisAmbientDrift 16s ease-in-out infinite;
+}
+
+.devis-page.is-open .devis-ambient-scene.is-active .devis-ambient-blob-1 { opacity: 0.56; transition-delay: 0.1s; }
+.devis-page.is-open .devis-ambient-scene.is-active .devis-ambient-blob-2 { opacity: 0.5;  transition-delay: 0.3s; }
+.devis-page.is-open .devis-ambient-scene.is-active .devis-ambient-blob-3 { opacity: 0.52; transition-delay: 0.5s; }
+.devis-page.is-open .devis-ambient-scene.is-active .devis-ambient-blob-4 { opacity: 0.46; transition-delay: 0.7s; }
+
+.devis-ambient-blob-1 {
+  top: 6%;
+  left: -6%;
+  width: 54vw;
+  height: 54vw;
+  background: radial-gradient(circle, #FFC368 0%, #FFC368 22%, rgba(255,195,104,0) 78%);
+  animation-duration: 17s;
+}
+
+.devis-ambient-blob-2 {
+  top: 36%;
+  right: -10%;
+  width: 52vw;
+  height: 52vw;
+  background: radial-gradient(circle, #FF8A65 0%, #FF8A65 22%, rgba(255,138,101,0) 78%);
+  animation-duration: 19s;
+  animation-delay: -4s;
+}
+
+.devis-ambient-blob-3 {
+  bottom: 2%;
+  left: 16%;
+  width: 54vw;
+  height: 54vw;
+  background: radial-gradient(circle, #FF6F91 0%, #FF6F91 22%, rgba(255,111,145,0) 78%);
+  animation-duration: 21s;
+  animation-delay: -9s;
+}
+
+.devis-ambient-blob-4 {
+  top: 40%;
+  left: 34%;
+  width: 44vw;
+  height: 44vw;
+  background: radial-gradient(circle, #FFD479 0%, #FFD479 22%, rgba(255,212,121,0) 78%);
+  animation-duration: 15s;
+  animation-delay: -2s;
+}
+
+@keyframes devisAmbientDrift {
+  0%   { transform: translate(0, 0) scale(1); }
+  25%  { transform: translate(7%, -9%) scale(1.18); }
+  50%  { transform: translate(-6%, 7%) scale(0.9); }
+  75%  { transform: translate(9%, 5%) scale(1.1); }
+  100% { transform: translate(0, 0) scale(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .devis-ambient-blob {
+    animation: none;
+  }
+}
+
+.devis-card {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 620px;
+}
+
+/* Cartes du formulaire : chaque étape logique (coordonnées, projet) est
+   regroupée dans son propre bloc visuel, plutôt qu'un long formulaire plat. */
+.devis-card-group {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  background: var(--white);
+  border-radius: var(--radius);
+  padding: 1.7rem 1.8rem;
+  box-shadow:
+    0 0 0 1px rgba(0,0,0,0.04),
+    0 8px 24px rgba(0,0,0,0.08);
+}
+
+.devis-card-group-head {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  margin-bottom: 1.3rem;
+}
+
+.devis-card-group-num {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: rgba(90,154,58,0.12);
+  color: var(--green-dark);
+  font-size: 0.82rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.devis-card-group-title {
+  font-family: var(--font-display);
+  font-size: 1.02rem;
+  font-weight: 700;
+  color: var(--black);
+}
+
+/* Apparition échelonnée : en-tête puis chaque carte puis le bouton,
+   déclenchée par l'ajout de .is-open sur .devis-page (cf. openDevisPage()
+   dans script.js, une fois la vague blanche arrivée). */
+.devis-reveal {
+  opacity: 0;
+  transform: translateY(22px);
+  transition: opacity 0.55s cubic-bezier(0.22, 1, 0.36, 1), transform 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.devis-page.is-open .devis-reveal {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.devis-reveal.devis-delay-1 { transition-delay: 0.08s; }
+.devis-reveal.devis-delay-2 { transition-delay: 0.18s; }
+.devis-reveal.devis-delay-3 { transition-delay: 0.28s; }
+
+/* Sortie au clic sur la croix (cf. closeDevis, script.js) : les cartes
+   s'envolent vers le haut en s'estompant, plus vite que leur entrée, avant
+   que la page Devis elle-même ne commence à se refermer (le délai est piloté
+   en JS pour laisser cette transition se jouer). Plus spécifique que
+   .devis-reveal seul, donc l'emporte sans !important. */
+.devis-page.is-closing .devis-reveal {
+  opacity: 0;
+  transform: translateY(-14px);
+  transition: opacity 0.3s ease, transform 0.3s ease;
+  transition-delay: 0s;
+}
+
+/* Ancrée sur le coin du .devis-card (pas sur le viewport) : reste toujours
+   au plus près du contenu, quelle que soit la largeur de l'écran. */
+.devis-close {
+  position: absolute;
+  top: -16px;
+  right: -16px;
+  z-index: 5;
+  background: var(--white);
+  border: 1px solid rgba(0,0,0,0.08);
+  border-radius: 50%;
+  width: 46px;
+  height: 46px;
+  font-size: 1.15rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 3px 8px rgba(0,0,0,0.12);
+  color: var(--black);
+  /* .devis-close est un <a> sur devis.html (vraie navigation vers
+     index.html) et un <button> dans le calque superposé d'index.html : sans
+     ça, le navigateur souligne le "✕" par défaut sur la version <a>. */
+  text-decoration: none;
+  transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+.devis-close:hover {
+  background: var(--black);
+  border-color: var(--black);
+  color: var(--white);
+}
+
+.devis-card h2 {
+  font-family: var(--font-display);
+  font-size: 1.6rem;
+  font-weight: 800;
+  margin-bottom: 0.3rem;
+}
+
+.devis-sub {
+  color: var(--grey);
+  font-size: 0.9rem;
+  margin-bottom: 1.8rem;
+}
+
+/* =============================================
+   FORM
+   ============================================= */
+form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.4rem;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.form-group label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--black);
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  color: var(--black);
+  background: #F6F6F6;
+  border: 1.5px solid #E0E0E0;
+  border-radius: var(--radius-sm);
+  padding: 0.75rem 1rem;
+  outline: none;
+  transition: border-color 0.2s, background 0.2s;
+  width: 100%;
+  resize: vertical;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+  border-color: var(--green-mid);
+  background: var(--white);
+}
+
+.form-group input::placeholder,
+.form-group textarea::placeholder {
+  color: var(--grey-light);
+}
+
+/* =============================================
+   CARTE DE LOCALISATION (étape "address" du devis)
+   Fond Leaflet/CARTO discret, non interactif : sert à confirmer visuellement
+   la commune détectée à partir du code postal (cf. updateDevisMapZone,
+   script.js). La zone trouvée est repeinte en rouge avec un léger halo.
+   ============================================= */
+.devis-map-card {
+  --devis-map-h: 260px;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  box-shadow: 0 0 0 1px rgba(0,0,0,0.06), 0 6px 18px rgba(0,0,0,0.08);
+  background: var(--white);
+  opacity: 0;
+  transition: opacity 0.5s ease;
+}
+
+.devis-map-card.is-ready {
+  opacity: 1;
+}
+
+/* Mode "Belgique entière" (cf. setDevisMapExpanded, script.js) : la carte
+   s'agrandit avant que la vue ne zoome/dézoome vers son nouveau cadrage. */
+.devis-map-card.is-belgium {
+  --devis-map-h: 380px;
+}
+
+.devis-map {
+  height: var(--devis-map-h);
+  width: 100%;
+  background: #EAEFEA;
+  transition: height 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* OpenStreetMap/CARTO imposent l'attribution sur leurs tuiles gratuites : on
+   ne peut pas la supprimer sans enfreindre leurs conditions d'usage. On la
+   réduit au maximum pour qu'elle reste discrète sans gêner le design. */
+.devis-map .leaflet-control-attribution {
+  font-size: 0.55rem;
+  line-height: 1.4;
+  padding: 0 4px;
+  background: rgba(255,255,255,0.55);
+  color: rgba(0,0,0,0.45);
+}
+
+.devis-map .leaflet-control-attribution a {
+  color: rgba(0,0,0,0.45);
+}
+
+.devis-map-zone-active {
+  transition: fill 0.4s ease, fill-opacity 0.4s ease, stroke 0.4s ease;
+  filter: drop-shadow(0 0 9px rgba(229,72,77,0.55));
+}
+
+.devis-map .leaflet-interactive {
+  transition: fill 0.4s ease, fill-opacity 0.4s ease, stroke 0.4s ease;
+}
+
+/* Nom de la commune, ancré à son centre géographique (cf. label_lon/label_lat
+   dans brussels-map-data.js et showDevisMapLabel, script.js). Le centrage
+   (translate -50%,-50%) est posé sur un enfant interne, pas sur la racine du
+   divIcon : Leaflet pose lui-même un transform inline sur cette racine pour
+   la positionner sur la carte, ce qui écraserait silencieusement le nôtre si
+   on le mettait au même endroit. */
+.devis-map-label-inner {
+  display: inline-block;
+  transform: translate(-50%, -50%);
+  white-space: nowrap;
+  color: #fff;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 0.95rem;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.5), 0 0 16px rgba(0,0,0,0.3);
+  letter-spacing: 0.01em;
+  opacity: 0;
+  transition: opacity 0.35s ease;
+  pointer-events: none;
+}
+
+.devis-map-label-inner.is-visible {
+  opacity: 1;
+}
+
+/* Vue Belgique entière (cf. showDevisMapLabel / showDevisBrusselsMarker,
+   script.js) : la zone visée (Bruxelles ou la commune/ville trouvée) est
+   minuscule à cette échelle, un nom centré dessus la recouvrirait
+   complètement. On le remonte donc au-dessus, pour laisser la zone colorée
+   visible en dessous. */
+.devis-map-label-icon--offset .devis-map-label-inner {
+  transform: translate(-50%, -135%);
+}
+
+/* Bouton "Je ne suis pas à Bruxelles" / retour (cf. setDevisLocationMode,
+   script.js) : lien discret, pas un bouton plein, pour rester secondaire
+   par rapport au champ d'adresse. */
+.devis-location-toggle {
+  align-self: flex-start;
+  background: none;
+  border: none;
+  padding: 0;
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--navy);
+  text-decoration: underline;
+  text-decoration-color: transparent;
+  cursor: pointer;
+  transition: text-decoration-color 0.2s ease;
+}
+
+.devis-location-toggle:hover {
+  text-decoration-color: var(--navy);
+}
+
+/* Repères "Bruxelles" / destination en mode Belgique entière (cf.
+   devisPinIcon, script.js). Même logique de centrage que .devis-map-label-inner :
+   tout se fait sur .devis-map-pin-inner, jamais sur la racine du divIcon. */
+.devis-map-pin-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transform: translate(-50%, -100%);
+  opacity: 0;
+  transition: opacity 0.35s ease;
+  pointer-events: none;
+}
+
+.devis-map-pin-inner.is-visible {
+  opacity: 1;
+}
+
+.devis-map-pin-label {
+  background: rgba(255,255,255,0.92);
+  color: var(--black);
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: 0.72rem;
+  padding: 2px 8px;
+  border-radius: 6px;
+  margin-bottom: 4px;
+  white-space: nowrap;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.18);
+}
+
+.devis-map-pin-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 2px solid var(--white);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+}
+
+.devis-map-pin--dest .devis-map-pin-dot {
+  background: #E5484D;
+}
+
+.devis-map-pin--dest .devis-map-pin-label {
+  color: #B3211E;
+}
+
+/* Tracé animé Bruxelles <-> adresse hors zone (cf. showDevisFreeLocation,
+   script.js) : tirets qui défilent en continu pour suggérer un trajet, plutôt
+   qu'un simple trait statique. */
+.devis-distance-line {
+  stroke-dasharray: 10 8;
+  animation: devisDashFlow 1.4s linear infinite;
+}
+
+@keyframes devisDashFlow {
+  to { stroke-dashoffset: -18; }
+}
+
+/* N'apparaît que lorsqu'une recherche aboutit (cf. showDevisNotice,
+   script.js) : jamais affichée par défaut, entrée/sortie en fondu + léger
+   glissement plutôt qu'un simple show/hide instantané. */
+.devis-distance-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  margin-top: 1rem;
+  padding: 0.85rem 1rem;
+  background: var(--green-bg);
+  border-radius: var(--radius-sm);
+  font-size: 0.82rem;
+  line-height: 1.4;
+  color: var(--green-dark);
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity 0.35s ease, transform 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.devis-distance-note.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.devis-distance-note i {
+  font-size: 1.1rem;
+  flex-shrink: 0;
+  margin-top: 0.1rem;
+}
+
+.devis-notice-action {
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  font-weight: 700;
+  color: var(--green-dark);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+@media (max-width: 768px) {
+  .devis-map-card {
+    --devis-map-h: 200px;
+  }
+  .devis-map-card.is-belgium {
+    --devis-map-h: 300px;
+  }
+}
+
+/* =============================================
+   QUIZ DEVIS (cartes successives)
+   Une seule carte visible à la fois dans .devis-quiz-stage : avancer/reculer
+   anime la carte courante en sortie tout en faisant entrer la suivante depuis
+   le côté opposé (cf. transitionToStep, script.js), pendant que la hauteur du
+   stage est tweenée vers celle de la nouvelle carte pour éviter un saut brut.
+   ============================================= */
+.devis-progress {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  margin-bottom: 1.6rem;
+}
+
+.devis-progress-track {
+  flex: 1;
+  height: 10px;
+  border-radius: 100px;
+  background: rgba(0,0,0,0.08);
+  overflow: hidden;
+}
+
+/* Dégradé rose/orange statique (pas d'animation de couleur), avec une lueur
+   (box-shadow colorée). La largeur, elle, est animée : elle part de 0% et
+   grandit jusqu'à sa taille requise à l'apparition (cf. resetDevisQuiz,
+   script.js, qui force un double rAF pour laisser le 0% initial se peindre
+   avant de fixer la largeur cible et déclencher la transition). */
+.devis-progress-fill {
+  height: 100%;
+  width: 0%;
+  border-radius: 100px;
+  background: linear-gradient(90deg, #FFC368, #FF8A65, #FF6F91);
+  box-shadow: 0 0 12px rgba(255, 111, 145, 0.55), 0 0 6px rgba(255, 138, 101, 0.5);
+  transition: width 1.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.devis-progress-label {
+  flex-shrink: 0;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--grey);
+  white-space: nowrap;
+  /* Masqué tant qu'aucun service n'est choisi (cf. updateDevisProgress,
+     script.js) : le compte de cartes n'a pas de sens avant que le nombre
+     total d'étapes ne soit déterminé par la réponse à la première question. */
+  opacity: 0;
+  transform: translateY(4px);
+  transition: opacity 0.4s ease, transform 0.4s ease;
+}
+
+.devis-progress-label.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.devis-quiz-stage {
+  position: relative;
+  /* `overflow: visible` au repos (jamais de clip, ombres/effets libres en
+     haut/bas/côtés). Le clip horizontal n'est nécessaire que pendant le
+     glissement entre deux cartes (cf. .is-transitioning ci-dessous) : dès
+     qu'un axe passe à `hidden`, les navigateurs forcent l'autre à `auto`
+     même réglé sur `visible` (et `auto` rogne quand même le contenu) — donc
+     mélanger overflow-x:hidden / overflow-y:visible en permanence coupait
+     l'ombre des cartes en haut/bas (cf. même piège documenté sur
+     .carousel-visual plus haut, qui le contourne par une marge de hauteur
+     fixe — impossible ici car la hauteur du stage est pilotée dynamiquement
+     par script.js pour matcher chaque carte). */
+  overflow: visible;
+  margin-left: -14px;
+  margin-right: -14px;
+  padding-left: 14px;
+  padding-right: 14px;
+  transition: height 0.42s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.devis-quiz-stage.is-transitioning {
+  overflow: hidden;
+}
+
+.devis-quiz-card {
+  width: 100%;
+  opacity: 0;
+  transform: translateX(36px);
+  transition: transform 0.42s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.36s ease;
+}
+
+/* Pendant la transition seulement : sort les deux cartes (sortante/entrante)
+   du flux pour qu'elles se superposent au même endroit (sinon, en flux
+   normal, elles s'empileraient verticalement le temps de l'animation).
+   left/right (plutôt que width:100% qui reste hérité) : pour un élément en
+   position:absolute, width:100% se calcule sur la boîte de padding du
+   conteneur positionné (.devis-quiz-stage, qui inclut ses 14px de padding
+   latéral réservés à l'ombre) au lieu de sa boîte de contenu comme en flux
+   normal — la carte était donc 28px plus large pendant le glissement, puis
+   "rétrécissait" d'un coup à la fin (cf. transitionDevisStep, script.js, qui
+   retire .is-animating après 440ms). left/right retrouvent la même largeur
+   qu'en flux normal. */
+.devis-quiz-card.is-animating {
+  position: absolute;
+  top: 0;
+  left: 14px;
+  right: 14px;
+  width: auto;
+}
+
+.devis-quiz-card.from-left {
+  transform: translateX(-36px);
+}
+
+.devis-quiz-card.is-active {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.devis-quiz-card.exit-left {
+  opacity: 0;
+  transform: translateX(-36px);
+}
+
+.devis-quiz-card.exit-right {
+  opacity: 0;
+  transform: translateX(36px);
+}
+
+.devis-quiz-card-head {
+  margin-bottom: 1.2rem;
+}
+
+/* Étapes "service" et "choice" : la question et chaque option de réponse
+   sont des cartes distinctes (plutôt qu'un seul bloc les regroupant), cf.
+   .devis-question-card et .devis-choice ci-dessous. */
+.devis-quiz-card-split {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.devis-quiz-card-split .devis-quiz-card-head {
+  margin-bottom: 0;
+}
+
+.devis-question-card {
+  background: var(--white);
+  border-radius: var(--radius);
+  padding: 1.5rem 1.6rem;
+  box-shadow:
+    0 0 0 1px rgba(0,0,0,0.04),
+    0 8px 24px rgba(0,0,0,0.08);
+}
+
+/* Même ancre de teinte que les lumières d'arrière-plan (--devis-hue, cf.
+   .devis-page et shiftDevisAmbientHue dans script.js), plutôt qu'un vert
+   fixe : le tag suit la couleur ambiante courante. */
+.devis-quiz-eyebrow {
+  display: inline-block;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: hsl(calc(36deg + var(--devis-hue, 0deg)) 70% 35%);
+  background: hsl(calc(36deg + var(--devis-hue, 0deg)) 80% 55% / 0.12);
+  padding: 0.25rem 0.6rem;
+  border-radius: 100px;
+  margin-bottom: 0.6rem;
+}
+
+.devis-quiz-card-head h3 {
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+
+.devis-quiz-hint {
+  color: var(--grey);
+  font-size: 0.88rem;
+  margin-top: 0.3rem;
+}
+
+/* Apparition de l'en-tête de carte, puis cascade des boutons (service ou
+   choix de configuration) qui démarre une fois l'en-tête bien entamé — cf.
+   STAGGER_BASE/STAGGER_STEP et l'animation-delay posé en JS par bouton. */
+@keyframes devisFadeUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* En pause tant que .devis-page n'a pas .is-open : à la toute première
+   ouverture, la carte service est construite (cf. resetDevisQuiz) pendant
+   que la vague d'entrée joue encore, page invisible — sans cette pause,
+   l'animation se jouerait (et finirait) en coulisses, et l'utilisateur ne
+   verrait jamais la cascade à l'ouverture. Une fois .is-open posé, elle
+   repart proprement depuis le début. */
+.devis-quiz-card-head {
+  animation: devisFadeUp 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-play-state: paused;
+}
+
+.devis-stagger-item {
+  opacity: 0;
+  animation: devisFadeUp 0.38s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-play-state: paused;
+}
+
+.devis-page.is-open .devis-quiz-card-head,
+.devis-page.is-open .devis-stagger-item {
+  animation-play-state: running;
+}
+
+/* Étape 1 : choix du service — chaque service est sa propre carte (cf.
+   .devis-choice), simplement empilées. */
+.devis-service-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+
+/* Étapes de configuration : questions à choix unique, adaptées au service
+   choisi (cf. SERVICES dans script.js) — une carte par option. */
+.devis-choice-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.8rem;
+}
+
+.devis-choice {
+  font-family: var(--font-body);
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: var(--black);
+  background: var(--white);
+  border: 1.5px solid transparent;
+  border-radius: var(--radius-sm);
+  padding: 0.85rem 1rem;
+  text-align: left;
+  cursor: pointer;
+  box-shadow:
+    0 0 0 1px rgba(0,0,0,0.04),
+    0 4px 14px rgba(0,0,0,0.06);
+  transition: border-color 0.2s, background 0.2s, box-shadow 0.2s ease, transform 0.18s ease;
+}
+
+.devis-service-list .devis-choice {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+}
+
+.devis-service-list .devis-choice i {
+  font-size: 1.15rem;
+  color: var(--black);
+  flex-shrink: 0;
+  transition: color 0.2s ease;
+}
+
+/* Au survol, le contour et l'icône reprennent la teinte actuelle de
+   l'arrière-plan (cf. --devis-hue, déclarée sur .devis-page et pilotée par
+   shiftDevisAmbientHue dans script.js) — 36deg = teinte de la première
+   tache lumineuse (#FFC368), utilisée comme ancre avant rotation. */
+.devis-choice:hover {
+  border-color: hsl(calc(36deg + var(--devis-hue, 0deg)) 80% 55%);
+  box-shadow:
+    0 0 0 1px hsl(calc(36deg + var(--devis-hue, 0deg)) 80% 55% / 0.3),
+    0 6px 18px rgba(0,0,0,0.08);
+}
+
+.devis-service-list .devis-choice:hover i {
+  color: hsl(calc(36deg + var(--devis-hue, 0deg)) 80% 50%);
+}
+
+/* Même ancre de teinte que .devis-choice:hover (cf. --devis-hue) : la
+   carte cliquée reprend la couleur d'arrière-plan actuelle plutôt qu'un
+   vert fixe. */
+.devis-choice.is-selected {
+  border-color: hsl(calc(36deg + var(--devis-hue, 0deg)) 80% 55%);
+  background: hsl(calc(36deg + var(--devis-hue, 0deg)) 80% 55% / 0.12);
+  color: var(--white);
+  transform: scale(0.98);
+}
+
+/* =============================================
+   DEVIS - SAISIE LIBRE DE SURFACE EN M²
+   ============================================= */
+.devis-area-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.devis-area-viz {
+  width: 100%;
+  background: var(--white);
+  border-radius: var(--radius);
+  box-shadow:
+    0 0 0 1px rgba(0,0,0,0.04),
+    0 8px 24px rgba(0,0,0,0.08);
+  overflow: hidden;
+  line-height: 0;
+}
+
+.devis-area-svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* Groupe scalé : rect + décor (fleurs / bordure).
+   transform-box: view-box → transform-origin 50% 50% = (140px, 80px)
+   = centre exact du rect (x20+120, y15+65), donc tout s'expand depuis le centre. */
+.devis-area-scaled-group {
+  transform-box: view-box;
+  transform-origin: 50% 50%;
+  transform: scale(0.18);
+  opacity: 0.28;
+  transition:
+    transform 0.52s cubic-bezier(0.34, 1.56, 0.64, 1),
+    opacity   0.35s ease;
+}
+
+.devis-area-svg-label,
+.devis-area-svg-dim {
+  pointer-events: none;
+  transition: opacity 0.28s ease;
+}
+
+.devis-area-field {
+  background: var(--white);
+  border-radius: calc(var(--radius) * 0.7);
+  box-shadow:
+    0 0 0 1px rgba(0,0,0,0.05),
+    0 4px 12px rgba(0,0,0,0.07);
+  padding: 0.35rem 1rem 0.25rem;
+}
+
+.devis-area-input-row {
+  display: flex;
+  align-items: baseline;
+  gap: 0.3rem;
+}
+
+.devis-area-input {
+  font-family: var(--font-display);
+  font-size: 1.9rem;
+  font-weight: 700;
+  color: var(--black);
+  background: transparent;
+  border: none;
+  outline: none;
+  width: auto;
+  min-width: 2ch;
+  max-width: 7ch;
+  line-height: 1;
+  padding: 0;
+  appearance: textfield;
+  -moz-appearance: textfield;
+}
+
+.devis-area-input::-webkit-outer-spin-button,
+.devis-area-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.devis-area-input::placeholder {
+  color: rgba(0,0,0,0.12);
+}
+
+.devis-area-input:focus {
+  color: hsl(calc(36deg + var(--devis-hue, 0deg)) 75% 32%);
+}
+
+.devis-area-unit {
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  font-weight: 600;
+  line-height: 1;
+  flex-shrink: 0;
+  color: hsl(calc(36deg + var(--devis-hue, 0deg)) 70% 42%);
+  transition: color 0.3s ease;
+}
+
+
+/* Navigation entre cartes */
+.devis-quiz-nav {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 1.4rem;
+}
+
+.devis-quiz-back {
+  margin-right: auto;
+}
+
+.devis-quiz-next:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+/* =============================================
+   CALENDRIER DE DATES (carte "date" du quiz)
+   Palette bleue (--navy) volontairement distincte du vert du reste du site :
+   isole visuellement cette carte comme un "widget" à part, façon date-picker.
+   ============================================= */
+.devis-calendar {
+  background: rgba(66,116,217,0.06);
+  border: 1px solid rgba(66,116,217,0.16);
+  border-radius: var(--radius-sm);
+  padding: 1rem;
+}
+
+.devis-calendar-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.9rem;
+}
+
+.devis-calendar-nav[hidden] {
+  display: none;
+}
+
+.devis-calendar-label {
+  font-family: var(--font-display);
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: var(--navy);
+}
+
+.devis-calendar-arrow {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 1.5px solid var(--navy);
+  background: var(--white);
+  color: var(--navy);
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s, color 0.2s, transform 0.18s ease;
+}
+
+.devis-calendar-arrow:hover:not(:disabled) {
+  background: var(--navy);
+  color: var(--white);
+  transform: scale(1.06);
+}
+
+.devis-calendar-arrow:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+/* Sous-étape "semaines" : 4 cartes-semaines, cliquer en fait glisser une
+   nouvelle sous-étape "jours" à la place (cf. .devis-cal-substage plus bas,
+   même mécanique d'animation que les cartes principales du quiz). */
+.devis-week-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.devis-week-card {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  background: var(--white);
+  border: 1.5px solid rgba(66,116,217,0.18);
+  border-radius: var(--radius-sm);
+  padding: 0.85rem 1rem;
+  cursor: pointer;
+  text-align: left;
+  font-family: var(--font-body);
+  transition: border-color 0.2s, transform 0.18s ease, box-shadow 0.2s ease;
+}
+
+.devis-week-card:hover {
+  border-color: var(--navy);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(66,116,217,0.14);
+}
+
+.devis-week-card-range {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--black);
+}
+
+.devis-week-card-meta {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.devis-week-card-arrow {
+  color: var(--navy);
+  font-size: 1rem;
+}
+
+.devis-week-count {
+  flex-shrink: 0;
+  min-width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--navy);
+  color: var(--white);
+  font-size: 0.72rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 0.3rem;
+}
+
+/* Sous-étape "jours" : en-tête avec retour vers les semaines + grille des
+   7 jours de la semaine choisie. */
+.devis-cal-days-head {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  margin-bottom: 0.9rem;
+}
+
+.devis-cal-back {
+  flex-shrink: 0;
+  background: var(--white);
+  border: 1.5px solid var(--navy);
+  color: var(--navy);
+  border-radius: 100px;
+  padding: 0.35rem 0.8rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+
+.devis-cal-back:hover {
+  background: var(--navy);
+  color: var(--white);
+}
+
+.devis-cal-days-range {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--navy);
+}
+
+.devis-week-days-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 0.4rem;
+}
+
+.devis-day {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.15rem;
+  aspect-ratio: 1;
+  border: 1.5px solid rgba(66,116,217,0.22);
+  border-radius: 10px;
+  background: var(--white);
+  cursor: pointer;
+  transition: border-color 0.18s, background 0.18s, transform 0.18s ease, color 0.18s;
+}
+
+.devis-day-weekday {
+  font-size: 0.62rem;
+  font-weight: 600;
+  color: var(--grey);
+  text-transform: uppercase;
+}
+
+.devis-day-num {
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: var(--black);
+}
+
+.devis-day:hover:not(:disabled) {
+  border-color: var(--navy);
+  transform: translateY(-1px);
+}
+
+.devis-day.is-selected {
+  background: var(--navy);
+  border-color: var(--navy);
+}
+
+.devis-day.is-selected .devis-day-weekday,
+.devis-day.is-selected .devis-day-num {
+  color: var(--white);
+}
+
+.devis-day.is-locked {
+  background: #F2F2F2;
+  border-color: #E5E5E5;
+  cursor: not-allowed;
+}
+
+.devis-day.is-locked .devis-day-weekday,
+.devis-day.is-locked .devis-day-num {
+  color: var(--grey-light);
+}
+
+.devis-selected-dates {
+  margin-top: 1rem;
+}
+
+.devis-date-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.devis-date-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  background: rgba(66,116,217,0.1);
+  color: var(--navy);
+  border-radius: 100px;
+  padding: 0.4rem 0.5rem 0.4rem 0.85rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.devis-date-chip button {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(66,116,217,0.18);
+  color: var(--navy);
+  font-size: 0.65rem;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.devis-date-chip button:hover {
+  background: var(--navy);
+  color: var(--white);
+}
+
+/* =============================================
+   SUCCESS STATE
+   ============================================= */
+.form-success {
+  text-align: center;
+  padding: 2rem 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.success-icon {
+  width: 64px;
+  height: 64px;
+  background: var(--green-dark);
+  color: var(--white);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.8rem;
+  font-weight: 700;
+  /* display:none → flex (cf. submitDevis, script.js) relance naturellement
+     l'animation à chaque apparition, pas besoin de JS dédié. */
+  animation: successPop 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.form-success h3 {
+  font-family: var(--font-display);
+  font-size: 1.4rem;
+  font-weight: 800;
+  animation: successFadeUp 0.45s ease 0.15s both;
+}
+
+.form-success p {
+  color: var(--grey);
+  font-size: 0.95rem;
+  animation: successFadeUp 0.45s ease 0.25s both;
+}
+
+.form-success .btn-outline {
+  animation: successFadeUp 0.45s ease 0.35s both;
+}
+
+@keyframes successPop {
+  from { opacity: 0; transform: scale(0.4); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+@keyframes successFadeUp {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* =============================================
+   RESPONSIVE
+   ============================================= */
+@media (max-width: 768px) {
+  /* Toujours dans le flux (display:flex) : la visibilité/animation passe par
+     opacity + transform + visibility, ce qui permet la transition slide+fade
+     à l'ouverture comme à la fermeture (display:none ne peut pas s'animer).
+     translateY(-46px) (au lieu d'un léger -10px) : la carte arrive vraiment
+     depuis le haut de l'écran plutôt que d'un simple fondu sur place, et
+     repart dans l'autre sens à la fermeture (cf. closeMobileMenu, script.js). */
+  .nav-links {
+    display: flex;
+    position: absolute;
+    top: calc(100% + 0.6rem);
+    left: 0; right: 0;
+    flex-direction: column;
+    gap: 0;
+    padding: 0.6rem;
+    border-radius: var(--radius);
+    border: 1px solid rgba(90,154,58,0.14);
+    background-color: rgba(255, 251, 244, 0.97);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.10), 0 22px 52px rgba(0,0,0,0.18);
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transform: translateY(-46px) scale(0.96);
+    transform-origin: top center;
+    transition:
+      opacity   0.38s cubic-bezier(0.22, 1, 0.36, 1),
+      transform 0.38s cubic-bezier(0.22, 1, 0.36, 1),
+      visibility 0s linear 0.38s;
+  }
+
+  .nav-links.open {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    transform: translateY(0) scale(1);
+    transition:
+      opacity   0.38s cubic-bezier(0.22, 1, 0.36, 1),
+      transform 0.38s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .nav-links li:not(:last-child) {
+    margin-bottom: 0.2rem;
+  }
+
+  .nav-links a {
+    padding: 0.95rem 1.1rem;
+    display: block;
+    border-radius: var(--radius-sm);
+    font-weight: 500;
+    transition: background-color 0.18s ease, color 0.18s ease;
+  }
+
+  .nav-links a:hover {
+    background-color: rgba(90,154,58,0.12);
+    color: var(--green-dark);
+  }
+
+  .nav-links a:active {
+    background-color: rgba(90,154,58,0.2);
+    color: var(--green-dark);
+  }
+
+  /* Bouton "Devis gratuit" dans la carte du menu : séparé des liens par un
+     filet, plein-largeur pour rester bien visible en bas de carte. */
+  .nav-links-cta {
+    display: block;
+    margin-top: 0.5rem;
+    padding-top: 0.7rem;
+    border-top: 1px solid rgba(90,154,58,0.14);
+  }
+
+  .nav-links-cta .btn-primary {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .nav > .btn-primary {
+    display: none;
+  }
+
+  .nav-burger {
+    display: flex;
+  }
+
+  /* Le logo s'efface progressivement au scroll vers le bas ; la nav reste
+     fixe/visible, seul le logo disparaît (le burger reste toujours là). */
+  .nav.nav-scrolled .nav-logo {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .hero-card {
+    padding: 2rem 1.5rem;
+  }
+
+  .hero-card h1 {
+    font-size: 1.8rem;
+  }
+
+  /* Cap responsive : évite que la carte occupe trop de place sur tablette/mobile
+     par rapport aux photos flottantes. clamp garantit le minimum sur très petits écrans. */
+  .cardboard-scene {
+    width: clamp(260px, 88%, 490px);
+  }
+
+  /* Mobile utilise carton-phone.png (rotation 90° de carton.png, 394×494) :
+     ratio portrait, donc aspect-ratio dédié pour éviter tout étirement. */
+  .cardboard-box {
+    aspect-ratio: 394 / 494;
+  }
+
+  /* Écran plus serré : on garde 8 objets (au lieu de 12) avec un agencement
+     dédié, calqué sur la maquette mobile fournie — pas un simple repli des
+     positions desktop. Masqués : aspirateur, serpillière, clé, tournevis. */
+  .float-hide-mobile {
+    display: none;
+  }
+
+  .cardboard-scene {
+    margin-top: 34px;
+  }
+
+  .float-broom {
+    --fo-w: 30% !important;
+    left: -4% !important;
+    top: -22% !important;
+  }
+  .float-bucket {
+    --fo-w: 20% !important;
+    left: 28% !important;
+    top: -5% !important;
+  }
+  .float-pressure {
+    --fo-w: 22% !important;
+    left: 56% !important;
+    top: -10% !important;
+  }
+  .float-hammer {
+    --fo-w: 17% !important;
+    right: -13% !important;
+    top: 2% !important;
+  }
+  .float-drill {
+    --fo-w: 21% !important;
+    right: -16% !important;
+    left: auto !important;
+    top: 38% !important;
+    /* Repositionnée à droite (miroir du desktop, où elle est à gauche) :
+       sans inverser aussi son décalage d'entrée (--fe-x, posé en inline dans
+       le HTML pour la position desktop), elle continuerait à arriver par la
+       gauche et traverserait le carton pour rejoindre sa place à droite. */
+    --fe-x: 260px !important;
+  }
+  /* Miroir : sur desktop la perceuse est à gauche (mèche pointant vers la
+     gauche, hors du carton) ; ici elle passe à droite, donc on inverse pour
+     que la mèche pointe vers la droite, hors du carton, comme sur la
+     maquette. */
+  .float-drill .float-obj {
+    --fo-flip: -1;
+  }
+  .float-grocery {
+    --fo-w: 24% !important;
+    right: -10% !important;
+    top: 60% !important;
+  }
+  .float-sponge {
+    --fo-w: 19% !important;
+    left: -10% !important;
+    top: 8% !important;
+  }
+  .float-box {
+    --fo-w: 20% !important;
+    right: auto !important;
+    left: -10% !important;
+    top: 47% !important;
+    /* Repositionnée à gauche (miroir du desktop, où elle est à droite) :
+       même raison que .float-drill ci-dessus — inverse son décalage
+       d'entrée pour qu'elle arrive bien par la gauche. */
+    --fe-x: -220px !important;
+  }
+
+  /* Zone de contenu resserrée : la rotation rend la zone sûre plus étroite
+     en largeur mais bien plus haute, d'où un padding latéral plus généreux. */
+  .carton-content {
+    padding: 9% 13%;
+  }
+
+  /* Titre plafonné pour rester dans la zone sûre, plus étroite, sur petits écrans. */
+  .carton-content h1 {
+    font-size: clamp(1.3rem, 6.5vw, 1.55rem);
+    margin-bottom: 0.7rem;
+  }
+
+  .carton-content p {
+    font-size: 0.82rem;
+    line-height: 1.55;
+  }
+
+  .carton-content .hero-actions {
+    margin-top: 1.2rem;
+    gap: 0.6rem;
+  }
+
+  .carton-content .btn-primary,
+  .carton-content .btn-outline {
+    padding: 0.65rem 1.2rem;
+    font-size: 0.85rem;
+  }
+
+  .why-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+
+  /* Les 140px venaient de la maquette desktop (dégagement sous la nav
+     pendant le pin plein écran) : en flux normal sur mobile, le padding-top
+     de 6rem déjà posé par .section (hérité par #services) suffit largement
+     à dégager la nav fixe — le surplus ne faisait que créer une grande
+     bande blanche entre le carton et "Nos services". */
+  #services .section-inner {
+    padding-top: 1.5rem;
+  }
+
+  .devis-page-inner {
+    padding: 6rem 1.2rem 2.5rem;
+  }
+
+  .devis-card-group {
+    padding: 1.3rem 1.2rem;
+  }
+
+  .devis-choice-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .devis-progress-label {
+    font-size: 0.74rem;
+  }
+
+  .devis-week-days-grid {
+    gap: 0.28rem;
+  }
+
+  .devis-day-weekday {
+    font-size: 0.56rem;
+  }
+
+  .devis-day-num {
+    font-size: 0.82rem;
+  }
+
+  .contact-inner {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  /* Pin scroll-hijacké désactivé sur mobile (cf. initHeroPageTransition,
+     script.js, qui se coupe désormais aussi sous 768px) : le document
+     retrouve un scroll natif classique, seul moyen pour Safari mobile de
+     rétracter sa barre d'adresse pendant le scroll. Sans ce retour au flux
+     normal, #services et .devis-page restent position:fixed avec leur
+     propre overflow-y:auto interne, invisible pour la barre du navigateur,
+     qui reste alors bloquée en position ouverte avec une bande vide en bas. */
+  .hero-scroll-stage {
+    position: static;
+    height: auto;
+  }
+  .hero-wave-rise {
+    display: none;
+  }
+  #services {
+    position: static;
+    height: auto;
+    overflow-x: hidden;
+    overflow-y: visible;
+    opacity: 1 !important;
+    pointer-events: auto !important;
+  }
+  /* Le devis vit désormais sur sa propre page mobile (devis.html, cf.
+     navigateToDevisMobile dans script.js) : le panneau .devis-page
+     d'index.html n'est plus jamais ouvert sur mobile, donc pas besoin d'un
+     repli position:static ici — ses styles de base (opacity:0,
+     pointer-events:none) le laissent déjà parfaitement inerte. .devis-page
+     garde même son overflow-y:auto par défaut sans risque, puisqu'il ne
+     devient jamais visible pour intercepter la barre d'adresse. */
+
+}
+
+/* =============================================
+   REDUCED MOTION
+   ============================================= */
+@media (prefers-reduced-motion: reduce) {
+  .cardboard-box {
+    transition: none !important;
+  }
+  .reveal {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+  }
+  /* Pin + transition animée désactivés : retour à un enchaînement de
+     sections classique, dans le flux normal du document. */
+  html.is-paged {
+    overflow: visible;
+    height: auto;
+  }
+  .hero-scroll-stage {
+    position: static;
+    height: auto;
+  }
+  .hero {
+    position: relative;
+  }
+  .hero-wave-rise {
+    display: none;
+  }
+  .preloader {
+    transition: none;
+  }
+  .float-obj {
+    animation: none;
+  }
+  /* .float-enter porte opacity:0 et un translate(--fe-x,--fe-y) en dehors de
+     l'animation (état de départ) : sans ces overrides, désactiver juste
+     l'animation laisserait chaque objet invisible et hors champ pour de bon. */
+  .float-enter {
+    animation: none;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+  .cardboard-box {
+    animation: none;
+  }
+  .carton-content h1,
+  .carton-content p,
+  .carton-content .hero-actions {
+    animation: none;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+  /* Pin désactivé : la section reprend sa place naturelle dans le flux. */
+  #services {
+    position: static;
+    height: auto;
+    overflow-x: hidden;
+    overflow-y: visible;
+    opacity: 1 !important;
+    pointer-events: auto !important;
+  }
+  /* Carrousel "Nos services" : plus d'avance automatique (cf. JS), et les
+     transitions entre services deviennent instantanées plutôt qu'animées. */
+  .carousel-panel,
+  .carousel-photo {
+    transition: none !important;
+    animation: none !important;
+  }
+  /* Devis : ni vague ni chute d'objets — un simple panneau affiché/masqué
+     instantanément (cf. fallback dans openDevis/closeDevis, script.js). */
+  .devis-wave-fall {
+    display: none;
+  }
+  .devis-page {
+    position: static;
+    height: auto;
+    overflow-x: hidden;
+    overflow-y: visible;
+    opacity: 1;
+    pointer-events: auto;
+    transition: none;
+    display: none;
+  }
+  .devis-page.is-open {
+    display: block;
+  }
+  .devis-reveal {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+  }
+  .devis-progress-fill,
+  .devis-quiz-stage,
+  .devis-quiz-card {
+    transition: none !important;
+  }
+  .devis-quiz-card {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+  .devis-calendar-arrow,
+  .devis-week-card,
+  .devis-day {
+    transition: none !important;
+  }
+  .devis-quiz-card-head,
+  .devis-stagger-item {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+  .success-icon,
+  .form-success h3,
+  .form-success p,
+  .form-success .btn-outline {
+    animation: none !important;
+  }
+}

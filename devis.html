@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Devis gratuit – HomeService</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="preconnect" href="https://unpkg.com" crossorigin />
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
+  <link rel="preconnect" href="https://api.emailjs.com" crossorigin />
+  <meta name="theme-color" content="#4274D9" />
+  <meta name="format-detection" content="telephone=yes" />
+  <meta name="robots" content="noindex, follow" />
+  <link rel="canonical" href="https://homeservicebxl.com" />
+  <link rel="manifest" href="/manifest.json" />
+  <link rel="icon" type="image/png" sizes="32x32" href="images/favicon-32.png" />
+  <link rel="apple-touch-icon" sizes="180x180" href="images/icon-180.png" />
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=Inter:wght@400;500;600&family=Poppins:wght@600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.min.css" />
+  <!-- leaflet.css ne sert qu'à la carte du quiz, après le premier rendu :
+       chargement non bloquant (preload -> stylesheet au onload), repli
+       <noscript> pour les navigateurs sans JS. -->
+  <link rel="preload" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" as="style" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" onload="this.onload=null;this.rel='stylesheet'" />
+  <noscript><link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" /></noscript>
+  <!-- defer : les icônes ne sont nécessaires qu'une fois la première carte
+       du quiz construite, bien après le premier rendu. -->
+  <script src="https://unpkg.com/@phosphor-icons/web@2.1.1" defer></script>
+  <style>
+    /* Pas de nav/logo sur cette page (cf. plus bas) : le contenu du devis
+       peut commencer bien plus haut que le padding-top pensé pour dégager
+       une barre de nav fixe (cf. .devis-page-inner, styles.css) — juste un
+       peu d'air en haut pour ne pas coller au bord de l'écran. */
+    .devis-standalone .devis-page-inner {
+      padding-top: 3.5rem;
+    }
+    /* Le ✕ n'est plus ancré au coin de .devis-card (cf. .devis-close,
+       styles.css) : sur cette page sans nav, il est cadré directement par
+       rapport à l'écran, en haut à droite, au-dessus du contenu. */
+    .devis-standalone .devis-close {
+      position: fixed;
+      top: 1rem;
+      right: 1rem;
+      z-index: 60;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- PAGE DEVIS : page mobile à part entière (cf. navigateToDevisMobile,
+       script.js, qui y navigue depuis index.html après la vague blanche).
+       .devis-standalone (styles.css) repasse le panneau en flux normal
+       plutôt qu'en calque plein écran — inutile ici puisqu'il n'y a rien
+       d'autre sur la page, et nécessaire pour que le document défile
+       nativement (barre d'adresse Safari mobile). -->
+  <section class="devis-page devis-standalone" id="devisPage">
+    <div class="devis-ambient-light" id="devisAmbientLight" aria-hidden="true">
+      <div class="devis-ambient-scene is-active" data-scene="a">
+        <span class="devis-ambient-blob devis-ambient-blob-1"></span>
+        <span class="devis-ambient-blob devis-ambient-blob-2"></span>
+        <span class="devis-ambient-blob devis-ambient-blob-3"></span>
+        <span class="devis-ambient-blob devis-ambient-blob-4"></span>
+      </div>
+      <div class="devis-ambient-scene" data-scene="b">
+        <span class="devis-ambient-blob devis-ambient-blob-1"></span>
+        <span class="devis-ambient-blob devis-ambient-blob-2"></span>
+        <span class="devis-ambient-blob devis-ambient-blob-3"></span>
+        <span class="devis-ambient-blob devis-ambient-blob-4"></span>
+      </div>
+    </div>
+    <div class="devis-page-inner">
+      <div class="devis-card">
+        <a href="index.html" class="devis-close" aria-label="Fermer" onclick="closeDevisStandalone(event)">✕</a>
+        <div class="devis-header devis-reveal">
+          <h2>Personnalise ton devis</h2>
+          <p class="devis-sub">Remplissez ce formulaire, on vous répond dans la journée.</p>
+        </div>
+
+        <div id="formStep1">
+          <div class="devis-progress devis-reveal devis-delay-1">
+            <div class="devis-progress-track">
+              <div class="devis-progress-fill" id="devisProgressFill"></div>
+            </div>
+            <span class="devis-progress-label" id="devisProgressLabel">Carte 1 / 5</span>
+          </div>
+
+          <form id="devisForm" name="devis" data-netlify="true" onsubmit="submitDevis(event)">
+            <input type="hidden" name="form-name" value="devis" />
+            <div class="devis-quiz-stage devis-reveal devis-delay-2" id="devisQuizStage"></div>
+
+            <div class="devis-quiz-nav devis-reveal devis-delay-3">
+              <button type="button" class="btn-outline devis-quiz-back" id="devisBackBtn">← Retour</button>
+              <button type="button" class="btn-primary devis-quiz-next" id="devisNextBtn">Suivant <span class="btn-arrow">→</span></button>
+            </div>
+          </form>
+        </div>
+
+        <div id="formSuccess" class="form-success" style="display:none">
+          <div class="success-icon">✓</div>
+          <h3>Demande envoyée&nbsp;!</h3>
+          <p>On revient vers vous dans les 24h. Merci de votre confiance.</p>
+          <a href="index.html" class="btn-outline" onclick="closeDevisStandalone(event)">Fermer</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- defer sur les 4 : le carton de cette page (quiz, carte, envoi du
+       formulaire) n'a besoin d'aucun d'eux avant que l'utilisateur ait
+       progressé dans les questions — les laisser bloquer l'analyse du HTML
+       retardait l'affichage du tout premier contenu pour rien. defer
+       préserve leur ordre d'exécution (identique à avant), juste après
+       l'analyse complète du document plutôt que pendant. -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin="" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js" defer></script>
+  <script src="brussels-map-data.min.js" defer></script>
+  <script src="script.min.js" defer></script>
+
+  <!-- Init spécifique à cette page : script.js expose buildSteps/
+       renderInitialDevisStep/resetDevisQuiz/SERVICES (utilisés par le
+       carrousel sur index.html) — on les réutilise ici tels quels pour
+       construire la première carte du quiz, avec le même repli "service
+       pré-sélectionné" que openDevisWithService() sur index.html. -->
+  <script>
+    // Fermeture animée (croix ou bouton "Fermer") : les cartes s'envolent
+    // vers le haut en s'estompant et les lumières d'ambiance disparaissent
+    // (mêmes classes .is-closing/.is-hiding que closeDevis() sur index.html,
+    // cf. styles.css), puis on revient réellement à l'accueil. Le flag
+    // sessionStorage indique à initPreloader() (script.js) de ne pas
+    // réafficher le cercle de chargement pour ce retour — les images/polices
+    // ont déjà été chargées lors de cette visite.
+    function closeDevisStandalone(event) {
+      if (event) event.preventDefault();
+      sessionStorage.setItem('hs_skip_preloader', '1');
+
+      const target = 'index.html';
+      const page = document.getElementById('devisPage');
+      const ambient = document.getElementById('devisAmbientLight');
+
+      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        window.location.href = target;
+        return;
+      }
+
+      page.classList.add('is-closing');
+      if (ambient) ambient.classList.add('is-hiding');
+      setTimeout(() => {
+        window.location.href = target;
+      }, 350);
+    }
+
+    // script.js (et donc SERVICES/buildSteps/resetDevisQuiz/etc.) est chargé
+    // en defer (cf. plus haut) : il ne s'exécute qu'après l'analyse complète
+    // du HTML, juste avant DOMContentLoaded — on attend cet évènement avant
+    // d'utiliser quoi que ce soit qui en provient, plutôt que de dépendre de
+    // l'ordre d'apparition dans le document comme avant.
+    document.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('formStep1').style.display = 'block';
+      document.getElementById('formSuccess').style.display = 'none';
+
+      // Construit tout de suite la première carte (invisible tant que
+      // .is-open n'est pas posé, cf. plus bas).
+      const serviceKey = new URLSearchParams(window.location.search).get('service');
+      const svcPresel = serviceKey ? SERVICES.find((s) => s.key === serviceKey) : null;
+
+      if (svcPresel) {
+        devisAnswers = { serviceKey, service: svcPresel.label };
+        devisSteps = buildSteps(serviceKey);
+        devisStepIndex = 1;
+        renderInitialDevisStep();
+      } else {
+        resetDevisQuiz();
+      }
+
+      triggerDevisProgressGrowIn();
+      // Petit délai (plutôt qu'un double rAF) avant de poser .is-open : force
+      // un premier paint à l'état de repos (.devis-reveal opacity:0) pour que
+      // le fondu + léger slide se joue bien, sans dépendre de rAF qui peut
+      // être retardé/throttle selon le navigateur.
+      setTimeout(() => {
+        document.getElementById('devisPage').classList.add('is-open');
+      }, 30);
+    });
+  </script>
+</body>
+</html>
