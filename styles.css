@@ -1208,6 +1208,25 @@ body.is-loading .carton-content .hero-actions {
    CARROUSEL DE SERVICES – icônes, pas d'images
    ═══════════════════════════════════════════════ */
 
+/* Titre visible au-dessus du texte descriptif : donne à la section un vrai
+   point d'ancrage (avant, seul un h2 sr-only existait). */
+.services-carousel-heading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  margin-top: 4.5rem;
+}
+
+.services-carousel-title {
+  font-family: var(--font-display);
+  font-size: clamp(1.7rem, 3.4vw, 2.3rem);
+  font-weight: 800;
+  color: var(--black);
+  letter-spacing: -0.01em;
+  margin: 0;
+}
+
 /* Apparition au scroll (depuis le bas, fade-in) */
 .carousel-wrap {
   width: 100%;
@@ -1230,138 +1249,231 @@ body.is-loading .carton-content .hero-actions {
   transform: translateY(0);
 }
 
-/* ── Visual track ── */
-.carousel-visual {
+/* ── Scène : conteneur fixe (ne défile pas) qui porte le décor et les
+   flèches ; le défilement horizontal natif se fait dans .carousel-viewport,
+   à l'intérieur. ── */
+.carousel-stage {
   position: relative;
   width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 400px;
   user-select: none;
 }
 
+.carousel-viewport {
+  width: 100%;
+  padding: 26px 0 34px;
+  overflow-x: auto;
+  overflow-y: visible;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.carousel-viewport::-webkit-scrollbar { display: none; }
+
 .carousel-track {
   position: relative;
-  width: 100%;
-  height: 100%;
   display: flex;
   align-items: center;
-  justify-content: center;
+  gap: 22px;
+  width: max-content;
+  /* Marge = moitié de la carte active, pour que la 1ère et la dernière
+     carte puissent elles aussi venir se centrer (snap) dans le viewport. */
+  padding-inline: calc(50% - 125px);
 }
 
-/* Carte (sans image, fond gradient défini en JS) */
-.carousel-photo {
+/* Décor derrière les cartes : un halo doux + un anneau pointillé, fixes
+   (portés par .carousel-stage, pas par le viewport qui défile), pour que le
+   carrousel ait une vraie "scène" plutôt que de flotter sur du vide. */
+.carousel-stage-glow {
   position: absolute;
-  border-radius: 24px;
-  overflow: hidden;
-  will-change: transform, opacity, filter;
-  transition:
-    transform  0.75s cubic-bezier(0.22, 1, 0.36, 1),
-    opacity    0.75s ease,
-    filter     0.75s ease,
-    width      0.75s cubic-bezier(0.22, 1, 0.36, 1),
-    height     0.75s cubic-bezier(0.22, 1, 0.36, 1),
-    box-shadow 0.75s ease;
+  top: 50%;
+  left: 50%;
+  width: 460px;
+  height: 460px;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(45,106,45,0.16) 0%, rgba(255,179,92,0.10) 42%, rgba(255,179,92,0) 72%);
+  filter: blur(6px);
+  z-index: 0;
+  pointer-events: none;
 }
 
-/* Icône centrée dans la carte */
-.carousel-card-inner {
+.carousel-stage-ring {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 560px;
+  height: 560px;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  border: 1.5px dashed rgba(17,17,17,0.10);
+  z-index: 0;
+  pointer-events: none;
+  animation: carouselRingSpin 90s linear infinite;
+}
+
+@keyframes carouselRingSpin {
+  to { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+/* Carte : photo entière (ratio 1330:2287, non recadrée), bordure blanche
+   très arrondie, ombre portée. Le ratio de hauteur est calé sur celui des
+   photos sources pour que object-fit: cover ne recadre jamais rien.
+   État par défaut = taille "carte latérale" ; .is-active (carte centrée
+   dans le viewport, détectée en JS via IntersectionObserver) passe à la
+   taille "carte principale" et révèle titre + bouton. */
+.carousel-photo {
+  position: relative;
+  flex: 0 0 auto;
+  scroll-snap-align: center;
+  box-sizing: border-box;
+  width: 185px;
+  height: 318px;
+  border-radius: 27.8px;
+  border: 5.5px solid #fff;
+  background: #fff;
+  overflow: hidden;
+  opacity: 0.6;
+  filter: saturate(0.65) brightness(0.82);
+  box-shadow:
+    0 12px 32px rgba(0,0,0,0.14),
+    0 3px 10px rgba(0,0,0,0.07);
+  cursor: pointer;
+  transition:
+    width      0.5s cubic-bezier(0.22, 1, 0.36, 1),
+    height     0.5s cubic-bezier(0.22, 1, 0.36, 1),
+    border-radius 0.5s ease,
+    border-width  0.5s ease,
+    opacity    0.4s ease,
+    filter     0.4s ease,
+    box-shadow 0.4s ease;
+}
+
+/* Photo du service, en fond de carte, pleine carte. Même rayon que la
+   carte/bordure (spec Figma : image et bordure ont les mêmes dimensions). */
+.carousel-photo-img {
   position: absolute;
   inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding-bottom: 3.5rem; /* espace pour le label */
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 27.8px;
+  display: block;
+  transition: border-radius 0.5s ease;
 }
 
-.carousel-card-icon {
-  font-size: 3.8rem;
-  transition: font-size 0.75s cubic-bezier(0.22, 1, 0.36, 1);
-  line-height: 1;
-}
-
-/* Label en bas de chaque carte */
-.carousel-photo-label {
-  margin: 0;
+/* Voile sombre + flou progressif en bas de l'image (un peu plus du quart de
+   la hauteur), pour la lisibilité du titre */
+.carousel-photo-overlay {
   position: absolute;
-  bottom: 0;
   left: 0;
   right: 0;
-  padding: 0 1rem 1.2rem;
-  text-align: center;
-  font-family: var(--font-display);
-  font-weight: 700;
-  letter-spacing: -0.01em;
+  bottom: 0;
+  height: 28%;
+  background: linear-gradient(to bottom, rgba(6,10,16,0) 0%, rgba(6,10,16,0.42) 60%, rgba(4,7,12,0.68) 100%);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, #000 50%);
+  mask-image: linear-gradient(to bottom, transparent 0%, #000 50%);
   pointer-events: none;
-  transition: font-size 0.75s ease, opacity 0.35s ease;
+  z-index: 2;
 }
 
-/* Carte centrale */
-.carousel-photo.role-main {
+/* Titre + bouton, ancrés en bas de la carte. Insets réduits (juste de quoi
+   respirer près des coins) : le titre est libre de sa propre largeur
+   (nowrap, jamais sur 2 lignes), le bouton a une largeur fixe calée sur le
+   spec Figma. Masqués par défaut (cartes non actives : image seule) et
+   révélés en fade in/out uniquement sur la carte centrée, cf. règle
+   .is-active .carousel-photo-footer plus bas. */
+.carousel-photo-footer {
+  position: absolute;
+  left: 3%;
+  right: 3%;
+  bottom: 4.5%;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.65rem;
+  opacity: 0;
+  transform: translateY(10px);
+  pointer-events: none;
+  transition: opacity 0.4s ease, transform 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Sélecteur qualifié par .carousel-photo : la règle générique
+   ".section-navy h3" (color: var(--black)) est plus spécifique qu'un simple
+   ".carousel-photo-label" et écraserait sinon le blanc voulu ici. */
+.carousel-photo .carousel-photo-label {
+  margin: 0;
+  color: #fff;
+  text-align: center;
+  white-space: nowrap;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 1.18rem;
+  letter-spacing: -0.01em;
+  text-shadow: 0 2px 10px rgba(0,0,0,0.3);
+  pointer-events: none;
+}
+
+/* Bouton "Voir plus" : W:1099 H:199 sur une carte de 1330 (Figma), soit
+   82.63 % de la largeur (≈ 206.6px sur la carte principale de 250px) et une
+   hauteur ≈ 37.4px. Largeur fixe (indépendante du footer, dont les insets
+   ne servent plus qu'au titre) pour respecter le ratio Figma exact.
+   Sa visibilité est entièrement pilotée par le fade du footer parent. */
+.carousel-photo-btn {
+  width: 206.6px;
+  border: none;
+  border-radius: 999px;
+  background: #fff;
+  color: #14171a;
+  font-family: inherit;
+  font-weight: 700;
+  font-size: 0.9rem;
+  line-height: 1;
+  padding: 0.72rem 1rem;
+  cursor: pointer;
+  transition: background 0.28s ease, color 0.28s ease;
+}
+
+.carousel-photo-btn:hover,
+.carousel-photo-btn:focus-visible {
+  background: #14171a;
+  color: #fff;
+}
+
+/* Carte centrée dans le viewport : ratio image 1330:2287 conservé
+   intégralement */
+.carousel-photo.is-active {
   width: 250px;
-  height: 360px;
-  transform: translateX(0) scale(1);
+  height: 430px;
+  border-radius: 37.5px;
+  border-width: 7.5px;
   opacity: 1;
   filter: none;
   box-shadow:
-    0 20px 56px rgba(0,0,0,0.13),
-    0 6px 20px rgba(0,0,0,0.08);
-  z-index: 3;
-  cursor: pointer;
+    0 24px 60px rgba(0,0,0,0.20),
+    0 8px 24px rgba(0,0,0,0.10);
+  z-index: 2;
 }
 
-.carousel-photo.role-main .carousel-card-icon { font-size: 4.8rem; }
-.carousel-photo.role-main .carousel-photo-label { font-size: 1.1rem; }
+.carousel-photo.is-active .carousel-photo-img { border-radius: 37.5px; }
 
-.carousel-photo.role-main:hover {
+/* Fade in du titre + bouton, uniquement sur la carte centrée. Le fade out
+   se joue automatiquement (même transition) dès qu'elle quitte ce rôle. */
+.carousel-photo.is-active .carousel-photo-footer {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+  transition-delay: 0.15s;
+}
+
+.carousel-photo.is-active:hover {
   box-shadow:
-    0 28px 72px rgba(0,0,0,0.17),
-    0 10px 28px rgba(0,0,0,0.10);
-}
-
-/* Cartes latérales */
-.carousel-photo.role-prev {
-  width: 185px;
-  height: 260px;
-  transform: translateX(-248px);
-  opacity: 0.55;
-  filter: saturate(0.5) brightness(0.85);
-  z-index: 2;
-  cursor: pointer;
-}
-
-.carousel-photo.role-next {
-  width: 185px;
-  height: 260px;
-  transform: translateX(248px);
-  opacity: 0.55;
-  filter: saturate(0.5) brightness(0.85);
-  z-index: 2;
-  cursor: pointer;
-}
-
-.carousel-photo.role-prev .carousel-card-icon,
-.carousel-photo.role-next .carousel-card-icon { font-size: 3rem; }
-
-.carousel-photo.role-prev .carousel-photo-label,
-.carousel-photo.role-next .carousel-photo-label { font-size: 0.82rem; }
-
-/* Hors-champ */
-.carousel-photo.role-offstage-left {
-  width: 185px;
-  height: 260px;
-  transform: translateX(-660px) scale(0.8);
-  opacity: 0;
-  z-index: 1;
-}
-
-.carousel-photo.role-offstage-right {
-  width: 185px;
-  height: 260px;
-  transform: translateX(660px) scale(0.8);
-  opacity: 0;
-  z-index: 1;
+    0 30px 76px rgba(0,0,0,0.24),
+    0 12px 30px rgba(0,0,0,0.12);
 }
 
 /* Flash blanc au clic */
@@ -1380,7 +1492,8 @@ body.is-loading .carton-content .hero-actions {
   100% { opacity: 0.9; }
 }
 
-/* ── Flèches ── */
+/* ── Flèches : portées par .carousel-stage (fixe), pas par le viewport
+   défilant, donc toujours ancrées aux bords quel que soit le scroll. ── */
 .carousel-arrow {
   position: absolute;
   top: 50%;
@@ -1412,33 +1525,97 @@ body.is-loading .carton-content .hero-actions {
 .carousel-arrow--prev { left: 2px; }
 .carousel-arrow--next { right: 2px; }
 
-/* ── Panels – rôle logique JS, invisibles ── */
-.carousel-panels { display: none; }
+/* ── Légende éditoriale : "01 — Nom du service / 07" ── */
+.carousel-index-caption {
+  display: flex;
+  align-items: baseline;
+  gap: 0.65rem;
+  font-family: var(--font-display);
+}
 
-/* ── Segments de progression ── */
+.carousel-index-num {
+  font-size: 2.1rem;
+  font-weight: 800;
+  color: var(--black);
+  line-height: 1;
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+
+.carousel-index-divider {
+  width: 30px;
+  height: 2px;
+  background: var(--green-dark);
+  border-radius: 2px;
+}
+
+.carousel-index-name {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--black);
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+
+.carousel-index-total {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--grey-light);
+}
+
+.carousel-index-caption.is-changing .carousel-index-num,
+.carousel-index-caption.is-changing .carousel-index-name {
+  opacity: 0;
+  transform: translateY(4px);
+}
+
+/* ── Puces de services nommées, cliquables (remplacent les tirets) ── */
 .carousel-segments-bar {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 7px;
+  justify-content: center;
+  gap: 0.5rem;
+  max-width: 560px;
 }
 
 .carousel-segment {
-  height: 4px;
-  width: 22px;
-  border-radius: 3px;
-  background: rgba(0,0,0,0.10);
-  cursor: pointer;
+  position: relative;
   overflow: hidden;
-  transition: width 0.38s cubic-bezier(0.22, 1, 0.36, 1);
+  padding: 0.55rem 1.05rem;
+  border-radius: 999px;
+  background: rgba(17,17,17,0.05);
+  cursor: pointer;
+  transition: background 0.35s ease, transform 0.2s ease;
 }
 
-.carousel-segment.is-active { width: 50px; }
+.carousel-segment:hover { background: rgba(17,17,17,0.09); }
+
+.carousel-segment.is-active {
+  background: var(--black);
+  transform: translateY(-1px);
+}
+
+.carousel-segment-label {
+  position: relative;
+  z-index: 1;
+  font-family: var(--font-display);
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--grey);
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  transition: color 0.35s ease;
+}
+
+.carousel-segment.is-active .carousel-segment-label { color: #fff; }
 
 .carousel-segment-fill {
-  height: 100%;
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  height: 2px;
   width: 0%;
-  background: var(--green-dark);
-  border-radius: 3px;
+  background: var(--green-mid);
+  border-radius: 2px;
 }
 
 @keyframes carouselFill {
@@ -3727,10 +3904,15 @@ form {
   }
   /* Carrousel "Nos services" : plus d'avance automatique (cf. JS), et les
      transitions entre services deviennent instantanées plutôt qu'animées. */
-  .carousel-panel,
-  .carousel-photo {
+  .carousel-photo,
+  .carousel-photo-footer,
+  .carousel-photo-btn,
+  .carousel-photo-label,
+  .carousel-viewport,
+  .carousel-stage-ring {
     transition: none !important;
     animation: none !important;
+    scroll-behavior: auto !important;
   }
   /* Devis : ni vague ni chute d'objets — un simple panneau affiché/masqué
      instantanément (cf. fallback dans openDevis/closeDevis, script.js). */

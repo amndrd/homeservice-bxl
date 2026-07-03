@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<title>Sauvegarde — design de carte du carrousel</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800&display=swap" rel="stylesheet" />
+<style>
+  :root { --font-display: 'Poppins', sans-serif; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    padding: 4rem 2rem 6rem;
+    background: linear-gradient(160deg, #fdf3e2 0%, #fce9d8 55%, #ffffff 100%);
+    font-family: 'Poppins', sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3rem;
+  }
+  .note {
+    max-width: 640px;
+    text-align: center;
+    color: #444;
+    font-size: 0.95rem;
+    line-height: 1.6;
+  }
+  .note h1 { font-size: 1.3rem; margin: 0 0 0.75rem; color: #111; }
+  .note code { background: rgba(0,0,0,0.06); padding: 0.1rem 0.4rem; border-radius: 4px; font-size: 0.85em; }
+  /* Contexte minimal nécessaire : la CSS de carte utilise position:absolute
+     + transform, elle attend donc un conteneur position:relative centré. */
+  .stage {
+    position: relative;
+    width: 100%;
+    max-width: 860px;
+    height: 480px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+</style>
+<link rel="stylesheet" href="carousel-card-design.css" />
+</head>
+<body>
+
+  <div class="note">
+    <h1>Design de carte — sauvegardé le 2 juillet 2026</h1>
+    <p>
+      Cette page fige le rendu exact de la carte du carrousel de services avant
+      la refonte complète de la section (mécanique, disposition, décor).
+      La feuille <code>carousel-card-design.css</code> à côté de ce fichier est
+      copiable telle quelle dans <code>styles.css</code> pour la restaurer.
+      Voir l'en-tête de ce fichier CSS pour le couplage JS nécessaire
+      (<code>setCard</code> / <code>setRole</code> dans <code>script.js</code>).
+    </p>
+  </div>
+
+  <div class="stage">
+    <div class="carousel-photo role-prev">
+      <img class="carousel-photo-img" src="../images/nettoyage.exterieur.jpg" alt="Nettoyage extérieur">
+      <div class="carousel-photo-overlay"></div>
+      <div class="carousel-photo-footer">
+        <h3 class="carousel-photo-label">Nettoyage extérieur</h3>
+        <button type="button" class="carousel-photo-btn" tabindex="-1">Voir plus</button>
+      </div>
+    </div>
+    <div class="carousel-photo role-main">
+      <img class="carousel-photo-img" src="../images/lavage.voiture.jpg" alt="Lavage voiture">
+      <div class="carousel-photo-overlay"></div>
+      <div class="carousel-photo-footer">
+        <h3 class="carousel-photo-label">Lavage voiture</h3>
+        <button type="button" class="carousel-photo-btn">Voir plus</button>
+      </div>
+    </div>
+    <div class="carousel-photo role-next">
+      <img class="carousel-photo-img" src="../images/desemcombrement.jpg" alt="Décombrement">
+      <div class="carousel-photo-overlay"></div>
+      <div class="carousel-photo-footer">
+        <h3 class="carousel-photo-label">Décombrement</h3>
+        <button type="button" class="carousel-photo-btn" tabindex="-1">Voir plus</button>
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>

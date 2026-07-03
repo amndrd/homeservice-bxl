@@ -492,54 +492,116 @@
 
       </div>
 
+      <!-- Titre visible de la section (le h2 sr-only plus haut reste pour le
+           SEO/lecteurs d'écran avec la liste complète des services). -->
+      <div class="services-carousel-heading">
+        <span class="eyebrow">Nos services</span>
+        <h3 class="services-carousel-title">Sept services, un seul geste</h3>
+      </div>
+
       <!-- Texte descriptif : les mots s'allument au fur et à mesure du scroll -->
       <div class="services-about">
         <p class="services-about-text" id="servicesAboutText">Vous avez mieux à faire que de gérer les corvées du quotidien. HomeService intervient chez vous à Bruxelles pour tous vos besoins, on s'occupe de ce que vous n'avez pas le temps de faire, pour que vous puissiez vous concentrer sur ce qui compte vraiment.</p>
       </div>
 
-      <!-- Carrousel des 7 services -->
+      <!-- Carrousel des 7 services — défilement horizontal natif (scroll-snap) :
+           les 7 cartes sont statiques dans le DOM, la carte centrée grandit
+           et révèle titre+bouton (cf. .is-active en CSS/JS, initServicesCarousel). -->
       <div class="carousel-wrap" id="servicesCarousel">
-        <div class="carousel-visual" id="carouselVisual">
+        <div class="carousel-stage">
+          <div class="carousel-stage-ring" aria-hidden="true"></div>
+          <div class="carousel-stage-glow" aria-hidden="true"></div>
           <button class="carousel-arrow carousel-arrow--prev" id="carouselPrevBtn" aria-label="Service précédent">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="22" height="22"><polyline points="15 18 9 12 15 6"/></svg>
           </button>
-          <div class="carousel-track">
-            <div class="carousel-photo role-prev" id="carouselPhotoA">
-              <div class="carousel-card-inner"><i class="carousel-card-icon" aria-hidden="true"></i></div>
-              <h3 class="carousel-photo-label"></h3>
+          <div class="carousel-viewport" id="carouselViewport">
+          <div class="carousel-track" id="carouselTrack">
+
+            <div class="carousel-photo" data-index="0" data-key="lavage-voiture">
+              <img class="carousel-photo-img" src="images/lavage.voiture.jpg" alt="Lavage voiture" loading="eager" decoding="async">
+              <div class="carousel-photo-overlay" aria-hidden="true"></div>
+              <div class="carousel-photo-footer">
+                <h3 class="carousel-photo-label">Lavage voiture</h3>
+                <button type="button" class="carousel-photo-btn" tabindex="-1">Voir plus</button>
+              </div>
             </div>
-            <div class="carousel-photo role-main" id="carouselPhotoB">
-              <div class="carousel-card-inner"><i class="carousel-card-icon" aria-hidden="true"></i></div>
-              <h3 class="carousel-photo-label"></h3>
+
+            <div class="carousel-photo" data-index="1" data-key="nettoyage-exterieur">
+              <img class="carousel-photo-img" src="images/nettoyage.exterieur.jpg" alt="Nettoyage extérieur" loading="eager" decoding="async">
+              <div class="carousel-photo-overlay" aria-hidden="true"></div>
+              <div class="carousel-photo-footer">
+                <h3 class="carousel-photo-label">Nettoyage extérieur</h3>
+                <button type="button" class="carousel-photo-btn" tabindex="-1">Voir plus</button>
+              </div>
             </div>
-            <div class="carousel-photo role-next" id="carouselPhotoC">
-              <div class="carousel-card-inner"><i class="carousel-card-icon" aria-hidden="true"></i></div>
-              <h3 class="carousel-photo-label"></h3>
+
+            <div class="carousel-photo" data-index="2" data-key="decombrements">
+              <img class="carousel-photo-img" src="images/desemcombrement.jpg" alt="Décombrement" loading="eager" decoding="async">
+              <div class="carousel-photo-overlay" aria-hidden="true"></div>
+              <div class="carousel-photo-footer">
+                <h3 class="carousel-photo-label">Décombrement</h3>
+                <button type="button" class="carousel-photo-btn" tabindex="-1">Voir plus</button>
+              </div>
             </div>
+
+            <div class="carousel-photo" data-index="3" data-key="courses-livraison">
+              <img class="carousel-photo-img" src="images/livraison.jpg" alt="Livraison" loading="eager" decoding="async">
+              <div class="carousel-photo-overlay" aria-hidden="true"></div>
+              <div class="carousel-photo-footer">
+                <h3 class="carousel-photo-label">Livraison</h3>
+                <button type="button" class="carousel-photo-btn" tabindex="-1">Voir plus</button>
+              </div>
+            </div>
+
+            <div class="carousel-photo" data-index="4" data-key="nettoyage">
+              <img class="carousel-photo-img" src="images/nettoyage.interieur.jpg" alt="Nettoyage intérieur" loading="eager" decoding="async">
+              <div class="carousel-photo-overlay" aria-hidden="true"></div>
+              <div class="carousel-photo-footer">
+                <h3 class="carousel-photo-label">Nettoyage intérieur</h3>
+                <button type="button" class="carousel-photo-btn" tabindex="-1">Voir plus</button>
+              </div>
+            </div>
+
+            <div class="carousel-photo" data-index="5" data-key="montage-bricolage">
+              <img class="carousel-photo-img" src="images/montage.jpg" alt="Montage" loading="eager" decoding="async">
+              <div class="carousel-photo-overlay" aria-hidden="true"></div>
+              <div class="carousel-photo-footer">
+                <h3 class="carousel-photo-label">Montage</h3>
+                <button type="button" class="carousel-photo-btn" tabindex="-1">Voir plus</button>
+              </div>
+            </div>
+
+            <div class="carousel-photo" data-index="6" data-key="travaux">
+              <img class="carousel-photo-img" src="images/travaux.jpg" alt="Travaux" loading="eager" decoding="async">
+              <div class="carousel-photo-overlay" aria-hidden="true"></div>
+              <div class="carousel-photo-footer">
+                <h3 class="carousel-photo-label">Travaux</h3>
+                <button type="button" class="carousel-photo-btn" tabindex="-1">Voir plus</button>
+              </div>
+            </div>
+
+          </div>
           </div>
           <button class="carousel-arrow carousel-arrow--next" id="carouselNextBtn" aria-label="Service suivant">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="22" height="22"><polyline points="9 18 15 12 9 6"/></svg>
           </button>
         </div>
-        <!-- Panels: label actif (pour la JS, le label visible est sur la photo, les panels servent à la détection active) -->
-        <div class="carousel-panels" aria-live="polite">
-          <div class="carousel-panel is-active" data-index="0">Lavage voiture</div>
-          <div class="carousel-panel" data-index="1">Nettoyage extérieur</div>
-          <div class="carousel-panel" data-index="2">Décombrement</div>
-          <div class="carousel-panel" data-index="3">Livraison</div>
-          <div class="carousel-panel" data-index="4">Nettoyage intérieur</div>
-          <div class="carousel-panel" data-index="5">Montage</div>
-          <div class="carousel-panel" data-index="6">Travaux</div>
+        <!-- Légende éditoriale : numéro + nom du service actif, mise à jour en JS -->
+        <div class="carousel-index-caption" id="carouselIndexCaption" aria-hidden="true">
+          <span class="carousel-index-num" id="carouselIndexNum">01</span>
+          <span class="carousel-index-divider"></span>
+          <span class="carousel-index-name" id="carouselIndexName">Lavage voiture</span>
+          <span class="carousel-index-total">/ 07</span>
         </div>
-        <!-- Barre de progression : 7 segments, le segment actif a une barre qui se remplit -->
+        <!-- Barre de progression : 7 puces nommées, cliquables, la puce active se remplit -->
         <div class="carousel-segments-bar" role="tablist" aria-label="Services">
-          <div class="carousel-segment is-active" data-index="0" role="tab" aria-selected="true" tabindex="0"><div class="carousel-segment-fill"></div></div>
-          <div class="carousel-segment" data-index="1" role="tab" aria-selected="false" tabindex="-1"><div class="carousel-segment-fill"></div></div>
-          <div class="carousel-segment" data-index="2" role="tab" aria-selected="false" tabindex="-1"><div class="carousel-segment-fill"></div></div>
-          <div class="carousel-segment" data-index="3" role="tab" aria-selected="false" tabindex="-1"><div class="carousel-segment-fill"></div></div>
-          <div class="carousel-segment" data-index="4" role="tab" aria-selected="false" tabindex="-1"><div class="carousel-segment-fill"></div></div>
-          <div class="carousel-segment" data-index="5" role="tab" aria-selected="false" tabindex="-1"><div class="carousel-segment-fill"></div></div>
-          <div class="carousel-segment" data-index="6" role="tab" aria-selected="false" tabindex="-1"><div class="carousel-segment-fill"></div></div>
+          <div class="carousel-segment is-active" data-index="0" role="tab" aria-selected="true" tabindex="0"><span class="carousel-segment-label">Lavage voiture</span><div class="carousel-segment-fill"></div></div>
+          <div class="carousel-segment" data-index="1" role="tab" aria-selected="false" tabindex="-1"><span class="carousel-segment-label">Nettoyage extérieur</span><div class="carousel-segment-fill"></div></div>
+          <div class="carousel-segment" data-index="2" role="tab" aria-selected="false" tabindex="-1"><span class="carousel-segment-label">Décombrement</span><div class="carousel-segment-fill"></div></div>
+          <div class="carousel-segment" data-index="3" role="tab" aria-selected="false" tabindex="-1"><span class="carousel-segment-label">Livraison</span><div class="carousel-segment-fill"></div></div>
+          <div class="carousel-segment" data-index="4" role="tab" aria-selected="false" tabindex="-1"><span class="carousel-segment-label">Nettoyage intérieur</span><div class="carousel-segment-fill"></div></div>
+          <div class="carousel-segment" data-index="5" role="tab" aria-selected="false" tabindex="-1"><span class="carousel-segment-label">Montage</span><div class="carousel-segment-fill"></div></div>
+          <div class="carousel-segment" data-index="6" role="tab" aria-selected="false" tabindex="-1"><span class="carousel-segment-label">Travaux</span><div class="carousel-segment-fill"></div></div>
         </div>
       </div>
 

@@ -1,0 +1,226 @@
+/* =============================================
+   SAUVEGARDE — design de la carte du carrousel de services
+   Extrait tel quel de styles.css le 2026-07-02, avant redesign complet de
+   la section carrousel (mécanique, disposition, décor autour des cartes).
+   Ce bloc ne dépend que de --font-display (Poppins) comme variable globale.
+
+   Couplage JS à connaître si on réutilise ce design ailleurs (voir
+   initServicesCarousel dans script.js) :
+   - setCard(el, index) fait : el.querySelector('.carousel-photo-img').src/alt
+     + el.querySelector('.carousel-photo-label').textContent
+   - setRole(el, role) fait : el.className = `carousel-photo role-${role}`
+     + gère le tabIndex du bouton (.carousel-photo-btn) selon le rôle
+   - Rôles utilisés par la mécanique actuelle : role-main, role-prev,
+     role-next, role-offstage-left, role-offstage-right (les deux derniers
+     ne sont pas utiles si on abandonne la mécanique de glissement actuelle,
+     seuls role-main/role-prev/role-next définissent le VISUEL de la carte).
+   ============================================= */
+
+.carousel-photo {
+  position: absolute;
+  box-sizing: border-box;
+  border-radius: 37.5px;
+  border: 7.5px solid #fff;
+  background: #fff;
+  overflow: hidden;
+  box-shadow:
+    0 18px 44px rgba(0,0,0,0.16),
+    0 4px 14px rgba(0,0,0,0.08);
+  will-change: transform, opacity, filter;
+  transition:
+    transform  0.75s cubic-bezier(0.22, 1, 0.36, 1),
+    opacity    0.75s ease,
+    filter     0.75s ease,
+    width      0.75s cubic-bezier(0.22, 1, 0.36, 1),
+    height     0.75s cubic-bezier(0.22, 1, 0.36, 1),
+    border-radius 0.75s ease,
+    border-width  0.75s ease,
+    box-shadow 0.75s ease;
+}
+
+/* Photo du service, en fond de carte, pleine carte. Même rayon que la
+   carte/bordure (spec Figma : image et bordure ont les mêmes dimensions). */
+.carousel-photo-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 37.5px;
+  display: block;
+}
+
+/* Voile sombre + flou progressif en bas de l'image (un peu plus du quart de
+   la hauteur), pour la lisibilité du titre */
+.carousel-photo-overlay {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 28%;
+  background: linear-gradient(to bottom, rgba(6,10,16,0) 0%, rgba(6,10,16,0.42) 60%, rgba(4,7,12,0.68) 100%);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, #000 50%);
+  mask-image: linear-gradient(to bottom, transparent 0%, #000 50%);
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* Titre + bouton, ancrés en bas de la carte. Insets réduits (juste de quoi
+   respirer près des coins) : le titre est libre de sa propre largeur
+   (nowrap, jamais sur 2 lignes), le bouton a une largeur fixe calée sur le
+   spec Figma. Masqués par défaut (cartes latérales : image seule) et
+   révélés en fade in/out uniquement sur la carte centrale, cf. règle
+   .role-main .carousel-photo-footer plus bas. */
+.carousel-photo-footer {
+  position: absolute;
+  left: 3%;
+  right: 3%;
+  bottom: 4.5%;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.65rem;
+  opacity: 0;
+  transform: translateY(10px);
+  pointer-events: none;
+  transition: opacity 0.4s ease, transform 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Sélecteur qualifié par .carousel-photo : sur le site, la règle générique
+   ".section-navy h3" (color: var(--black)) est plus spécifique qu'un simple
+   ".carousel-photo-label" et écraserait sinon le blanc voulu ici — à garder
+   qualifié si le nouveau contexte a une règle similaire. */
+.carousel-photo .carousel-photo-label {
+  margin: 0;
+  color: #fff;
+  text-align: center;
+  white-space: nowrap;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 1.18rem;
+  letter-spacing: -0.01em;
+  text-shadow: 0 2px 10px rgba(0,0,0,0.3);
+  pointer-events: none;
+}
+
+/* Bouton "Voir plus" : W:1099 H:199 sur une carte de 1330 (Figma), soit
+   82.63 % de la largeur (≈ 206.6px sur la carte principale de 250px) et une
+   hauteur ≈ 37.4px. Largeur fixe (indépendante du footer, dont les insets
+   ne servent plus qu'au titre) pour respecter le ratio Figma exact.
+   Sa visibilité est entièrement pilotée par le fade du footer parent. */
+.carousel-photo-btn {
+  width: 206.6px;
+  border: none;
+  border-radius: 999px;
+  background: #fff;
+  color: #14171a;
+  font-family: inherit;
+  font-weight: 700;
+  font-size: 0.9rem;
+  line-height: 1;
+  padding: 0.72rem 1rem;
+  cursor: pointer;
+  transition: background 0.28s ease, color 0.28s ease;
+}
+
+.carousel-photo-btn:hover,
+.carousel-photo-btn:focus-visible {
+  background: #14171a;
+  color: #fff;
+}
+
+/* Carte centrale : ratio image 1330:2287 conservé intégralement */
+.carousel-photo.role-main {
+  width: 250px;
+  height: 430px;
+  transform: translateX(0) scale(1);
+  opacity: 1;
+  filter: none;
+  border-radius: 37.5px;
+  border-width: 7.5px;
+  box-shadow:
+    0 24px 60px rgba(0,0,0,0.20),
+    0 8px 24px rgba(0,0,0,0.10);
+  z-index: 3;
+  cursor: pointer;
+}
+
+.carousel-photo.role-main .carousel-photo-img { border-radius: 37.5px; }
+
+/* Fade in du titre + bouton, uniquement sur la carte centrale. Le fade out
+   se joue automatiquement (même transition) dès que la carte quitte ce rôle. */
+.carousel-photo.role-main .carousel-photo-footer {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+  transition-delay: 0.15s;
+}
+
+.carousel-photo.role-main:hover {
+  box-shadow:
+    0 30px 76px rgba(0,0,0,0.24),
+    0 12px 30px rgba(0,0,0,0.12);
+}
+
+/* Cartes latérales */
+.carousel-photo.role-prev,
+.carousel-photo.role-next {
+  width: 185px;
+  height: 318px;
+  border-radius: 27.8px;
+  border-width: 5.5px;
+  opacity: 0.6;
+  filter: saturate(0.65) brightness(0.82);
+  z-index: 2;
+  cursor: pointer;
+  box-shadow:
+    0 12px 32px rgba(0,0,0,0.14),
+    0 3px 10px rgba(0,0,0,0.07);
+}
+
+.carousel-photo.role-prev .carousel-photo-img,
+.carousel-photo.role-next .carousel-photo-img { border-radius: 27.8px; }
+
+.carousel-photo.role-prev { transform: translateX(-248px); }
+.carousel-photo.role-next { transform: translateX(248px); }
+
+/* Hors-champ (utile uniquement si on garde la mécanique de glissement
+   actuelle telle quelle) */
+.carousel-photo.role-offstage-left {
+  width: 185px;
+  height: 318px;
+  border-radius: 27.8px;
+  border-width: 5.5px;
+  transform: translateX(-660px) scale(0.8);
+  opacity: 0;
+  z-index: 1;
+}
+
+.carousel-photo.role-offstage-right {
+  width: 185px;
+  height: 318px;
+  border-radius: 27.8px;
+  border-width: 5.5px;
+  transform: translateX(660px) scale(0.8);
+  opacity: 0;
+  z-index: 1;
+}
+
+/* Flash blanc au clic */
+.carousel-photo.is-flashing::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: #fff;
+  border-radius: inherit;
+  animation: photoFlash 0.42s ease forwards;
+}
+
+@keyframes photoFlash {
+  0%   { opacity: 0; }
+  45%  { opacity: 0.9; }
+  100% { opacity: 0.9; }
+}

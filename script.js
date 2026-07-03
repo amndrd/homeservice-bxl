@@ -234,20 +234,20 @@ const SERVICES = [
     ]
   },
   {
-    key: 'nettoyage-exterieur', label: 'Nettoyage extérieur', icon: 'ph-tree',
+    key: 'nettoyage-exterieur', label: 'Entretien extérieur', icon: 'ph-tree',
     questions: [
       { id: 'typeExterieur', label: 'Jardin ou terrasse ?', options: ['Jardin', 'Terrasse'] }
     ]
   },
   {
-    key: 'decombrements', label: 'Décombrements', icon: 'ph-trash',
+    key: 'decombrements', label: 'Désencombrement', icon: 'ph-trash',
     questions: [
       { id: 'volume', label: 'Quel volume à évacuer ?', options: ['Quelques objets', 'Une pièce', 'Un logement complet', 'Un local / garage'] },
       { id: 'typeDechets', label: 'Quel type de déchets ?', options: ['Meubles / encombrants', 'Gravats / matériaux', 'Électroménager', 'Mixte'] }
     ]
   },
   {
-    key: 'courses-livraison', label: 'Courses et livraison à domicile', icon: 'ph-shopping-cart',
+    key: 'courses-livraison', label: 'Livraison à domicile', icon: 'ph-shopping-cart',
     questions: [
       { id: 'typeCourses', label: 'Quel type de courses ?', options: ['Alimentaire', 'Pharmacie', 'Colis / autre'] }
     ]
@@ -259,7 +259,7 @@ const SERVICES = [
     ]
   },
   {
-    key: 'montage-bricolage', label: 'Montage / bricolage', icon: 'ph-wrench',
+    key: 'montage-bricolage', label: 'Montage', icon: 'ph-wrench',
     questions: [
       { id: 'tache', label: 'Quel type de tâche ?', options: ['Montage de meubles', 'Installation (étagères, luminaires…)', 'Autre'] },
       { id: 'urgence', label: "Quel est le degré d'urgence ?", options: ['Dès que possible', 'Cette semaine', 'Pas urgent'] }
@@ -2652,129 +2652,107 @@ function initServicesCarousel() {
     {
       key: 'lavage-voiture',
       label: 'Lavage voiture',
+      img: 'images/lavage.voiture.jpg',
       gradient: 'linear-gradient(145deg, #e0f0ff 0%, #b8d8f8 100%)',
       iconClass: 'ph-fill ph-car',
       iconColor: '#2a7bc0',
-      labelColor: '#1a5a96',
       desc: 'Lavage complet de votre véhicule à domicile, à la main, sans effort de votre part.',
     },
     {
       key: 'nettoyage-exterieur',
       label: 'Nettoyage extérieur',
+      img: 'images/nettoyage.exterieur.jpg',
       gradient: 'linear-gradient(145deg, #d8f5e4 0%, #a8e6c0 100%)',
       iconClass: 'ph-fill ph-tree',
       iconColor: '#1f7d40',
-      labelColor: '#155c2e',
       desc: 'Remise en état de vos espaces extérieurs : terrasse, jardin, allée.',
     },
     {
       key: 'decombrements',
       label: 'Décombrement',
+      img: 'images/desemcombrement.jpg',
       gradient: 'linear-gradient(145deg, #fff0d8 0%, #ffd9a0 100%)',
       iconClass: 'ph-fill ph-trash',
       iconColor: '#b06a00',
-      labelColor: '#8a5000',
       desc: 'Évacuation rapide de meubles, encombrants et matériaux en tout genre.',
     },
     {
       key: 'courses-livraison',
       label: 'Livraison',
+      img: 'images/livraison.jpg',
       gradient: 'linear-gradient(145deg, #ede0ff 0%, #d0b0f8 100%)',
       iconClass: 'ph-fill ph-package',
       iconColor: '#6b35c7',
-      labelColor: '#4e229e',
       desc: 'Courses alimentaires, pharmacie ou colis : on livre chez vous.',
     },
     {
       key: 'nettoyage',
       label: 'Nettoyage intérieur',
+      img: 'images/nettoyage.interieur.jpg',
       gradient: 'linear-gradient(145deg, #fce4f0 0%, #f9b8d8 100%)',
       iconClass: 'ph-fill ph-sparkle',
       iconColor: '#c0246a',
-      labelColor: '#9a1350',
       desc: 'Nettoyage en profondeur de votre logement, des sols aux vitres.',
     },
     {
       key: 'montage-bricolage',
       label: 'Montage',
+      img: 'images/montage.jpg',
       gradient: 'linear-gradient(145deg, #fff8d8 0%, #ffe89a 100%)',
       iconClass: 'ph-fill ph-wrench',
       iconColor: '#a07000',
-      labelColor: '#7a5200',
       desc: 'Montage de meubles, fixations et installations diverses.',
     },
     {
       key: 'travaux',
       label: 'Travaux',
+      img: 'images/travaux.jpg',
       gradient: 'linear-gradient(145deg, #ffe0d8 0%, #ffb8a4 100%)',
       iconClass: 'ph-fill ph-paint-roller',
       iconColor: '#c04020',
-      labelColor: '#9a2c10',
       desc: 'Peinture, plomberie, électricité et petites réparations.',
     },
   ];
 
+  // Précharge ET décode chaque photo à l'avance : sans ça, la carte recyclée
+  // (celle qui glisse de hors-champ vers prev/next) affiche un flash blanc le
+  // temps que le navigateur télécharge puis décode l'image au moment même où
+  // elle réapparaît. decode() force ce travail en amont, hors écran.
+  SERVICE_DATA.forEach((svc) => {
+    const img = new Image();
+    img.src = svc.img;
+    if (img.decode) img.decode().catch(() => {});
+  });
+
   const COUNT = SERVICE_DATA.length;
   const AUTOPLAY_MS = 4500;
-  const TRANSITION_MS = 700;
   const REDUCED_MOTION = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  const panels   = Array.from(root.querySelectorAll('.carousel-panel'));
+  const viewport = document.getElementById('carouselViewport');
+  const track    = document.getElementById('carouselTrack');
+  const slides   = track ? Array.from(track.querySelectorAll('.carousel-photo')) : [];
   const segments = Array.from(root.querySelectorAll('.carousel-segment'));
-  const visual   = document.getElementById('carouselVisual');
   const prevBtn  = document.getElementById('carouselPrevBtn');
   const nextBtn  = document.getElementById('carouselNextBtn');
-  const photoA = document.getElementById('carouselPhotoA');
-  const photoB = document.getElementById('carouselPhotoB');
-  const photoC = document.getElementById('carouselPhotoC');
-  if (!panels.length || !segments.length || !visual || !photoA || !photoB || !photoC) return;
+  const indexCaption = document.getElementById('carouselIndexCaption');
+  const indexNum     = document.getElementById('carouselIndexNum');
+  const indexName    = document.getElementById('carouselIndexName');
+  if (!viewport || !track || slides.length !== COUNT || !segments.length) return;
 
   let activeIndex = 0;
-  let prevEl = photoA, mainEl = photoB, nextEl = photoC;
-  let isAnimating = false;
   let autoplayTimer = null;
   let autoplayDeadline = 0;
   let pausedRemaining = AUTOPLAY_MS;
   let started = false;
 
-  function setCard(el, index) {
-    const svc = SERVICE_DATA[index];
-    el.style.background = svc.gradient;
-    const icon = el.querySelector('.carousel-card-icon');
-    if (icon) {
-      icon.className = `carousel-card-icon ${svc.iconClass}`;
-      icon.style.color = svc.iconColor;
-    }
-    const lbl = el.querySelector('.carousel-photo-label');
-    if (lbl) {
-      lbl.textContent = svc.label;
-      lbl.style.color = svc.labelColor;
-    }
-  }
-
-  function setRole(el, role) {
-    el.className = `carousel-photo role-${role}`;
-  }
-
-  function snapTo(el, role) {
-    el.style.transition = 'none';
-    setRole(el, role);
-    void el.offsetWidth;
-    el.style.transition = '';
-  }
-
-  function updatePanels(newIndex) {
-    panels.forEach((p) => {
-      const i = Number(p.dataset.index);
-      if (i === newIndex) {
-        p.classList.remove('is-leaving');
-        p.classList.add('is-active');
-      } else if (p.classList.contains('is-active')) {
-        p.classList.remove('is-active');
-        p.classList.add('is-leaving');
-        setTimeout(() => p.classList.remove('is-leaving'), 600);
-      }
-    });
+  function updateIndexCaption(newIndex) {
+    if (!indexCaption || !indexNum || !indexName) return;
+    indexCaption.classList.add('is-changing');
+    setTimeout(() => {
+      indexNum.textContent = String(newIndex + 1).padStart(2, '0');
+      indexName.textContent = SERVICE_DATA[newIndex].label;
+      indexCaption.classList.remove('is-changing');
+    }, 180);
   }
 
   function updateSegments(newIndex) {
@@ -2796,81 +2774,61 @@ function initServicesCarousel() {
     });
   }
 
-  function step(newIndex, dir) {
-    isAnimating = true;
-    const oldPrev = prevEl, oldMain = mainEl, oldNext = nextEl;
-
-    if (dir > 0) {
-      // La carte de droite arrive au centre
-      setRole(oldNext, 'main');
-      // La carte centrale part à gauche
-      setRole(oldMain, 'prev');
-      // La carte de gauche s'anime vers offstage-left (fade out vers la gauche)
-      setRole(oldPrev, 'offstage-left');
-      // Recyclée seulement une fois son fondu de sortie terminé (TRANSITION_MS) :
-      // la recycler plus tôt (avant la fin de la transition opacity/transform)
-      // la ferait sauter instantanément à l'opposé en pleine disparition,
-      // coupant le fondu au lieu de le laisser se terminer proprement.
-      setTimeout(() => {
-        setCard(oldPrev, (newIndex + 1) % COUNT);
-        snapTo(oldPrev, 'offstage-right');
-        requestAnimationFrame(() => setRole(oldPrev, 'next'));
-      }, TRANSITION_MS);
-      prevEl = oldMain; mainEl = oldNext; nextEl = oldPrev;
-    } else {
-      // La carte de gauche arrive au centre
-      setRole(oldPrev, 'main');
-      // La carte centrale part à droite
-      setRole(oldMain, 'next');
-      // La carte de droite s'anime vers offstage-right (fade out vers la droite)
-      setRole(oldNext, 'offstage-right');
-      // Recyclée seulement une fois son fondu de sortie terminé (TRANSITION_MS) :
-      // cf. commentaire équivalent dans la branche dir > 0 ci-dessus.
-      setTimeout(() => {
-        setCard(oldNext, (newIndex - 1 + COUNT) % COUNT);
-        snapTo(oldNext, 'offstage-left');
-        requestAnimationFrame(() => setRole(oldNext, 'prev'));
-      }, TRANSITION_MS);
-      prevEl = oldNext; mainEl = oldPrev; nextEl = oldMain;
-    }
-    setTimeout(() => { isAnimating = false; }, TRANSITION_MS + 80);
-  }
-
-  function directJump(newIndex) {
-    isAnimating = true;
-    mainEl.style.transition = 'opacity 0.4s ease';
-    mainEl.style.opacity = '0';
-    setTimeout(() => {
-      setCard(prevEl, (newIndex - 1 + COUNT) % COUNT);
-      setCard(mainEl, newIndex);
-      setCard(nextEl, (newIndex + 1) % COUNT);
-      mainEl.style.opacity = '1';
-      setTimeout(() => {
-        mainEl.style.transition = '';
-        mainEl.style.opacity = '';
-        isAnimating = false;
-      }, 420);
-    }, 220);
-  }
-
-  function goTo(newIndex, dir) {
-    if (newIndex === activeIndex || isAnimating) return;
-    updatePanels(newIndex);
-    updateSegments(newIndex);
-    if (typeof dir === 'number') {
-      step(newIndex, dir);
-    } else {
-      directJump(newIndex);
-    }
+  // Carte "active" = celle centrée dans le viewport. Détectée par
+  // IntersectionObserver (cf. plus bas), pas par un minuteur de transition :
+  // la mécanique repose entièrement sur le scroll-snap natif du navigateur,
+  // il n'y a donc plus d'état "en cours d'animation" à verrouiller ni de
+  // recyclage de cartes à orchestrer.
+  function setActive(newIndex) {
+    if (newIndex === activeIndex) return;
     activeIndex = newIndex;
-    scheduleNext(AUTOPLAY_MS);
+    slides.forEach((s, i) => {
+      const isActive = i === newIndex;
+      s.classList.toggle('is-active', isActive);
+      const btn = s.querySelector('.carousel-photo-btn');
+      if (btn) btn.tabIndex = isActive ? 0 : -1;
+    });
+    updateSegments(newIndex);
+    updateIndexCaption(newIndex);
   }
+
+  function scrollToIndex(index) {
+    const target = slides[(index + COUNT) % COUNT];
+    if (!target) return;
+    target.scrollIntoView({
+      behavior: REDUCED_MOTION ? 'auto' : 'smooth',
+      inline: 'center',
+      block: 'nearest',
+    });
+  }
+
+  if ('IntersectionObserver' in window) {
+    const activeObserver = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (!entry.isIntersecting) return;
+        const i = Number(entry.target.dataset.index);
+        if (!Number.isNaN(i)) setActive(i);
+      });
+    }, { root: viewport, threshold: 0.62 });
+    slides.forEach((s) => activeObserver.observe(s));
+  }
+
+  // Init visuel immédiat de la première carte, sans attendre le premier
+  // rapport de l'IntersectionObserver (évite un flash "aucune carte active"
+  // au chargement).
+  slides[0].classList.add('is-active');
+  const firstBtn = slides[0].querySelector('.carousel-photo-btn');
+  if (firstBtn) firstBtn.tabIndex = 0;
+  updateSegments(0);
 
   function scheduleNext(ms) {
     if (REDUCED_MOTION || !started) return;
     clearTimeout(autoplayTimer);
     autoplayDeadline = Date.now() + ms;
-    autoplayTimer = setTimeout(() => goTo((activeIndex + 1) % COUNT, 1), ms);
+    autoplayTimer = setTimeout(() => {
+      scrollToIndex(activeIndex + 1);
+      scheduleNext(AUTOPLAY_MS);
+    }, ms);
   }
 
   function pauseAutoplay() {
@@ -2878,24 +2836,19 @@ function initServicesCarousel() {
     clearTimeout(autoplayTimer);
     pausedRemaining = Math.max(autoplayDeadline - Date.now(), 600);
     const fill = segments[activeIndex].querySelector('.carousel-segment-fill');
-    fill.style.animationPlayState = 'paused';
+    if (fill) fill.style.animationPlayState = 'paused';
   }
 
   function resumeAutoplay() {
     if (REDUCED_MOTION || !started) return;
     const fill = segments[activeIndex].querySelector('.carousel-segment-fill');
-    fill.style.animationPlayState = 'running';
+    if (fill) fill.style.animationPlayState = 'running';
     scheduleNext(pausedRemaining);
   }
 
   function start() {
     if (started) return;
     started = true;
-    // Init cards
-    setCard(prevEl, COUNT - 1);
-    setCard(mainEl, 0);
-    setCard(nextEl, 1);
-    updateSegments(activeIndex);
     scheduleNext(AUTOPLAY_MS);
   }
 
@@ -2929,8 +2882,9 @@ function initServicesCarousel() {
     titleEl.textContent = svc.label;
     descEl.textContent  = svc.desc;
 
-    // Flash de la carte centrale
-    mainEl.classList.add('is-flashing');
+    // Flash de la carte active
+    const activeEl = slides[index];
+    if (activeEl) activeEl.classList.add('is-flashing');
 
     // Petit délai puis ouverture du panneau
     setTimeout(() => {
@@ -2940,7 +2894,7 @@ function initServicesCarousel() {
 
     // Fin du flash après l'ouverture
     setTimeout(() => {
-      mainEl.classList.remove('is-flashing');
+      if (activeEl) activeEl.classList.remove('is-flashing');
     }, 600);
   }
 
@@ -2975,41 +2929,36 @@ function initServicesCarousel() {
 
   // ── Listeners carrousel ────────────────────────
   if ('IntersectionObserver' in window) {
-    const observer = new IntersectionObserver((entries) => {
+    const startObserver = new IntersectionObserver((entries) => {
       entries.forEach((entry) => {
-        if (entry.isIntersecting) { start(); observer.disconnect(); }
+        if (entry.isIntersecting) { start(); startObserver.disconnect(); }
       });
     }, { threshold: 0.3 });
-    observer.observe(root);
+    startObserver.observe(root);
   } else {
     start();
   }
 
-  if (prevBtn) prevBtn.addEventListener('click', () => { start(); goTo((activeIndex - 1 + COUNT) % COUNT, -1); });
-  if (nextBtn) nextBtn.addEventListener('click', () => { start(); goTo((activeIndex + 1) % COUNT, 1); });
+  if (prevBtn) prevBtn.addEventListener('click', () => { start(); scrollToIndex(activeIndex - 1); });
+  if (nextBtn) nextBtn.addEventListener('click', () => { start(); scrollToIndex(activeIndex + 1); });
 
-  visual.addEventListener('click', (e) => {
-    const photo = e.target.closest('.carousel-photo');
-    if (!photo) return;
-    start();
-    if (photo.classList.contains('role-prev')) {
-      goTo((activeIndex - 1 + COUNT) % COUNT, -1);
-    } else if (photo.classList.contains('role-next')) {
-      goTo((activeIndex + 1) % COUNT, 1);
-    } else if (photo.classList.contains('role-main')) {
-      openServiceDetail(activeIndex);
-    }
+  slides.forEach((slide, i) => {
+    slide.addEventListener('click', () => {
+      start();
+      if (i === activeIndex) {
+        openServiceDetail(activeIndex);
+      } else {
+        scrollToIndex(i);
+      }
+    });
   });
 
   segments.forEach((seg) => {
     seg.addEventListener('click', () => {
       const target = Number(seg.dataset.index);
-      if (target === activeIndex || isAnimating) return;
+      if (target === activeIndex) return;
       start();
-      const diff = (target - activeIndex + COUNT) % COUNT;
-      if (diff === 1) goTo(target, 1);
-      else if (diff === COUNT - 1) goTo(target, -1);
-      else goTo(target);
+      scrollToIndex(target);
     });
     seg.addEventListener('keydown', (e) => {
       if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); seg.click(); }
@@ -3020,6 +2969,10 @@ function initServicesCarousel() {
   root.addEventListener('mouseleave', resumeAutoplay);
   root.addEventListener('focusin',  pauseAutoplay);
   root.addEventListener('focusout', resumeAutoplay);
+  viewport.addEventListener('pointerdown', pauseAutoplay, { passive: true });
+  viewport.addEventListener('pointerup', resumeAutoplay, { passive: true });
+  viewport.addEventListener('touchstart', pauseAutoplay, { passive: true });
+  viewport.addEventListener('touchend', resumeAutoplay, { passive: true });
 }
 
 // ─────────────────────────────────────────────
