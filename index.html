@@ -52,13 +52,7 @@
   <link rel="preconnect" href="https://unpkg.com" crossorigin />
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
   <link rel="preconnect" href="https://api.emailjs.com" crossorigin />
-  <!-- Image LCP (carton du hero) : préchargée en WebP, avec le même
-       découpage mobile/desktop que le <picture> plus bas (cf.
-       .cardboard-box), pour que le navigateur commence à la récupérer avant
-       même d'avoir analysé le <body>. -->
-  <link rel="preload" as="image" type="image/webp" href="images/carton-phone.webp" media="(max-width: 768px)" />
-  <link rel="preload" as="image" type="image/webp" href="images/carton.webp" media="(min-width: 769px)" />
-  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=Inter:wght@400;500;600&family=Poppins:wght@600;700;800&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=Inter:wght@400;500;600&family=Poppins:wght@600;700;800&family=Montserrat:wght@700;800;900&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="styles.min.css" />
   <!-- leaflet.css ne sert qu'à la carte du quiz devis (chargée bien après le
        premier rendu) : chargement non bloquant (preload -> stylesheet au
@@ -236,13 +230,12 @@
 <body class="is-loading">
 
   <!-- PRÉCHARGEUR : masque le site (page blanche + logo + spinner) tant que
-       les images/polices ne sont pas prêtes, pour éviter l'effet de
-       contours visibles pendant le chargement du carton. Retiré en JS
-       (cf. initPreloader) une fois tout le contenu chargé. -->
+       le logo/les polices ne sont pas prêts. Retiré en JS (cf. initPreloader)
+       une fois tout le contenu chargé. -->
   <div class="preloader" id="preloader" role="status" aria-live="polite">
     <picture>
       <source srcset="images/logo.webp" type="image/webp" />
-      <img src="images/logo.png" alt="" class="preloader-logo" aria-hidden="true" width="1176" height="558" />
+      <img src="images/logo.png" alt="" class="preloader-logo" aria-hidden="true" width="801" height="380" />
     </picture>
     <div class="preloader-spinner" aria-hidden="true"></div>
     <span class="sr-only">Chargement…</span>
@@ -254,7 +247,7 @@
     <a href="#" class="nav-logo">
       <picture>
         <source srcset="images/logo.webp" type="image/webp" />
-        <img src="images/logo.png" alt="HomeService BXL - services à domicile à Bruxelles" class="logo-img" width="1176" height="558" />
+        <img src="images/logo.png" alt="HomeService BXL - services à domicile à Bruxelles" class="logo-img" width="801" height="380" />
       </picture>
     </a>
     <ul class="nav-links">
@@ -264,10 +257,10 @@
            styles.css) : sur ordinateur, le bouton "Devis gratuit" de la nav
            (juste après) suffit déjà. -->
       <li class="nav-links-cta">
-        <button type="button" class="btn-primary" onclick="openDevis()">Devis gratuit <span class="btn-arrow">→</span></button>
+        <button type="button" class="btn-primary" onclick="openDevis()"><span class="btn-label">Devis gratuit</span> <span class="btn-arrow">→</span></button>
       </li>
     </ul>
-    <button class="btn-primary" onclick="openDevis()">Devis gratuit <span class="btn-arrow">→</span></button>
+    <button class="btn-primary" onclick="openDevis()"><span class="btn-label">Devis gratuit</span> <span class="btn-arrow">→</span></button>
     <button class="nav-burger" onclick="toggleMenu()" aria-label="Menu" aria-expanded="false">
       <span></span><span></span><span></span>
     </button>
@@ -285,165 +278,43 @@
            compositeur), donnant l'impression d'un changement instantané
            plutôt que d'un fondu. -->
       <div id="navScrollSentinel" aria-hidden="true" style="position:absolute; top:24px; left:0; width:1px; height:1px; pointer-events:none;"></div>
-      <!-- Lumières chaudes : blobs flous qui dérivent doucement en arrière-
-           plan, mêmes principes que .services-ambient-light — activées en
-           JS (initHeroAmbientLight) une fois le carton et les objets
-           flottants arrivés (cf. .hero-lights-active, styles.css). Tout en
-           bas de la pile (z-index le plus bas du hero), derrière le carton
-           et les objets flottants. -->
-      <div class="hero-ambient-light" aria-hidden="true">
-        <span class="hero-ambient-blob hero-ambient-blob-1"></span>
-        <span class="hero-ambient-blob hero-ambient-blob-2"></span>
-        <span class="hero-ambient-blob hero-ambient-blob-3"></span>
-        <span class="hero-ambient-blob hero-ambient-blob-4"></span>
+
+      <!-- Grille de points : grise, fondue vers les bords. Reste inchangée
+           pendant la transition de scroll vers #services (cf. renderHeroExit
+           dans initHeroPageTransition) — seuls la carte et les lumières
+           chaudes ci-dessous bougent. -->
+      <div class="hero-grid" aria-hidden="true">
+        <div class="hero-grid-base"></div>
       </div>
-      <!-- Center CTA – Carton PNG + contenu superposé -->
-      <div class="tilt-zone" id="tiltZone">
-      <div class="cardboard-scene" id="cardboardScene">
-        <!-- Objets flottants : calque indépendant dans .cardboard-scene, PAS
-             dans #cardboardBox (qui seul reçoit le tilt souris en JS) — ils
-             restent donc immobiles au survol, seul le carton bascule.
-             Disposition calquée sur la maquette fournie : les outils longs
-             (aspirateur, balai, serpillière) émergent du haut du carton,
-             les autres flottent tout autour, certains chevauchant légèrement
-             les bords pour un effet de profondeur. Images pré-recadrées
-             (*-trim.png) pour que la rotation pivote sur l'objet réel et
-             non sur une zone transparente. Raréfiés sur mobile (cf. media query).
 
-             Chaque objet = un .float-enter (position/taille + animation
-             d'arrivée one-shot depuis hors-écran, --fe-x/--fe-y) qui enveloppe
-             un .float-obj (rotation + flottement infini). Deux éléments
-             distincts donc deux animations indépendantes sur `transform` qui
-             ne se court-circuitent pas : l'arrivée se joue une fois, puis le
-             flottement prend le relais une fois l'objet en place (son délai
-             --fo-delay est calé juste après la fin de l'arrivée). -->
-        <div class="float-objects" aria-hidden="true">
-          <div class="float-enter float-top float-vacuum float-hide-mobile"
-               style="--fo-w:24%; left:-19%; top:-37%; --fe-x:-240px; --fe-y:-200px; --fe-delay:.15s;">
-            <picture>
-              <source srcset="images/vacuum-trim.webp" type="image/webp" />
-              <img class="float-obj" src="images/vacuum-trim.png" alt="" width="288" height="403"
-                   style="--fo-rot:-72deg; --fo-bob:-12px; --fo-dur:6.4s; --fo-delay:1s;" />
-            </picture>
-          </div>
-          <div class="float-enter float-top float-broom"
-               style="--fo-w:14%; left:18%; top:-31%; --fe-x:-40px; --fe-y:-260px; --fe-delay:.5s;">
-            <picture>
-              <source srcset="images/broom-trim.webp" type="image/webp" />
-              <img class="float-obj" src="images/broom-trim.png" alt="" width="129" height="448"
-                   style="--fo-rot:174deg; --fo-bob:-13px; --fo-dur:6.8s; --fo-delay:1.35s;" />
-            </picture>
-          </div>
-          <div class="float-enter float-top float-bucket"
-               style="--fo-w:16%; left:37%; top:-12%; --fe-x:20px; --fe-y:-220px; --fe-delay:.35s;">
-            <picture>
-              <source srcset="images/bucket-trim.webp" type="image/webp" />
-              <img class="float-obj" src="images/bucket-trim.png" alt="" width="354" height="365"
-                   style="--fo-rot:-3deg; --fo-bob:-10px; --fo-dur:5.8s; --fo-delay:1.2s;" />
-            </picture>
-          </div>
-          <div class="float-enter float-top float-pressure"
-               style="--fo-w:25%; left:56%; top:-33%; --fe-x:60px; --fe-y:-240px; --fe-delay:.3s;">
-            <picture>
-              <source srcset="images/pressure-trim.webp" type="image/webp" />
-              <img class="float-obj" src="images/pressure-trim.png" alt="" width="396" height="631"
-                   style="--fo-rot:-2deg; --fo-bob:-12px; --fo-dur:7.2s; --fo-delay:1.15s;" />
-            </picture>
-          </div>
-          <div class="float-enter float-top float-wash float-hide-mobile"
-               style="--fo-w:12%; left:84%; top:-30%; --fe-x:160px; --fe-y:-240px; --fe-delay:.45s;">
-            <picture>
-              <source srcset="images/wash-trim.webp" type="image/webp" />
-              <img class="float-obj" src="images/wash-trim.png" alt="" width="171" height="644"
-                   style="--fo-rot:184deg; --fo-bob:-14px; --fo-dur:6.6s; --fo-delay:1.3s;" />
-            </picture>
-          </div>
+      <!-- Lumières chaudes : taches orange/jaune floues qui dérivent
+           doucement en continu, indépendamment de la souris. Pendant le
+           scroll vers #services, le calque entier s'intensifie (échelle +
+           saturation, cf. renderHeroExit dans initHeroPageTransition) pour
+           signaler la transition, sans jamais s'éteindre — l'arrière-plan
+           (ciel/grille) reste constant, seules les lumières "changent". -->
+      <div class="hero-warm-light" id="heroWarmLight" aria-hidden="true">
+        <span class="warm-blob warm-blob-1" style="--drift-dur:22s;"></span>
+        <span class="warm-blob warm-blob-2" style="--drift-dur:27s;"></span>
+        <span class="warm-blob warm-blob-3" style="--drift-dur:18s;"></span>
+      </div>
 
-          <div class="float-enter float-hammer"
-               style="--fo-w:14%; right:-18%; top:-18%; --fe-x:260px; --fe-y:-140px; --fe-delay:.55s;">
-            <picture>
-              <source srcset="images/hammer-trim.webp" type="image/webp" />
-              <img class="float-obj" src="images/hammer-trim.png" alt="" width="357" height="491"
-                   style="--fo-rot:22deg; --fo-bob:-11px; --fo-dur:6.9s; --fo-delay:1.4s;" />
-            </picture>
-          </div>
-          <div class="float-enter float-grocery"
-               style="--fo-w:22%; right:-7%; top:30%; --fe-x:300px; --fe-y:40px; --fe-delay:.65s;">
-            <picture>
-              <source srcset="images/grocery-trim.webp" type="image/webp" />
-              <img class="float-obj" src="images/grocery-trim.png" alt="" width="327" height="423"
-                   style="--fo-rot:3deg; --fo-bob:-9px; --fo-dur:7.4s; --fo-delay:1.5s;" />
-            </picture>
-          </div>
-          <div class="float-enter float-wrench float-hide-mobile"
-               style="--fo-w:16%; right:-32%; top:48%; --fe-x:320px; --fe-y:90px; --fe-delay:.75s;">
-            <picture>
-              <source srcset="images/wrench-trim.webp" type="image/webp" />
-              <img class="float-obj" src="images/wrench-trim.png" alt="" width="381" height="377"
-                   style="--fo-rot:8deg; --fo-bob:-10px; --fo-dur:6.3s; --fo-delay:1.6s;" />
-            </picture>
-          </div>
-
-          <div class="float-enter float-drill"
-               style="--fo-w:17%; left:-26%; top:11%; --fe-x:-260px; --fe-y:50px; --fe-delay:.6s;">
-            <picture>
-              <source srcset="images/power-drill-trim.webp" type="image/webp" />
-              <img class="float-obj" src="images/power-drill-trim.png" alt="" width="484" height="457"
-                   style="--fo-rot:-10deg; --fo-bob:-11px; --fo-dur:6.7s; --fo-delay:1.45s;" />
-            </picture>
-          </div>
-          <div class="float-enter float-screwdriver float-hide-mobile"
-               style="--fo-w:4%; left:-15%; top:39%; --fe-x:-200px; --fe-y:110px; --fe-delay:.85s;">
-            <picture>
-              <source srcset="images/screwdriver-trim.webp" type="image/webp" />
-              <img class="float-obj" src="images/screwdriver-trim.png" alt="" width="88" height="498"
-                   style="--fo-rot:-50deg; --fo-bob:-8px; --fo-dur:5.6s; --fo-delay:1.7s;" />
-            </picture>
-          </div>
-
-          <div class="float-enter float-sponge"
-               style="--fo-w:12%; left:-10%; top:76%; --fe-x:-150px; --fe-y:200px; --fe-delay:.7s;">
-            <picture>
-              <source srcset="images/sponge-trim.webp" type="image/webp" />
-              <img class="float-obj" src="images/sponge-trim.png" alt="" width="563" height="433"
-                   style="--fo-rot:42deg; --fo-bob:-7px; --fo-dur:5.4s; --fo-delay:1.55s;" />
-            </picture>
-          </div>
-          <div class="float-enter float-box"
-               style="--fo-w:28%; right:-14%; top:73%; --fe-x:220px; --fe-y:190px; --fe-delay:.9s;">
-            <picture>
-              <source srcset="images/box-trim.webp" type="image/webp" />
-              <img class="float-obj" src="images/box-trim.png" alt="" width="407" height="282"
-                   style="--fo-rot:-4deg; --fo-bob:-9px; --fo-dur:7.8s; --fo-delay:1.75s;" />
-            </picture>
+      <!-- Contenu : titre + description + boutons, sur une carte verre
+           flottante. #heroContent (extérieur) sort de l'écran (fondu +
+           montée) au scroll, cf. renderHeroExit dans initHeroPageTransition ;
+           .hero-card (intérieur) porte le style verre + son propre
+           flottement continu, sur SON PROPRE `transform` — deux éléments
+           distincts pour ne jamais faire cohabiter deux animations sur le
+           même `transform`. -->
+      <div class="hero-content" id="heroContent">
+        <div class="hero-card is-entering" id="heroCard">
+          <h1>Besoin d'un coup<br/>de main&nbsp;? <span class="sr-only">Services à domicile à Bruxelles : nettoyage, jardinage, déménagement</span></h1>
+          <p>Ménage, déménagement, montage de meubles, jardinage… On s'occupe de tout, <span class="hero-highlight-phrase">à votre rythme<span class="hero-highlight-glow" aria-hidden="true">à votre rythme</span></span> et <span class="hero-highlight-phrase hero-highlight-phrase-2">à votre budget<span class="hero-highlight-glow" aria-hidden="true">à votre budget</span></span>.</p>
+          <div class="hero-actions">
+            <button class="btn-primary" onclick="openDevis()"><span class="btn-label">Devis gratuit</span> <span class="btn-arrow">→</span></button>
+            <a href="#services" class="btn-outline">Nos services</a>
           </div>
         </div>
-        <div class="cardboard-box" id="cardboardBox">
-          <picture>
-            <source media="(max-width: 768px)" srcset="images/carton-phone.webp" type="image/webp" />
-            <source media="(max-width: 768px)" srcset="images/carton-phone.png" />
-            <source srcset="images/carton.webp" type="image/webp" />
-            <img class="carton-img" src="images/carton.png" alt="" aria-hidden="true" width="494" height="394" fetchpriority="high" />
-          </picture>
-          <div class="carton-content">
-            <h1>Besoin d'un coup<br/>de main&nbsp;? <span class="sr-only">Services à domicile à Bruxelles : nettoyage, jardinage, déménagement</span></h1>
-            <p>Ménage, déménagement, montage de meubles, jardinage… On s'occupe de tout, à votre rythme et à votre budget.</p>
-            <div class="hero-actions">
-              <button class="btn-primary" onclick="openDevis()">Devis gratuit <span class="btn-arrow">→</span></button>
-              <a href="#services" class="btn-outline">Nos services</a>
-            </div>
-          </div>
-        </div>
-      </div><!-- /.cardboard-scene -->
-      </div><!-- /.tilt-zone -->
-
-      <!-- Vague bleu marine, pilotée par le scroll : monte depuis le bas et
-           recouvre tout l'écran avant que le pin ne se relâche. Crête
-           subtile, dont la position horizontale dérive légèrement au scroll. -->
-      <div class="hero-wave-rise" id="heroWaveRise" aria-hidden="true">
-        <svg class="hero-wave-rise-inner" id="heroWaveRiseInner" viewBox="0 0 1440 1000" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
-          <path id="heroWavePath" fill="#FFFFFF" d="M0,90 Q720,65 1440,90 L1440,1000 L0,1000 Z"></path>
-        </svg>
       </div>
     </section>
   </div>
@@ -451,6 +322,11 @@
   <!-- SERVICES : section révélée par la vague. Les blobs lumineux et les
        cartes sont activés via .lights-active (ajouté en JS). -->
   <section class="section section-navy" id="services" aria-label="Nos services à domicile : nettoyage, jardinage, lavage voiture, déménagement, livraison, montage, bricolage">
+    <!-- Même grille de points que le hero (cf. .hero-grid), pour que
+         l'arrière-plan continue au lieu de disparaître d'un coup pendant la
+         transition de scroll — seules les lumières chaudes changent
+         d'intensité (cf. renderHeroExit, script.js), pas la grille. -->
+    <div class="services-grid" aria-hidden="true"></div>
     <div class="services-ambient-light" aria-hidden="true">
       <span class="services-ambient-blob services-ambient-blob-1"></span>
       <span class="services-ambient-blob services-ambient-blob-2"></span>
@@ -492,117 +368,9 @@
 
       </div>
 
-      <!-- Titre visible de la section (le h2 sr-only plus haut reste pour le
-           SEO/lecteurs d'écran avec la liste complète des services). -->
-      <div class="services-carousel-heading">
-        <span class="eyebrow">Nos services</span>
-        <h3 class="services-carousel-title">Sept services, un seul geste</h3>
-      </div>
-
       <!-- Texte descriptif : les mots s'allument au fur et à mesure du scroll -->
       <div class="services-about">
         <p class="services-about-text" id="servicesAboutText">Vous avez mieux à faire que de gérer les corvées du quotidien. HomeService intervient chez vous à Bruxelles pour tous vos besoins, on s'occupe de ce que vous n'avez pas le temps de faire, pour que vous puissiez vous concentrer sur ce qui compte vraiment.</p>
-      </div>
-
-      <!-- Carrousel des 7 services — défilement horizontal natif (scroll-snap) :
-           les 7 cartes sont statiques dans le DOM, la carte centrée grandit
-           et révèle titre+bouton (cf. .is-active en CSS/JS, initServicesCarousel). -->
-      <div class="carousel-wrap" id="servicesCarousel">
-        <div class="carousel-stage">
-          <div class="carousel-stage-ring" aria-hidden="true"></div>
-          <div class="carousel-stage-glow" aria-hidden="true"></div>
-          <button class="carousel-arrow carousel-arrow--prev" id="carouselPrevBtn" aria-label="Service précédent">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="22" height="22"><polyline points="15 18 9 12 15 6"/></svg>
-          </button>
-          <div class="carousel-viewport" id="carouselViewport">
-          <div class="carousel-track" id="carouselTrack">
-
-            <div class="carousel-photo" data-index="0" data-key="lavage-voiture">
-              <img class="carousel-photo-img" src="images/lavage.voiture.jpg" alt="Lavage voiture" loading="eager" decoding="async">
-              <div class="carousel-photo-overlay" aria-hidden="true"></div>
-              <div class="carousel-photo-footer">
-                <h3 class="carousel-photo-label">Lavage voiture</h3>
-                <button type="button" class="carousel-photo-btn" tabindex="-1">Voir plus</button>
-              </div>
-            </div>
-
-            <div class="carousel-photo" data-index="1" data-key="nettoyage-exterieur">
-              <img class="carousel-photo-img" src="images/nettoyage.exterieur.jpg" alt="Nettoyage extérieur" loading="eager" decoding="async">
-              <div class="carousel-photo-overlay" aria-hidden="true"></div>
-              <div class="carousel-photo-footer">
-                <h3 class="carousel-photo-label">Nettoyage extérieur</h3>
-                <button type="button" class="carousel-photo-btn" tabindex="-1">Voir plus</button>
-              </div>
-            </div>
-
-            <div class="carousel-photo" data-index="2" data-key="decombrements">
-              <img class="carousel-photo-img" src="images/desemcombrement.jpg" alt="Décombrement" loading="eager" decoding="async">
-              <div class="carousel-photo-overlay" aria-hidden="true"></div>
-              <div class="carousel-photo-footer">
-                <h3 class="carousel-photo-label">Décombrement</h3>
-                <button type="button" class="carousel-photo-btn" tabindex="-1">Voir plus</button>
-              </div>
-            </div>
-
-            <div class="carousel-photo" data-index="3" data-key="courses-livraison">
-              <img class="carousel-photo-img" src="images/livraison.jpg" alt="Livraison" loading="eager" decoding="async">
-              <div class="carousel-photo-overlay" aria-hidden="true"></div>
-              <div class="carousel-photo-footer">
-                <h3 class="carousel-photo-label">Livraison</h3>
-                <button type="button" class="carousel-photo-btn" tabindex="-1">Voir plus</button>
-              </div>
-            </div>
-
-            <div class="carousel-photo" data-index="4" data-key="nettoyage">
-              <img class="carousel-photo-img" src="images/nettoyage.interieur.jpg" alt="Nettoyage intérieur" loading="eager" decoding="async">
-              <div class="carousel-photo-overlay" aria-hidden="true"></div>
-              <div class="carousel-photo-footer">
-                <h3 class="carousel-photo-label">Nettoyage intérieur</h3>
-                <button type="button" class="carousel-photo-btn" tabindex="-1">Voir plus</button>
-              </div>
-            </div>
-
-            <div class="carousel-photo" data-index="5" data-key="montage-bricolage">
-              <img class="carousel-photo-img" src="images/montage.jpg" alt="Montage" loading="eager" decoding="async">
-              <div class="carousel-photo-overlay" aria-hidden="true"></div>
-              <div class="carousel-photo-footer">
-                <h3 class="carousel-photo-label">Montage</h3>
-                <button type="button" class="carousel-photo-btn" tabindex="-1">Voir plus</button>
-              </div>
-            </div>
-
-            <div class="carousel-photo" data-index="6" data-key="travaux">
-              <img class="carousel-photo-img" src="images/travaux.jpg" alt="Travaux" loading="eager" decoding="async">
-              <div class="carousel-photo-overlay" aria-hidden="true"></div>
-              <div class="carousel-photo-footer">
-                <h3 class="carousel-photo-label">Travaux</h3>
-                <button type="button" class="carousel-photo-btn" tabindex="-1">Voir plus</button>
-              </div>
-            </div>
-
-          </div>
-          </div>
-          <button class="carousel-arrow carousel-arrow--next" id="carouselNextBtn" aria-label="Service suivant">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="22" height="22"><polyline points="9 18 15 12 9 6"/></svg>
-          </button>
-        </div>
-        <!-- Légende éditoriale : numéro + nom du service actif, mise à jour en JS -->
-        <div class="carousel-index-caption" id="carouselIndexCaption" aria-hidden="true">
-          <span class="carousel-index-num" id="carouselIndexNum">01</span>
-          <span class="carousel-index-divider"></span>
-          <span class="carousel-index-name" id="carouselIndexName">Lavage voiture</span>
-          <span class="carousel-index-total">/ 07</span>
-        </div>
-        <!-- Barre de progression : 7 puces nommées, cliquables, la puce active se remplit -->
-        <div class="carousel-segments-bar" role="tablist" aria-label="Services">
-          <div class="carousel-segment is-active" data-index="0" role="tab" aria-selected="true" tabindex="0"><span class="carousel-segment-label">Lavage voiture</span><div class="carousel-segment-fill"></div></div>
-          <div class="carousel-segment" data-index="1" role="tab" aria-selected="false" tabindex="-1"><span class="carousel-segment-label">Nettoyage extérieur</span><div class="carousel-segment-fill"></div></div>
-          <div class="carousel-segment" data-index="2" role="tab" aria-selected="false" tabindex="-1"><span class="carousel-segment-label">Décombrement</span><div class="carousel-segment-fill"></div></div>
-          <div class="carousel-segment" data-index="3" role="tab" aria-selected="false" tabindex="-1"><span class="carousel-segment-label">Livraison</span><div class="carousel-segment-fill"></div></div>
-          <div class="carousel-segment" data-index="4" role="tab" aria-selected="false" tabindex="-1"><span class="carousel-segment-label">Nettoyage intérieur</span><div class="carousel-segment-fill"></div></div>
-          <div class="carousel-segment" data-index="5" role="tab" aria-selected="false" tabindex="-1"><span class="carousel-segment-label">Montage</span><div class="carousel-segment-fill"></div></div>
-          <div class="carousel-segment" data-index="6" role="tab" aria-selected="false" tabindex="-1"><span class="carousel-segment-label">Travaux</span><div class="carousel-segment-fill"></div></div>
-        </div>
       </div>
 
       <!-- FAQ visible : même contenu que le schéma FAQPage (JSON-LD, cf.

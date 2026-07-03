@@ -21,8 +21,8 @@ window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
 // Page Devis
 // openDevis()/closeDevis() sont les points d'entrée appelés depuis le HTML
 // (boutons "Devis gratuit", croix de fermeture). Ils délèguent à la
-// transition animée (chute des objets/carton ou fondu de la page courante,
-// puis vague blanche — cf. initHeroPageTransition plus bas) quand elle est
+// transition animée (sortie du hero ou fondu de la page courante, puis
+// vague blanche — cf. initHeroPageTransition plus bas) quand elle est
 // disponible ; sinon (prefers-reduced-motion, où cette transition ne
 // s'initialise jamais) ils retombent sur un simple affichage/masquage
 // instantané de #devisPage.
@@ -1917,172 +1917,130 @@ function initRipples() {
 }
 
 // ─────────────────────────────────────────────
-// Lumières chaudes du hero (.hero-ambient-light, styles.css)
-// N'apparaissent qu'une fois le carton ET tous les objets flottants visibles
-// arrivés à l'écran (leur animation floatEnter/heroCardIn terminée) : on
-// attend leur "animationend" plutôt que de deviner un délai fixe, pour
-// rester juste quelle que soit la durée réelle du préchargeur avant eux.
+// Découpe un titre/paragraphe en mots individuels (chacun dans son propre
+// <span class="hero-reveal-word">), pour une animation d'apparition "mot
+// par mot" au chargement (cf. .hero-reveal-word, styles.css) — donne
+// l'impression que le texte s'écrit plutôt qu'un simple fondu d'un seul
+// bloc. Nom volontairement différent de .reveal-word (déjà utilisé par le
+// texte de la section services, cf. plus bas dans ce fichier) pour éviter
+// toute collision de classe entre les deux systèmes. Seuls les noeuds texte
+// directs sont découpés ; les éléments enfants (ex. <br>, ou .sr-only pour
+// le h1) sont préservés tels quels et sautés — le contenu .sr-only en
+// particulier ne doit surtout pas être fragmenté, il reste le texte de
+// repli lu intégralement par les lecteurs d'écran.
 // ─────────────────────────────────────────────
-function initHeroAmbientLight() {
-  const hero = document.getElementById('home');
-  if (!hero) return;
-
-  const reveal = () => hero.classList.add('hero-lights-active');
-
-  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-    reveal();
-    return;
-  }
-
-  function whenAnimationDone(el) {
-    return new Promise((resolve) => {
-      el.addEventListener('animationend', resolve, { once: true });
-    });
-  }
-
-  const waits = [];
-  const cardboardBox = document.getElementById('cardboardBox');
-  if (cardboardBox) waits.push(whenAnimationDone(cardboardBox));
-  // Exclut les objets masqués sur mobile (.float-hide-mobile, styles.css) :
-  // display:none empêche leur animation de tourner, donc leur animationend
-  // ne se déclenche jamais — les attendre bloquerait la révélation pour de bon.
-  document.querySelectorAll('.float-enter').forEach((el) => {
-    if (window.getComputedStyle(el).display !== 'none') {
-      waits.push(whenAnimationDone(el));
+function wrapWordsForReveal(el) {
+  const nodes = Array.from(el.childNodes);
+  const frag = document.createDocumentFragment();
+  let i = 0;
+  nodes.forEach((node) => {
+    if (node.nodeType === Node.TEXT_NODE) {
+      // Découpe sur l'espace normal uniquement : une espace insécable
+      // (ex. "main&nbsp;?") reste collée au mot précédent, pas isolée seule.
+      node.textContent.split(/( )/).forEach((part) => {
+        if (part === '') return;
+        if (part === ' ') {
+          frag.appendChild(document.createTextNode(' '));
+          return;
+        }
+        const span = document.createElement('span');
+        span.className = 'hero-reveal-word';
+        span.style.setProperty('--reveal-i', String(i));
+        span.textContent = part;
+        frag.appendChild(span);
+        i++;
+      });
+    } else if (node.nodeType === Node.ELEMENT_NODE && node.classList.contains('hero-highlight-phrase')) {
+      // Locution à surbrillance cyclique (ex. "à votre rythme", cf.
+      // .hero-highlight-phrase/.hero-highlight-glow, styles.css) : traitée
+      // comme un mot unique dans la cascade d'apparition (même
+      // --reveal-i, même animation heroContentRise), mais son contenu
+      // interne n'est PAS redécoupé mot par mot — il porte sa propre
+      // superposition dégradée, qui doit rester un seul bloc.
+      const clone = node.cloneNode(true);
+      clone.classList.add('hero-reveal-word');
+      clone.style.setProperty('--reveal-i', String(i));
+      frag.appendChild(clone);
+      i++;
+    } else {
+      frag.appendChild(node.cloneNode(true));
     }
   });
-
-  if (!waits.length) {
-    reveal();
-    return;
-  }
-
-  const safetyTimeout = new Promise((resolve) => setTimeout(resolve, 4000));
-  Promise.race([Promise.all(waits), safetyTimeout]).then(reveal);
+  el.replaceChildren(frag);
 }
 
 // ─────────────────────────────────────────────
-// Cardboard box tilt (hero) — RAF lerp
+// Entrée de la carte du hero (.hero-card)
+// .is-entering porte l'animation d'atterrissage 3D depuis le haut de
+// l'écran (heroCardDrop, cf. styles.css) ; une fois celle-ci terminée, on
+// retire la classe pour rendre la main à .hero-card elle-même, qui porte le
+// flottement continu (heroCardFloat) — sans ce retrait, .is-entering
+// resterait pour toujours plus spécifique et empêcherait le flottement de
+// jamais démarrer. playHeroCardEntrance est rejouable : posée une première
+// fois au chargement (cf. initHeroCardEntrance) et rejouée à chaque retour
+// en arrière depuis services vers l'accueil (cf. goBackward,
+// initHeroPageTransition), pour la même animation d'arrivée dans les deux
+// cas plutôt qu'un simple fondu différent au retour.
 // ─────────────────────────────────────────────
-function initCardboardTilt() {
-  const box   = document.getElementById('cardboardBox');
-  const scene = document.getElementById('cardboardScene');
-  if (!box || !scene) return;
+function playHeroCardEntrance(card) {
+  // Distance de survol dynamique (même logique que measureHeroExitRise pour
+  // la sortie au scroll, cf. initHeroPageTransition) : la carte doit
+  // visiblement venir d'au-dessus de l'écran, pas d'une distance fixe qui
+  // peut être plus courte que la carte elle-même sur certains écrans. Se
+  // remesure à chaque rejeu, au cas où la mise en page aurait changé
+  // (redimensionnement pendant qu'on était sur services, par exemple).
+  const prevTransform = card.style.transform;
+  const prevAnimation = card.style.animation;
+  card.style.animation = 'none';
+  card.style.transform = 'none';
+  const rect = card.getBoundingClientRect();
+  card.style.transform = prevTransform;
+  card.style.animation = prevAnimation;
+  card.style.setProperty('--hero-entrance-rise', `${-(rect.top + rect.height + 80)}px`);
 
-  // Désactivé sur tactile, sur la mise en page mobile (carton trop proche
-  // du bord pour un tilt lisible) et si l'utilisateur préfère les animations
-  // réduites.
-  if (window.matchMedia('(hover: none)').matches) return;
-  if (window.matchMedia('(max-width: 768px)').matches) return;
-  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-
-  const MAX_DELTA = 7;    // degrés max
-  const ZONE_PAD  = 130;  // marge px autour de la scène
-  const LERP      = 0.09; // facteur d'interpolation (base 60 fps)
-  const EPS       = 0.01; // seuil en degrés sous lequel la boucle s'arrête
-
-  let sceneRect = null;
-  let targetX = 0, targetY = 0;   // valeurs visées par le lerp
-  let currentX = 0, currentY = 0; // valeurs actuellement appliquées
-  let lastTs = null;
-  let rafId  = null;
-
-  // ── Bounding rect ──────────────────────────
-  function cacheRect() {
-    sceneRect = scene.getBoundingClientRect();
-  }
-
-  // ── Zone de détection ──────────────────────
-  function inZone(x, y) {
-    if (!sceneRect) return false;
-    return (
-      x >= sceneRect.left   - ZONE_PAD &&
-      x <= sceneRect.right  + ZONE_PAD &&
-      y >= sceneRect.top    - ZONE_PAD &&
-      y <= sceneRect.bottom + ZONE_PAD
-    );
-  }
-
-  // ── Boucle RAF ─────────────────────────────
-  function tick(ts) {
-    // dt normalisé : 1 = une frame à 60 fps, 2 = 120 fps, etc.
-    const dt = lastTs ? Math.min((ts - lastTs) / (1000 / 60), 4) : 1;
-    lastTs = ts;
-
-    // Facteur frame-rate-indépendant : même vitesse perçue à tout refresh rate
-    const f = 1 - Math.pow(1 - LERP, dt);
-    currentX += (targetX - currentX) * f;
-    currentY += (targetY - currentY) * f;
-
-    box.style.transform = `rotateX(${currentX}deg) rotateY(${currentY}deg)`;
-
-    const settled =
-      Math.abs(targetX - currentX) < EPS &&
-      Math.abs(targetY - currentY) < EPS;
-
-    if (settled) {
-      // Snap sur la cible exacte, arrêt de la boucle
-      currentX = targetX;
-      currentY = targetY;
-      box.style.transform = `rotateX(${currentX}deg) rotateY(${currentY}deg)`;
-      lastTs = null;
-      rafId  = null;
-    } else {
-      rafId = requestAnimationFrame(tick);
-    }
-  }
-
-  function startLoop() {
-    if (!rafId) rafId = requestAnimationFrame(tick);
-  }
-
-  // ── Init ───────────────────────────────────
-  cacheRect();
-  window.addEventListener('resize', cacheRect, { passive: true });
-  window.addEventListener('scroll', cacheRect, { passive: true });
-
-  // mousemove : met à jour les cibles uniquement, n'écrit jamais dans le DOM
-  document.addEventListener('mousemove', (e) => {
-    if (!sceneRect) return;
-
-    if (!inZone(e.clientX, e.clientY)) {
-      if (targetX !== 0 || targetY !== 0) {
-        targetX = 0;
-        targetY = 0;
-        startLoop();
-      }
-      return;
-    }
-
-    const cx = sceneRect.left + sceneRect.width  / 2;
-    const cy = sceneRect.top  + sceneRect.height / 2;
-    const hw = sceneRect.width  / 2 + ZONE_PAD;
-    const hh = sceneRect.height / 2 + ZONE_PAD;
-    const dx = Math.max(-1, Math.min(1, (e.clientX - cx) / hw));
-    const dy = Math.max(-1, Math.min(1, (e.clientY - cy) / hh));
-
-    targetX = -dy * MAX_DELTA;
-    targetY =  dx * MAX_DELTA;
-    startLoop();
-  }, { passive: true });
-
-  // Curseur qui quitte la fenêtre du navigateur
-  document.addEventListener('mouseleave', () => {
-    targetX = 0;
-    targetY = 0;
-    startLoop();
+  card.classList.add('is-entering');
+  card.addEventListener('animationend', function onEnd(e) {
+    if (e.animationName !== 'heroCardDrop') return;
+    card.classList.remove('is-entering');
+    card.removeEventListener('animationend', onEnd);
   });
+}
+
+// Rejoue l'apparition du titre/description (mot par mot) et des deux
+// boutons (cf. .hero-reveal-word / .hero-actions .btn-primary/.btn-outline,
+// styles.css), en forçant un reflow entre le retrait et la repose de
+// `animation` — sinon le navigateur ne détecte pas le changement et
+// l'animation ne redémarre pas.
+function replayHeroContentWords(heroContent) {
+  const entranceEls = heroContent.querySelectorAll('.hero-reveal-word, .hero-actions .btn-primary, .hero-actions .btn-outline');
+  entranceEls.forEach((el) => { el.style.animation = 'none'; });
+  void heroContent.offsetWidth;
+  entranceEls.forEach((el) => { el.style.animation = ''; });
+}
+
+function initHeroCardEntrance() {
+  const card = document.getElementById('heroCard');
+  if (!card) return;
+
+  const title = card.querySelector('h1');
+  const desc = card.querySelector('p');
+  if (title) wrapWordsForReveal(title);
+  if (desc) wrapWordsForReveal(desc);
+
+  // .is-entering est déjà posé en HTML : playHeroCardEntrance se contente
+  // ici de mesurer la distance et d'armer le nettoyage de fin d'animation.
+  playHeroCardEntrance(card);
 }
 
 // ─────────────────────────────────────────────
 // Transition accueil ↔ services (page à page)
 // Ce ne sont plus deux sections d'une même page que l'on scrolle en continu :
-// le hero et #services sont chacun un écran plein viewport, et la vague est
-// une animation de transition qui se rejoue intégralement entre les deux —
-// on ne peut plus s'arrêter à mi-course. Un geste vers le bas (molette,
-// swipe, flèche/PageDown) sur l'accueil lance la transition vers le bleu ;
-// un geste vers le haut sur la page services la rejoue à l'envers (le carton
-// et les objets flottants réapparaissent comme à l'arrivée sur le site).
+// le hero et #services sont chacun un écran plein viewport, et le passage de
+// l'un à l'autre est une animation de transition qui se rejoue intégralement
+// entre les deux — on ne peut plus s'arrêter à mi-course. Un geste vers le
+// bas (molette, swipe, flèche/PageDown) sur l'accueil lance la sortie du
+// hero ; un geste vers le haut sur la page services la rejoue à l'envers (le
+// titre/texte/boutons du hero réapparaissent comme à l'arrivée sur le site).
 // Désactivé si l'utilisateur préfère moins d'animations, ainsi que sur mobile
 // (cf. media query prefers-reduced-motion / max-width:768px en CSS, qui
 // repassent alors #services et .devis-page en page normale scrollable — sans
@@ -2093,76 +2051,101 @@ function initHeroPageTransition() {
   if (window.matchMedia('(max-width: 768px)').matches) return;
 
   const stage = document.getElementById('heroScrollStage');
-  const waveInner = document.getElementById('heroWaveRiseInner');
-  const wavePath = document.getElementById('heroWavePath');
-  const tiltZone = document.getElementById('tiltZone');
+  const heroContent = document.getElementById('heroContent');
+  const heroWarmLight = document.getElementById('heroWarmLight');
   const nav = document.querySelector('.nav');
   const services = document.getElementById('services');
-  const cardboardBox = document.getElementById('cardboardBox');
+  const servicesBlobs = Array.from(document.querySelectorAll('.services-ambient-blob'));
   const devisWaveFall = document.getElementById('devisWaveFall');
   const devisWaveFallInner = document.getElementById('devisWaveFallInner');
   const devisWavePath = document.getElementById('devisWavePath');
   const devisPage = document.getElementById('devisPage');
-  if (!stage || !waveInner || !wavePath || !tiltZone || !services) return;
-  if (!cardboardBox || !devisWaveFall || !devisWaveFallInner || !devisWavePath || !devisPage) return;
+  if (!stage || !heroContent || !heroWarmLight || !services || servicesBlobs.length !== 4) return;
+  if (!devisWaveFall || !devisWaveFallInner || !devisWavePath || !devisPage) return;
 
   document.documentElement.classList.add('is-paged');
 
-  // Dôme doux : un seul arc symétrique (courbe quadratique), sans double
-  // inflexion — amplitude légère entre la base et le sommet. BASE_Y/PEAK_Y
-  // sont l'amplitude au DÉBUT de la montée seulement : elles sont ensuite
-  // interpolées vers 0 au fil de la progression (cf. render), pour que la
-  // crête s'aplatisse et rejoigne exactement le bord supérieur de l'écran
-  // une fois la vague entièrement montée — sans ça, un écart constant
-  // (~9 % de la hauteur) reste toujours visible juste sous la navbar, même
-  // une fois translateY revenu à 0.
-  const BASE_Y_START = 90;
-  const PEAK_Y_START = 65;
-  // Dérive horizontale du sommet de l'arc pendant la transition (mouvement subtil).
-  const PEAK_X_START = 660;
-  const PEAK_X_END   = 820;
-  // Réaction du hero (parallaxe) : continue et proportionnelle dès le tout
-  // début de la transition, jusqu'à devenir quasi invisible en fin de course.
-  const HERO_RISE_PX = 140;
-  const HERO_SHRINK   = 0.35;
-  const DURATION_MS = 1000;
+  const DURATION_MS = 900;
+  // Sortie de la carte : s'envole vers le haut de l'écran en se réduisant et
+  // en s'estompant, comme aspirée vers le ciel — la grille reste immobile,
+  // seule la carte s'en va. flightT (cf. renderHeroExit) applique une légère
+  // accélération à la montée/réduction/fondu (lente au décollage, un peu
+  // plus rapide ensuite), mais bien plus douce qu'avant : la course occupe
+  // presque toute la durée du scroll (CONTENT_FADE_END proche de 1), pour
+  // une vitesse de sortie proche de celle de l'entrée (heroCardDrop, 0.95s)
+  // plutôt qu'une disparition expédiée en un quart de la course.
+  const CONTENT_FADE_END = 0.85;
+  // Distance de montée : calculée dynamiquement (cf. measureHeroExitRise)
+  // pour que la carte quitte entièrement le haut de l'écran avant de
+  // disparaître, quels que soient sa hauteur et la taille de la fenêtre —
+  // une valeur fixe en pixels ne suffisait pas sur les écrans où la carte
+  // est plus haute que la marge au-dessus d'elle.
+  let heroExitRisePx = 190;
+  const CONTENT_SHRINK = 0.24;
 
-  // Dispersion des objets flottants à la sortie : chacun repart vers son
-  // point d'origine (--fe-x/--fe-y, le même que celui utilisé pour son
-  // arrivée), amplifié pour s'envoler bien au-delà de l'écran plutôt que de
-  // simplement revenir à son point de départ. Lu une seule fois pour éviter
-  // un recalcul de style coûteux à chaque frame.
-  const SCATTER_MULT = 2.4;
-  const floatScatter = Array.from(document.querySelectorAll('.float-enter')).map((el) => ({
-    el,
-    fx: parseFloat(el.style.getPropertyValue('--fe-x')) || 0,
-    fy: parseFloat(el.style.getPropertyValue('--fe-y')) || 0,
-  }));
+  // Distance depuis le haut actuel de la carte jusqu'à un point nettement
+  // au-dessus du viewport (marge de sécurité incluse) : garantit qu'au pic
+  // de la sortie, la carte a réellement quitté l'écran plutôt que de
+  // s'estomper alors qu'elle est encore visible au milieu de la page.
+  function measureHeroExitRise() {
+    const prevTransform = heroContent.style.transform;
+    heroContent.style.transform = 'none';
+    const rect = heroContent.getBoundingClientRect();
+    heroContent.style.transform = prevTransform;
+    heroExitRisePx = rect.top + rect.height + 80;
+  }
+  measureHeroExitRise();
+  // Lumières chaudes du hero : s'intensifient et dérivent (échelle +
+  // déplacement + saturation/luminosité) pendant la première moitié de la
+  // course, puis s'effacent en fondu pendant la seconde (cf. CROSSFADE_*
+  // plus bas) — jamais un arrêt net. La transition CSS posée sur
+  // .hero-warm-light (cf. styles.css) lisse ces valeurs, réévaluées à
+  // chaque frame de scroll, en un mouvement continu plutôt que saccadé.
+  const WARM_INTENSIFY_END = 0.6;
+  const WARM_SCALE_MAX = 1.35;
+  const WARM_DRIFT_PX = 70;
+  // Fondu croisé : #services (et ses propres taches chaudes, cf.
+  // servicesBlobs) apparaît en fondu pendant que celles du hero
+  // disparaissent, sur la même fenêtre de progression — puisque c'est une
+  // fonction continue de `p`, l'aller (accueil → services) et le retour
+  // (services → accueil) sont automatiquement symétriques, sans code séparé.
+  const CROSSFADE_START = 0.45;
+  const CROSSFADE_END = 0.92;
+  // Opacité cible de chaque tache (cf. #services.lights-active .services-
+  // ambient-blob-N, styles.css) : reprise ici pour piloter le fondu croisé
+  // en JS, en overrideant ces valeurs via inline style (plus prioritaire).
+  const SERVICES_BLOB_OPACITY = [0.38, 0.30, 0.34, 0.26];
 
-  let riseHeightPx = waveInner.clientHeight;
-  let navBottomPx = nav ? nav.getBoundingClientRect().bottom : 0;
   let page = 0; // 0 = accueil, 1 = services
   let animating = false;
   let progress = 0;
-  // Dernière valeur appliquée au scatter (tiltZone + objets flottants),
-  // qu'elle vienne de render() (vague bleue) ou de renderDevisFromHome()
-  // (vague blanche) : sert à le ré-appliquer correctement au resize, quel
+  // Dernière valeur appliquée à la sortie du hero (contenu), qu'elle vienne
+  // de render() (transition accueil → services) ou de renderDevisFromHome()
+  // (ouverture Devis) : sert à la ré-appliquer correctement au resize, quel
   // que soit l'axe de transition actif.
   let scatterAmount = 0;
+  // Le retour accueil ← services ne doit PAS rejouer le fondu/glissement
+  // JS de #heroContent (celui utilisé pour la sortie) : il rejoue plutôt
+  // l'atterrissage 3D de la carte + l'écriture mot par mot (cf.
+  // playHeroCardEntrance/replayHeroContentWords, même animation qu'au
+  // premier chargement). Ce drapeau, posé le temps de la course retour dans
+  // animateTo(0), fait sauter les lignes correspondantes de
+  // renderHeroExit() pour laisser la place à ce rejeu.
+  let suppressHeroContentExit = false;
 
-  // ── Page Devis : chute des objets/carton (depuis l'accueil) puis vague
-  // blanche descendante, miroir de la vague bleue. ────────────────────────
+  // ── Page Devis : sortie du hero (depuis l'accueil) puis vague blanche
+  // descendante. ─────────────────────────────────────────────────────────
   // DEVIS_BASE/PEAK_Y_START sont la distance par rapport au bord INFÉRIEUR
-  // du viewBox (au lieu du supérieur pour la vague bleue) : la crête
-  // s'aplatit de la même façon en fin de course, mais contre le bas.
+  // du viewBox (au lieu du supérieur pour l'ancienne vague du hero) : la
+  // crête s'aplatit de la même façon en fin de course, mais contre le bas.
   const DEVIS_BASE_Y_START = 1000 - 90;
   const DEVIS_PEAK_Y_START = 1000 - 65;
   const DEVIS_PEAK_X_START = 660;
   const DEVIS_PEAK_X_END   = 820;
   // Toute la séquence Devis tient dans UNE seule course de DURATION_MS — la
-  // même durée que la vague bleue accueil ↔ services, pour une vitesse
+  // même durée que la plongée accueil ↔ services, pour une vitesse
   // identique.
-  // Depuis services (pas de carton/objets à animer) : fondu rapide de la
+  // Depuis services (pas de contenu de hero à animer) : fondu rapide de la
   // page courante (30 premiers %), vague blanche démarrant avec un léger
   // décalage (15 %) pour un chevauchement plus prononcé.
   const SERVICES_FADE_END = 0.3;
@@ -2196,67 +2179,72 @@ function initHeroPageTransition() {
     return Math.min(Math.max(p, 0), 1);
   }
 
-  function buildPath(peakX, baseY, peakY) {
-    return (
-      `M0,${baseY} ` +
-      `Q${peakX},${peakY} 1440,${baseY} ` +
-      `L1440,1000 L0,1000 Z`
-    );
-  }
-
-  // Sortie "de base" du hero : le carton/tiltZone rétrécit en s'estompant et
-  // remonte légèrement, tandis que les objets flottants s'envolent chacun
-  // vers leur point d'origine en tournant. Utilisée à l'identique par la
-  // vague bleue (accueil → services) ET par l'ouverture de la page Devis
-  // depuis l'accueil — ces deux transitions ne se distinguent que par leur
-  // vague, jamais par cette animation de sortie.
-  function renderHeroScatter(p) {
+  // Sortie "de base" du hero : la carte s'estompe en remontant vers le haut
+  // de l'écran, pendant que les lumières chaudes s'intensifient (la grille,
+  // elle, ne bouge jamais — cf. #heroGrid, non touché ici). Utilisée à
+  // l'identique par la transition accueil → services ET par l'ouverture de
+  // la page Devis depuis l'accueil — ces deux transitions ne se distinguent
+  // que par leur vague, jamais par cette animation de sortie.
+  function renderHeroExit(p) {
     scatterAmount = p;
-    tiltZone.style.opacity = String(1 - p);
-    tiltZone.style.transform = `translateY(${-HERO_RISE_PX * p}px) scale(${1 - HERO_SHRINK * p})`;
-    tiltZone.style.pointerEvents = p > 0.85 ? 'none' : '';
 
-    // Ne touche ces éléments qu'une fois la transition réellement commencée
-    // (p > 0) : au repos (p = 0), écrire opacity/transform — même avec des
-    // valeurs identiques à l'état de repos — écraserait l'état de départ de
-    // l'animation d'arrivée au chargement et l'empêcherait de se jouer.
-    if (p > 0) {
-      floatScatter.forEach(({ el, fx, fy }) => {
-        el.style.opacity = String(1 - p);
-        const spin = (fx >= 0 ? 1 : -1) * p * 35;
-        el.style.transform = `translate(${fx * SCATTER_MULT * p}px, ${fy * SCATTER_MULT * p}px) rotate(${spin}deg)`;
-      });
+    if (!suppressHeroContentExit) {
+      const contentT = Math.min(p / CONTENT_FADE_END, 1);
+      // Fondu bien visible et régulier sur toute la course (contentT tout
+      // seul) ; la position/l'échelle gardent une légère accélération
+      // (flightT, puissance plus douce qu'avant) pour rester un envol
+      // plutôt qu'un simple glissement linéaire — deux courbes distinctes
+      // pour que le fondu ne reste plus caché jusqu'aux tout derniers
+      // instants comme avec l'ancienne courbe partagée.
+      const flightT = Math.pow(contentT, 1.3);
+      heroContent.style.opacity = String(1 - contentT);
+      // Léger flou croissant en plus de l'opacité : rend le fondu net et
+      // sans équivoque (un "dissout" plutôt qu'un simple envol qui, seul,
+      // peut se lire davantage comme un déplacement qu'une disparition en
+      // fondu) — miroir du flou net→flou inversé de l'entrée (heroCardDrop).
+      heroContent.style.filter = `blur(${7 * contentT}px)`;
+      heroContent.style.transform = `translateY(${-heroExitRisePx * flightT}px) scale(${1 - CONTENT_SHRINK * flightT})`;
+      heroContent.style.pointerEvents = p > 0.5 ? 'none' : '';
     }
+
+    const warmT = Math.min(p / WARM_INTENSIFY_END, 1);
+    // Fondu de sortie, sur la même fenêtre que le fondu croisé de #services
+    // (cf. render() plus bas) : les lumières du hero s'effacent pile pendant
+    // que celles de services prennent le relais, jamais avant ni après.
+    const warmFadeT = Math.min(Math.max((p - CROSSFADE_START) / (CROSSFADE_END - CROSSFADE_START), 0), 1);
+    heroWarmLight.style.transform = `translate(${WARM_DRIFT_PX * 0.3 * warmT}px, ${-WARM_DRIFT_PX * warmT}px) scale(${1 + (WARM_SCALE_MAX - 1) * warmT})`;
+    heroWarmLight.style.filter = `saturate(${1 + 0.6 * warmT}) brightness(${1 + 0.15 * warmT})`;
+    heroWarmLight.style.opacity = String(1 - warmFadeT);
   }
 
   function render(p) {
-    const translatePx = (1 - p) * riseHeightPx;
-    waveInner.style.transform = `translateY(${translatePx}px)`;
+    renderHeroExit(p);
 
-    const peakX = PEAK_X_START + (PEAK_X_END - PEAK_X_START) * p;
-    const baseY = BASE_Y_START * (1 - p);
-    const peakY = PEAK_Y_START * (1 - p);
-    wavePath.setAttribute('d', buildPath(peakX, baseY, peakY));
+    // Fondu croisé de #services (panneau + ses propres taches chaudes) sur
+    // la même fenêtre que le fondu de sortie des lumières du hero
+    // (CROSSFADE_START/END) : fonction continue de `p`, donc automatiquement
+    // symétrique à l'aller comme au retour.
+    const crossT = Math.min(Math.max((p - CROSSFADE_START) / (CROSSFADE_END - CROSSFADE_START), 0), 1);
+    services.style.opacity = String(crossT);
+    servicesBlobs.forEach((blob, i) => {
+      blob.style.opacity = String(SERVICES_BLOB_OPACITY[i] * crossT);
+    });
 
-    renderHeroScatter(p);
-
-    if (nav) {
-      nav.classList.toggle('nav-on-dark', translatePx <= navBottomPx);
-    }
-
-    // Une fois la transition terminée vers services, le hero (invisible sous
-    // l'aplat bleu) ne doit plus intercepter de clics/survols.
-    stage.style.pointerEvents = p >= 1 ? 'none' : '';
+    // Interactif seulement une fois la bascule quasi terminée ; le hero,
+    // symétriquement, cesse d'intercepter les clics à ce même seuil.
+    const settled = p >= CROSSFADE_END;
+    services.style.pointerEvents = settled ? 'auto' : 'none';
+    stage.style.pointerEvents = settled ? 'none' : '';
   }
 
   function easeInOutCubic(t) {
     return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
   }
 
-  // Tween générique 0→1 (ou 1→0), réutilisé par les séquences Devis : chute
-  // des objets/carton, vague blanche, fondu de la page courante. Retourne une
-  // Promise résolue une fois la durée écoulée, pour pouvoir enchaîner
-  // plusieurs étapes avec await.
+  // Tween générique 0→1 (ou 1→0), réutilisé par les séquences Devis : sortie
+  // du hero, vague blanche, fondu de la page courante. Retourne une Promise
+  // résolue une fois la durée écoulée, pour pouvoir enchaîner plusieurs
+  // étapes avec await.
   function tween(durationMs, from, to, onUpdate) {
     return new Promise((resolve) => {
       const start = performance.now();
@@ -2309,54 +2297,28 @@ function initHeroPageTransition() {
   }
 
   // Depuis l'accueil, l'ouverture de Devis réutilise exactement la même
-  // sortie que la vague bleue (renderHeroScatter), au même rythme que la
-  // vague blanche : seule la vague elle-même diffère (blanche et
-  // descendante plutôt que bleue et montante), jamais l'animation du
-  // carton/des objets.
+  // sortie de hero (renderHeroExit), au même rythme que la vague blanche :
+  // seule la vague diffère, jamais l'animation de sortie du contenu.
   function renderDevisFromHome(p) {
-    renderHeroScatter(p);
+    renderHeroExit(p);
     devisProgress = p;
     renderDevisWave(p);
   }
 
   // Au retour vers l'accueil depuis Devis, on ne rejoue pas la sortie à
   // l'envers : on relance directement l'animation d'arrivée d'origine
-  // (heroCardIn / floatEnter), celle de l'arrivée sur le site au premier
-  // chargement — c'est l'effet demandé, pas une nouvelle animation.
+  // (heroContentRise), celle de l'arrivée sur le site au premier chargement
+  // — c'est l'effet demandé, pas une nouvelle animation.
   function replayHomeEntrance() {
     scatterAmount = 0;
-    // renderHeroScatter (ouverture) avait réduit/estompé tiltZone : on
-    // efface ces styles pour qu'il reprenne sa pleine visibilité par défaut.
-    tiltZone.style.opacity = '';
-    tiltZone.style.transform = '';
-    tiltZone.style.pointerEvents = '';
-
-    cardboardBox.style.transform = '';
-    cardboardBox.style.opacity = '';
-    cardboardBox.style.animation = 'none';
-
-    floatScatter.forEach(({ el }) => {
-      el.style.transform = '';
-      el.style.opacity = '';
-      el.style.animation = 'none';
-    });
-
-    // Force un reflow avant de réactiver l'animation, sinon le navigateur ne
-    // détecte pas le changement et elle ne redémarre pas.
-    void cardboardBox.offsetWidth;
-
-    cardboardBox.style.animation = '';
-    floatScatter.forEach(({ el }) => {
-      el.style.animation = '';
-      // .float-enter n'a pas de fill-mode "forwards" (volontairement, cf.
-      // sa règle de base) : une fois l'animation terminée, on referme la
-      // main sur opacity/transform en inline — exactement comme
-      // initFloatEnterSettle() au chargement initial.
-      el.addEventListener('animationend', () => {
-        el.style.opacity = '1';
-        el.style.transform = 'translate(0, 0)';
-      }, { once: true });
-    });
+    heroContent.style.opacity = '';
+    heroContent.style.filter = '';
+    heroContent.style.transform = '';
+    heroContent.style.pointerEvents = '';
+    heroWarmLight.style.transform = '';
+    heroWarmLight.style.filter = '';
+    heroWarmLight.style.opacity = '';
+    replayHeroContentWords(heroContent);
   }
 
   function renderDevisFromServices(p) {
@@ -2412,7 +2374,7 @@ function initHeroPageTransition() {
     devisLogoCrossP = computeDevisLogoCrossP();
 
     if (devisCameFromPage === 0) {
-      // Vague blanche seule : l'arrivée du carton/objets rejoue son
+      // Vague blanche seule : l'arrivée du contenu du hero rejoue son
       // animation d'origine, indépendamment du rythme de la vague.
       replayHomeEntrance();
       await tween(DURATION_MS, 1, 0, (p) => { devisProgress = p; renderDevisWave(p); });
@@ -2438,17 +2400,33 @@ function initHeroPageTransition() {
 
   function animateTo(target) {
     animating = true;
-    // La page services reste masquée pendant toute la montée/descente de la
-    // vague : elle n'apparaît qu'une fois l'écran entièrement recouvert de
-    // bleu (à la toute fin de la transition vers l'avant), et disparaît dès
-    // le tout début d'un retour en arrière, pour laisser voir la vague
-    // redescendre sur tout le trajet.
-    services.style.opacity = '0';
-    services.style.pointerEvents = 'none';
-    // Les lumières disparaissent immédiatement quand on quitte services
-    // (la section devient opacity:0, les blobs n'ont plus de transition visible).
-    // On retire la classe pour qu'elles repartent de zéro à la prochaine entrée.
+    // L'opacité de #services (panneau + lumières) est désormais pilotée en
+    // continu par render() (fondu croisé sur CROSSFADE_START/END, cf. plus
+    // haut) — il n'y a donc plus de snap à poser ici, dans un sens comme
+    // dans l'autre. Seul .lights-active (qui pilote .svc-reveal, indépendant
+    // du fondu croisé des lumières) reste géré au début/à la fin de la
+    // course : repart de zéro dès qu'on quitte services...
     if (target === 0) services.classList.remove('lights-active');
+
+    // Retour vers l'accueil : au lieu du fondu/glissement JS habituel de
+    // #heroContent (utilisé pour la sortie), on rejoue la même arrivée
+    // qu'au premier chargement — atterrissage 3D de la carte + écriture mot
+    // par mot. #heroContent lui-même est neutralisé immédiatement (déjà
+    // visible), pour laisser toute la place à ce rejeu. Sens inverse (vers
+    // services) : on s'assure que le fondu/glissement JS reprend bien la
+    // main, au cas où il aurait été suspendu par un retour précédent.
+    if (target === 0) {
+      suppressHeroContentExit = true;
+      heroContent.style.opacity = '';
+      heroContent.style.filter = '';
+      heroContent.style.transform = '';
+      heroContent.style.pointerEvents = '';
+      const card = document.getElementById('heroCard');
+      if (card) playHeroCardEntrance(card);
+      replayHeroContentWords(heroContent);
+    } else {
+      suppressHeroContentExit = false;
+    }
 
     const start = progress;
     const delta = target - start;
@@ -2466,12 +2444,16 @@ function initHeroPageTransition() {
         page = target;
         animating = false;
         if (target === 1) {
-          services.style.opacity = '1';
-          services.style.pointerEvents = 'auto';
-          // Déclenche le fade-in des lumières chaudes une fois la section visible.
+          // ...et se déclenche une fois l'arrivée sur services terminée.
           services.classList.add('lights-active');
           // Synchronise l'état des mots (scroll peut être non-nul).
           if (window.HSServicesReveal) window.HSServicesReveal.update();
+        } else {
+          // La course retour est terminée : suppressHeroContentExit ne doit
+          // plus vivre au-delà, sinon une ouverture de Devis depuis
+          // l'accueil juste après (qui partage renderHeroExit) se
+          // retrouverait avec une sortie de contenu bloquée.
+          suppressHeroContentExit = false;
         }
       }
     }
@@ -2592,15 +2574,14 @@ function initHeroPageTransition() {
   }
 
   function onResize() {
-    riseHeightPx = waveInner.clientHeight;
     devisRiseHeightPx = devisWaveFallInner.clientHeight;
-    if (nav) navBottomPx = nav.getBoundingClientRect().bottom;
+    measureHeroExitRise();
     render(progress);
     renderDevisWave(devisProgress);
-    // Ré-applique le bon état du scatter en dernier : render() vient de le
+    // Ré-applique le bon état de sortie en dernier : render() vient de le
     // recalculer via `progress` (axe accueil ↔ services), ce qui serait
     // erroné si c'est en réalité l'ouverture de Devis qui l'a positionné.
-    renderHeroScatter(scatterAmount);
+    renderHeroExit(scatterAmount);
   }
   window.addEventListener('resize', onResize, { passive: true });
 
@@ -2609,378 +2590,11 @@ function initHeroPageTransition() {
 }
 
 // ─────────────────────────────────────────────
-// Carrousel "Nos services"
-// Anneau de 3 éléments DOM (rôles prev/main/next) positionnés en
-// ligne horizontale : au changement de service, la photo centrale
-// glisse vers le côté en rétrécissant et en s'estompant, tandis que
-// la photo voisine grandit et devient nette pour prendre sa place
-// (transition CSS sur transform/opacity, easing doux — pas un saut
-// ni un fade plat). L'élément qui sort du rôle "prev" (ou "next" en
-// arrière) est recyclé : repositionné hors-champ sans transition,
-// puis ramené avec l'image du service suivant à révéler. Avance
-// automatique (déclenchée seulement une fois le carrousel réellement
-// visible à l'écran, via IntersectionObserver, pour ne pas
-// désynchroniser la barre de progression pendant que l'utilisateur
-// scrolle encore vers la section) + flèches, clic sur une photo
-// latérale, ou clic direct sur un segment de la barre.
-// ─────────────────────────────────────────────
-function initServicesCarousel() {
-  const root = document.getElementById('servicesCarousel');
-  if (!root) return;
-
-  // Scroll-reveal du wrapper carrousel
-  (function revealCarousel() {
-    const wrap = document.getElementById('servicesCarousel');
-    if (!wrap) return;
-    const services = document.getElementById('services');
-    function checkReveal() {
-      const rect = wrap.getBoundingClientRect();
-      // Seuil aligné sur celui du texte au-dessus (initServicesRevealText,
-      // 65 % de la hauteur d'écran) : l'ancien seuil (88 %) déclenchait
-      // l'apparition dès que le haut du carrousel pointait à peine en bas
-      // de l'écran, bien avant que l'utilisateur n'ait vraiment scrollé
-      // jusqu'à lui.
-      const inView = rect.top < window.innerHeight * 0.65 && rect.bottom > 60;
-      wrap.classList.toggle('is-revealed', inView);
-    }
-    if (services) services.addEventListener('scroll', checkReveal, { passive: true });
-    window.addEventListener('scroll', checkReveal, { passive: true });
-    checkReveal();
-  })();
-
-  const SERVICE_DATA = [
-    {
-      key: 'lavage-voiture',
-      label: 'Lavage voiture',
-      img: 'images/lavage.voiture.jpg',
-      gradient: 'linear-gradient(145deg, #e0f0ff 0%, #b8d8f8 100%)',
-      iconClass: 'ph-fill ph-car',
-      iconColor: '#2a7bc0',
-      desc: 'Lavage complet de votre véhicule à domicile, à la main, sans effort de votre part.',
-    },
-    {
-      key: 'nettoyage-exterieur',
-      label: 'Nettoyage extérieur',
-      img: 'images/nettoyage.exterieur.jpg',
-      gradient: 'linear-gradient(145deg, #d8f5e4 0%, #a8e6c0 100%)',
-      iconClass: 'ph-fill ph-tree',
-      iconColor: '#1f7d40',
-      desc: 'Remise en état de vos espaces extérieurs : terrasse, jardin, allée.',
-    },
-    {
-      key: 'decombrements',
-      label: 'Décombrement',
-      img: 'images/desemcombrement.jpg',
-      gradient: 'linear-gradient(145deg, #fff0d8 0%, #ffd9a0 100%)',
-      iconClass: 'ph-fill ph-trash',
-      iconColor: '#b06a00',
-      desc: 'Évacuation rapide de meubles, encombrants et matériaux en tout genre.',
-    },
-    {
-      key: 'courses-livraison',
-      label: 'Livraison',
-      img: 'images/livraison.jpg',
-      gradient: 'linear-gradient(145deg, #ede0ff 0%, #d0b0f8 100%)',
-      iconClass: 'ph-fill ph-package',
-      iconColor: '#6b35c7',
-      desc: 'Courses alimentaires, pharmacie ou colis : on livre chez vous.',
-    },
-    {
-      key: 'nettoyage',
-      label: 'Nettoyage intérieur',
-      img: 'images/nettoyage.interieur.jpg',
-      gradient: 'linear-gradient(145deg, #fce4f0 0%, #f9b8d8 100%)',
-      iconClass: 'ph-fill ph-sparkle',
-      iconColor: '#c0246a',
-      desc: 'Nettoyage en profondeur de votre logement, des sols aux vitres.',
-    },
-    {
-      key: 'montage-bricolage',
-      label: 'Montage',
-      img: 'images/montage.jpg',
-      gradient: 'linear-gradient(145deg, #fff8d8 0%, #ffe89a 100%)',
-      iconClass: 'ph-fill ph-wrench',
-      iconColor: '#a07000',
-      desc: 'Montage de meubles, fixations et installations diverses.',
-    },
-    {
-      key: 'travaux',
-      label: 'Travaux',
-      img: 'images/travaux.jpg',
-      gradient: 'linear-gradient(145deg, #ffe0d8 0%, #ffb8a4 100%)',
-      iconClass: 'ph-fill ph-paint-roller',
-      iconColor: '#c04020',
-      desc: 'Peinture, plomberie, électricité et petites réparations.',
-    },
-  ];
-
-  // Précharge ET décode chaque photo à l'avance : sans ça, la carte recyclée
-  // (celle qui glisse de hors-champ vers prev/next) affiche un flash blanc le
-  // temps que le navigateur télécharge puis décode l'image au moment même où
-  // elle réapparaît. decode() force ce travail en amont, hors écran.
-  SERVICE_DATA.forEach((svc) => {
-    const img = new Image();
-    img.src = svc.img;
-    if (img.decode) img.decode().catch(() => {});
-  });
-
-  const COUNT = SERVICE_DATA.length;
-  const AUTOPLAY_MS = 4500;
-  const REDUCED_MOTION = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-  const viewport = document.getElementById('carouselViewport');
-  const track    = document.getElementById('carouselTrack');
-  const slides   = track ? Array.from(track.querySelectorAll('.carousel-photo')) : [];
-  const segments = Array.from(root.querySelectorAll('.carousel-segment'));
-  const prevBtn  = document.getElementById('carouselPrevBtn');
-  const nextBtn  = document.getElementById('carouselNextBtn');
-  const indexCaption = document.getElementById('carouselIndexCaption');
-  const indexNum     = document.getElementById('carouselIndexNum');
-  const indexName    = document.getElementById('carouselIndexName');
-  if (!viewport || !track || slides.length !== COUNT || !segments.length) return;
-
-  let activeIndex = 0;
-  let autoplayTimer = null;
-  let autoplayDeadline = 0;
-  let pausedRemaining = AUTOPLAY_MS;
-  let started = false;
-
-  function updateIndexCaption(newIndex) {
-    if (!indexCaption || !indexNum || !indexName) return;
-    indexCaption.classList.add('is-changing');
-    setTimeout(() => {
-      indexNum.textContent = String(newIndex + 1).padStart(2, '0');
-      indexName.textContent = SERVICE_DATA[newIndex].label;
-      indexCaption.classList.remove('is-changing');
-    }, 180);
-  }
-
-  function updateSegments(newIndex) {
-    segments.forEach((seg, i) => {
-      const fill = seg.querySelector('.carousel-segment-fill');
-      seg.classList.toggle('is-active', i === newIndex);
-      seg.setAttribute('aria-selected', i === newIndex ? 'true' : 'false');
-      seg.tabIndex = i === newIndex ? 0 : -1;
-      fill.style.animation = 'none';
-      fill.style.width = '0%';
-      if (i === newIndex) {
-        void fill.offsetWidth;
-        if (REDUCED_MOTION) {
-          fill.style.width = '100%';
-        } else {
-          fill.style.animation = `carouselFill ${AUTOPLAY_MS}ms linear forwards`;
-        }
-      }
-    });
-  }
-
-  // Carte "active" = celle centrée dans le viewport. Détectée par
-  // IntersectionObserver (cf. plus bas), pas par un minuteur de transition :
-  // la mécanique repose entièrement sur le scroll-snap natif du navigateur,
-  // il n'y a donc plus d'état "en cours d'animation" à verrouiller ni de
-  // recyclage de cartes à orchestrer.
-  function setActive(newIndex) {
-    if (newIndex === activeIndex) return;
-    activeIndex = newIndex;
-    slides.forEach((s, i) => {
-      const isActive = i === newIndex;
-      s.classList.toggle('is-active', isActive);
-      const btn = s.querySelector('.carousel-photo-btn');
-      if (btn) btn.tabIndex = isActive ? 0 : -1;
-    });
-    updateSegments(newIndex);
-    updateIndexCaption(newIndex);
-  }
-
-  function scrollToIndex(index) {
-    const target = slides[(index + COUNT) % COUNT];
-    if (!target) return;
-    target.scrollIntoView({
-      behavior: REDUCED_MOTION ? 'auto' : 'smooth',
-      inline: 'center',
-      block: 'nearest',
-    });
-  }
-
-  if ('IntersectionObserver' in window) {
-    const activeObserver = new IntersectionObserver((entries) => {
-      entries.forEach((entry) => {
-        if (!entry.isIntersecting) return;
-        const i = Number(entry.target.dataset.index);
-        if (!Number.isNaN(i)) setActive(i);
-      });
-    }, { root: viewport, threshold: 0.62 });
-    slides.forEach((s) => activeObserver.observe(s));
-  }
-
-  // Init visuel immédiat de la première carte, sans attendre le premier
-  // rapport de l'IntersectionObserver (évite un flash "aucune carte active"
-  // au chargement).
-  slides[0].classList.add('is-active');
-  const firstBtn = slides[0].querySelector('.carousel-photo-btn');
-  if (firstBtn) firstBtn.tabIndex = 0;
-  updateSegments(0);
-
-  function scheduleNext(ms) {
-    if (REDUCED_MOTION || !started) return;
-    clearTimeout(autoplayTimer);
-    autoplayDeadline = Date.now() + ms;
-    autoplayTimer = setTimeout(() => {
-      scrollToIndex(activeIndex + 1);
-      scheduleNext(AUTOPLAY_MS);
-    }, ms);
-  }
-
-  function pauseAutoplay() {
-    if (REDUCED_MOTION || !started) return;
-    clearTimeout(autoplayTimer);
-    pausedRemaining = Math.max(autoplayDeadline - Date.now(), 600);
-    const fill = segments[activeIndex].querySelector('.carousel-segment-fill');
-    if (fill) fill.style.animationPlayState = 'paused';
-  }
-
-  function resumeAutoplay() {
-    if (REDUCED_MOTION || !started) return;
-    const fill = segments[activeIndex].querySelector('.carousel-segment-fill');
-    if (fill) fill.style.animationPlayState = 'running';
-    scheduleNext(pausedRemaining);
-  }
-
-  function start() {
-    if (started) return;
-    started = true;
-    scheduleNext(AUTOPLAY_MS);
-  }
-
-  // ── Service detail overlay ─────────────────────
-  const overlay  = document.getElementById('svcDetailOverlay');
-  const backdrop = document.getElementById('svcDetailBackdrop');
-  const panel    = document.getElementById('svcDetailPanel');
-  const closeBtn = document.getElementById('svcDetailClose');
-  const hero     = document.getElementById('svcDetailHero');
-  const titleEl  = document.getElementById('svcDetailTitle');
-  const descEl   = document.getElementById('svcDetailDesc');
-  const ctaBtn   = document.getElementById('svcDetailCta');
-  let detailOpen = false;
-  let currentServiceKey = null;
-
-  function openServiceDetail(index) {
-    if (!overlay || detailOpen) return;
-    detailOpen = true;
-    pauseAutoplay();
-
-    const svc = SERVICE_DATA[index];
-    currentServiceKey = svc.key;
-
-    // Fill content
-    const heroIcon = document.getElementById('svcDetailHeroIcon');
-    hero.style.background = svc.gradient;
-    if (heroIcon) {
-      heroIcon.className = `svc-detail-hero-icon ${svc.iconClass}`;
-      heroIcon.style.color = svc.iconColor;
-    }
-    titleEl.textContent = svc.label;
-    descEl.textContent  = svc.desc;
-
-    // Flash de la carte active
-    const activeEl = slides[index];
-    if (activeEl) activeEl.classList.add('is-flashing');
-
-    // Petit délai puis ouverture du panneau
-    setTimeout(() => {
-      overlay.removeAttribute('aria-hidden');
-      overlay.classList.add('is-open');
-    }, 180);
-
-    // Fin du flash après l'ouverture
-    setTimeout(() => {
-      if (activeEl) activeEl.classList.remove('is-flashing');
-    }, 600);
-  }
-
-  function closeServiceDetail() {
-    if (!overlay || !detailOpen) return;
-    detailOpen = false;
-    overlay.setAttribute('aria-hidden', 'true');
-    overlay.classList.add('is-closing');
-    overlay.classList.remove('is-open');
-    setTimeout(() => {
-      overlay.classList.remove('is-closing');
-    }, 380);
-    resumeAutoplay();
-  }
-
-  if (closeBtn) closeBtn.addEventListener('click', closeServiceDetail);
-  if (backdrop) backdrop.addEventListener('click', closeServiceDetail);
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && detailOpen) closeServiceDetail();
-  });
-
-  if (ctaBtn) {
-    ctaBtn.addEventListener('click', () => {
-      closeServiceDetail();
-      // Légère pause pour laisser la fermeture se jouer, puis ouvrir le devis
-      setTimeout(() => {
-        if (currentServiceKey) openDevisWithService(currentServiceKey);
-        else openDevis();
-      }, 320);
-    });
-  }
-
-  // ── Listeners carrousel ────────────────────────
-  if ('IntersectionObserver' in window) {
-    const startObserver = new IntersectionObserver((entries) => {
-      entries.forEach((entry) => {
-        if (entry.isIntersecting) { start(); startObserver.disconnect(); }
-      });
-    }, { threshold: 0.3 });
-    startObserver.observe(root);
-  } else {
-    start();
-  }
-
-  if (prevBtn) prevBtn.addEventListener('click', () => { start(); scrollToIndex(activeIndex - 1); });
-  if (nextBtn) nextBtn.addEventListener('click', () => { start(); scrollToIndex(activeIndex + 1); });
-
-  slides.forEach((slide, i) => {
-    slide.addEventListener('click', () => {
-      start();
-      if (i === activeIndex) {
-        openServiceDetail(activeIndex);
-      } else {
-        scrollToIndex(i);
-      }
-    });
-  });
-
-  segments.forEach((seg) => {
-    seg.addEventListener('click', () => {
-      const target = Number(seg.dataset.index);
-      if (target === activeIndex) return;
-      start();
-      scrollToIndex(target);
-    });
-    seg.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); seg.click(); }
-    });
-  });
-
-  root.addEventListener('mouseenter', pauseAutoplay);
-  root.addEventListener('mouseleave', resumeAutoplay);
-  root.addEventListener('focusin',  pauseAutoplay);
-  root.addEventListener('focusout', resumeAutoplay);
-  viewport.addEventListener('pointerdown', pauseAutoplay, { passive: true });
-  viewport.addEventListener('pointerup', resumeAutoplay, { passive: true });
-  viewport.addEventListener('touchstart', pauseAutoplay, { passive: true });
-  viewport.addEventListener('touchend', resumeAutoplay, { passive: true });
-}
-
-// ─────────────────────────────────────────────
 // Préchargeur
-// Masque le site derrière un écran blanc (logo + spinner) tant que le
-// carton (gros PNG, cause des "contours" visibles avant chargement
-// complet) n'est pas prêt. Sécurité par délai max pour ne jamais bloquer
-// l'affichage si une ressource (ex: la vidéo de fond) tarde ou échoue.
+// Masque le site derrière un écran blanc (logo + spinner) tant que le logo
+// n'est pas prêt (le ciel/la brume du hero sont peints en CSS, rien à
+// précharger). Sécurité par délai max pour ne jamais bloquer l'affichage si
+// une ressource tarde ou échoue.
 // ─────────────────────────────────────────────
 function initPreloader() {
   const preloader = document.getElementById('preloader');
@@ -3005,22 +2619,11 @@ function initPreloader() {
   const MIN_DISPLAY_MS = 150;
   const shownAt = performance.now();
 
-  // Inclut les objets flottants : sans ça, leur image (et donc leurs
-  // dimensions réelles) pouvait finir de charger APRÈS la disparition du
-  // préchargeur, provoquant un petit "saut" visible juste avant que
-  // l'animation de flottement ne démarre proprement.
-  const imagesToWaitFor = [
-    document.querySelector('.carton-img'),
-    document.querySelector('.preloader-logo'),
-    ...document.querySelectorAll('.float-obj'),
-  ].filter(Boolean);
+  const imagesToWaitFor = [document.querySelector('.preloader-logo')].filter(Boolean);
 
   // `img.complete` ne garantit que la fin du téléchargement, pas du décodage
-  // pixel par pixel : sur les gros PNG (le carton, avec son filtre
-  // drop-shadow qui épouse son contour découpé), peindre avant la fin du
-  // décodage peut donner un premier rendu grossier/crénelé sur les bords.
-  // `decode()` ne résout qu'une fois l'image entièrement décodée et prête à
-  // être peinte sans à-coup.
+  // pixel par pixel : `decode()` ne résout qu'une fois l'image entièrement
+  // décodée et prête à être peinte sans à-coup.
   const whenImageReady = (img) => {
     if (typeof img.decode === 'function') {
       return img.decode().catch(() => {});
@@ -3036,15 +2639,13 @@ function initPreloader() {
   };
 
   const allReady = Promise.all(imagesToWaitFor.map(whenImageReady));
-  // Délai un peu plus large que pour le seul carton : on attend désormais
-  // une douzaine d'images (objets flottants compris).
-  const safetyTimeout = new Promise((resolve) => setTimeout(resolve, 6000));
+  const safetyTimeout = new Promise((resolve) => setTimeout(resolve, 3000));
 
   const hide = () => {
     preloader.classList.add('preloader--hidden');
     // `is-loading` n'est retiré qu'une fois le fondu terminé (pas au moment
-    // où il démarre) : les animations d'arrivée du carton/objets/contenu
-    // sont mises en pause par CSS tant que cette classe est présente (cf.
+    // où il démarre) : les animations d'arrivée du contenu du hero sont
+    // mises en pause par CSS tant que cette classe est présente (cf.
     // styles.css), pour ne jamais tourner cachées derrière le préchargeur
     // encore visible pendant ses ~0.3s de fondu.
     const reveal = () => {
@@ -3061,22 +2662,6 @@ function initPreloader() {
   Promise.race([allReady, safetyTimeout]).then(() => {
     const remaining = MIN_DISPLAY_MS - (performance.now() - shownAt);
     remaining > 0 ? setTimeout(hide, remaining) : hide();
-  });
-}
-
-// ─────────────────────────────────────────────
-// Une fois l'arrivée (floatEnter) terminée pour un objet, on fige son
-// opacity/transform en inline style (mêmes valeurs que l'état final de
-// l'animation, donc sans saut) pour libérer la propriété `transform` :
-// initHeroPageTransition peut alors la piloter (dispersion) sans qu'une
-// animation CSS "forwards" ne reprenne le dessus en permanence.
-// ─────────────────────────────────────────────
-function initFloatEnterSettle() {
-  document.querySelectorAll('.float-enter').forEach((el) => {
-    el.addEventListener('animationend', () => {
-      el.style.opacity = '1';
-      el.style.transform = 'translate(0, 0)';
-    }, { once: true });
   });
 }
 
@@ -3235,15 +2820,12 @@ function initServicesRevealText() {
 
 document.addEventListener('DOMContentLoaded', () => {
   initPreloader();
-  initFloatEnterSettle();
   initRipples();
-  initHeroAmbientLight();
-  initCardboardTilt();
+  initHeroCardEntrance();
   initNavLogoFade();
   initSmoothAnchorScroll();
   initScrollReveal();
   initHeroPageTransition();
-  initServicesCarousel();
   initServicesAccordion();
   initServicesRevealText();
 
@@ -3259,21 +2841,18 @@ document.addEventListener('DOMContentLoaded', () => {
         services.classList.add('lights-active');
       } else {
         // Sur mobile, #services est déjà visible en permanence dans le flux
-        // (cf. media query CSS) : à défaut de la vague pilotée par le scroll
-        // (désactivée pour laisser le document défiler nativement — seul
-        // moyen pour Safari mobile de rétracter sa barre d'adresse), on
-        // rejoue ici le fondu + léger slide de .svc-reveal (déjà utilisé
-        // par la vague sur desktop) une seule fois, dès que la section
-        // entre réellement dans l'écran au scroll naturel — et on enchaîne
-        // sur un fondu des lumières chaudes du hero (.hero-ambient-light),
-        // pour une transition douce entre les deux fonds plutôt qu'une
-        // coupure nette. Déclenché une seule fois (pas lié en continu au
-        // scroll, contrairement à une précédente tentative qui avait buggué).
+        // (cf. media query CSS) : à défaut de la plongée pilotée par le
+        // scroll (désactivée pour laisser le document défiler nativement —
+        // seul moyen pour Safari mobile de rétracter sa barre d'adresse), on
+        // rejoue ici le fondu + léger slide de .svc-reveal (déjà utilisé par
+        // la transition sur desktop) une seule fois, dès que la section
+        // entre réellement dans l'écran au scroll naturel. Déclenché une
+        // seule fois (pas lié en continu au scroll, contrairement à une
+        // précédente tentative qui avait buggué).
         const servicesIntro = new IntersectionObserver((entries) => {
           for (const entry of entries) {
             if (entry.isIntersecting) {
               services.classList.add('lights-active');
-              document.querySelector('.hero-ambient-light')?.classList.add('is-fading');
               servicesIntro.disconnect();
             }
           }
