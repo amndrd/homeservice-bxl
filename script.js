@@ -2683,26 +2683,54 @@ function initServicesAccordion() {
   const cards = Array.from(document.querySelectorAll('.service-card'));
   if (!services || !cards.length) return;
 
-  function setImmediate(i) {
-    cards.forEach((card, idx) => {
-      const active = idx === i;
-      card.classList.toggle('is-expanded', active);
-      card.classList.toggle('content-visible', active);
+  // Barre de progression (3 traits, cf. styles.css) : reflète la carte
+  // actuellement active (.is-filling, se remplit sur STEP_MS) et celles
+  // déjà vues dans le tour en cours (.is-done, trait plein figé) — un
+  // trait sans aucune des deux classes n'a pas encore été atteint.
+  const progressSegs = Array.from(document.querySelectorAll('.services-progress-seg'));
+  function setProgress(activeIndex) {
+    progressSegs.forEach((seg, i) => {
+      seg.classList.toggle('is-filling', i === activeIndex);
+      seg.classList.toggle('is-done', i < activeIndex);
     });
   }
 
-  // La 1ère carte est déjà élargie, avec son contenu déjà visible, dès le
-  // tout premier rendu, avant la moindre peinture : aucune transition ne
-  // peut jouer sur un état initial, donc les 3 cartes n'apparaissent jamais
-  // à la même taille — quand .svc-reveal les fait apparaître (fondu + léger
-  // slide), la 1ère est déjà dans sa forme finale élargie.
-  setImmediate(0);
+  // .is-expanded (largeur) est posé en synchrone dès le tout premier rendu,
+  // avant la moindre peinture : la 1ère carte est déjà élargie, sinon les 3
+  // cartes apparaîtraient à la même taille puis sauteraient à leur largeur
+  // finale quand .svc-reveal les révèle (fondu + léger slide).
+  cards.forEach((card, idx) => card.classList.toggle('is-expanded', idx === 0));
+
+  function showCardContent(card) {
+    card.classList.add('content-visible');
+  }
+
+  // .content-visible (opacité du texte/carte/point bleu, cf. styles.css) ne
+  // doit, elle, être posée qu'au moment où la section devient réellement
+  // visible pour l'utilisateur — pas juste après DOMContentLoaded. #services
+  // occupe le même rectangle d'écran que le hero dès le chargement (cf.
+  // commentaire plus bas sur .lights-active) : si on l'ajoutait tout de
+  // suite (même différé de quelques frames), sa transition d'apparition se
+  // jouerait entièrement en coulisses avant que l'utilisateur n'atteigne la
+  // section, et il ne verrait donc jamais l'animation. On attend donc le
+  // vrai signal de révélation (.lights-active, posé plus bas par start()),
+  // avec un double rAF ensuite pour garantir un repaint sur l'état caché
+  // avant de basculer — sinon la transition ne joue pas non plus.
+  function revealFirstCard() {
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        showCardContent(cards[0]);
+      });
+    });
+  }
 
   if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    showCardContent(cards[0]);
+    if (progressSegs[0]) progressSegs[0].classList.add('is-done');
     return;
   }
 
-  const STEP_MS = 3200;
+  const STEP_MS = 4500;
   // Durées des 2 étapes qui s'enchaînent (cf. styles.css) : le fade out du
   // contenu actif doit être terminé avant que la largeur ne commence à
   // bouger, et le fade in du nouveau contenu ne démarre qu'une fois la
@@ -2712,19 +2740,29 @@ function initServicesAccordion() {
 
   let index = 0;
   let timer = null;
+  let firstCardRevealed = false;
 
   function goTo(next) {
     cards[index].classList.remove('content-visible');
     setTimeout(() => {
       index = next;
+      setProgress(index);
       cards.forEach((card, idx) => card.classList.toggle('is-expanded', idx === index));
       setTimeout(() => {
-        cards[index].classList.add('content-visible');
+        showCardContent(cards[index]);
       }, WIDTH_MS);
     }, FADE_MS);
   }
 
   function start() {
+    // 1ère fois seulement : la carte 0 n'a encore aucun contenu visible
+    // (cf. plus haut) — on le révèle maintenant que la section est
+    // effectivement affichée, pour que son animation d'entrée soit vue.
+    if (!firstCardRevealed) {
+      firstCardRevealed = true;
+      revealFirstCard();
+      setProgress(0);
+    }
     if (timer) return;
     timer = setInterval(() => {
       goTo((index + 1) % cards.length);
@@ -2753,7 +2791,6 @@ function initServicesAccordion() {
   mo.observe(services, { attributes: true, attributeFilter: ['class'] });
 }
 
-// ─────────────────────────────────────────────
 // ─────────────────────────────────────────────
 // Texte scroll-reveal dans la section Services
 // Chaque mot devient un <span class="reveal-word">.

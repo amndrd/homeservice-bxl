@@ -701,6 +701,14 @@ body.is-loading .hero-warm-light {
   margin: 0 auto;
 }
 
+/* Retour à la ligne forcé avant "à votre rythme..." (cf. HTML) : masqué par
+   défaut, réactivé uniquement sur mobile (cf. media query plus bas) où il
+   regroupe toute la locution "à votre rythme et à votre budget." sur sa
+   propre ligne plutôt que de la laisser se couper au milieu. */
+.hero-desc-break {
+  display: none;
+}
+
 /* "à votre rythme" / "à votre budget" : surbrillance orange-jaune animée en
    boucle, alternant directement l'une puis l'autre — jamais les deux en même
    temps, et sans pause grise entre les deux (cf. heroPhraseGlowCycle
@@ -998,10 +1006,10 @@ body.is-loading .hero-highlight-glow {
   z-index: 1;
   flex: 1 1 0%;
   min-width: 0;
-  background: rgba(255, 255, 255, 0.72);
+  background: rgba(255, 255, 255, 0.9);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
-  border: 1px solid rgba(0, 0, 0, 0.055);
+  border: 1px solid rgba(0, 0, 0, 0.09);
   border-radius: 22px;
   overflow: hidden;
   display: flex;
@@ -1009,6 +1017,7 @@ body.is-loading .hero-highlight-glow {
   justify-content: center;
   padding: 1.5rem;
   cursor: default;
+  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.1);
 }
 
 .service-card.is-expanded {
@@ -1045,20 +1054,805 @@ body.is-loading .hero-highlight-glow {
   white-space: nowrap;
 }
 
-.service-card-accent {
-  display: block;
-  width: 28px;
-  height: 3px;
-  border-radius: 2px;
-  background: #FF7A29;
-  margin: 0.7rem auto;
-}
-
 .service-card-sub {
   font-size: 0.86rem;
   color: var(--grey);
   line-height: 1.55;
 }
+
+/* ── Carte "Localisé à Bruxelles" : variante plein cadre — la carte de
+   Bruxelles occupe toute la surface de la carte, le texte (icône + titre +
+   sous-titre) est superposé par-dessus en haut à gauche.
+   .service-card--map GARDE le même padding que les 2 autres cartes (ne pas
+   le retirer ici, cf. commentaire ci-dessous) : c'est .service-card-content--map
+   qui, via une marge négative, l'annule pour son propre compte afin que la
+   carte/l'image aillent bord à bord (border-radius hérité via overflow:hidden
+   sur .service-card), sans affecter la carte (l'article) elle-même. ── */
+
+.service-card-content--map {
+  position: relative;
+  max-width: none;
+  /* Marge négative de la valeur du padding hérité de .service-card
+     (1.5rem) : sans elle, cette carte devrait passer à padding:0 pour
+     que son arrière-plan aille bord à bord, mais un article sans padding
+     se retrouve alors mesuré plus étroit que les autres cartes une fois
+     réduit (repartition flex-grow faussée par cet écart de padding,
+     malgré box-sizing:border-box) — les 3 cartes doivent garder un
+     padding identique pour occuper exactement la même largeur une fois
+     réduites. width/height compensent la marge négative pour combler
+     exactement la surface ainsi libérée. */
+  margin: -1.5rem;
+  width: calc(100% + 3rem);
+  height: calc(100% + 3rem);
+  text-align: left;
+  padding: 1.4rem 1.5rem;
+  /* Contrairement aux 2 autres cartes, ce conteneur ne doit jamais
+     lui-même s'estomper avec .content-visible (règle générique plus haut,
+     .service-card-content) : la carte de Bruxelles à l'intérieur doit
+     rester affichée (juste assombrie) quand la carte se réduit, ce que la
+     règle générique empêcherait en cachant tout le conteneur. Chaque
+     enfant (texte, point bleu, image, voile) gère donc son opacité
+     indépendamment (cf. plus bas). */
+  opacity: 1;
+  transform: none;
+}
+
+.service-card-map {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: #eef1f4;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+/* La carte de Bruxelles apparaît en fondu à chaque agrandissement et
+   disparaît en fondu à chaque réduction (comme le reste du contenu),
+   laissant réapparaître le fond blanc de .service-card en dessous plutôt
+   que de rester affichée assombrie. */
+.service-card--map.content-visible .service-card-map {
+  opacity: 1;
+  transition: opacity 0.55s ease;
+}
+
+.service-card-map-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* Voile clair au-dessus de la carte pour garantir la lisibilité du texte,
+   quel que soit le fond (routes/labels) qui se trouve dessous à cet endroit.
+   Lié à .content-visible (comme le texte) : quand la carte se réduit, ce
+   voile clair disparaît pour laisser place au voile sombre ci-dessus. */
+.service-card-content--map::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.6) 0%, rgba(255, 255, 255, 0.28) 38%, rgba(255, 255, 255, 0) 58%);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.service-card--map.content-visible .service-card-content--map::before {
+  opacity: 1;
+  transition: opacity 0.45s ease;
+}
+
+.service-card-header {
+  position: relative;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  opacity: 0;
+  transform: translateY(6px);
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+
+.service-card-icon {
+  width: 15px;
+  height: 15px;
+  flex-shrink: 0;
+}
+
+.service-card--map .service-card-title,
+.service-card--icon .service-card-title {
+  white-space: normal;
+}
+
+.service-card--map .service-card-sub,
+.service-card--icon .service-card-sub {
+  position: relative;
+  z-index: 3;
+  text-align: left;
+  margin-top: 0.2rem;
+  opacity: 0;
+  transform: translateY(6px);
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+
+/* Cartes "Prise de rendez-vous" et "Estimation du prix" : simple texte noir
+   + icône, sans arrière-plan particulier — mais mêmes emplacement,
+   dimensions et animations que le titre/icône/description de la carte
+   Bruxelles (cf. .service-card--map ci-dessus et plus bas). Le conteneur
+   remplit toute la carte et s'aligne à gauche au lieu du texte centré par
+   défaut de .service-card-content (cf. règle générique tout en haut),
+   exactement comme .service-card-content--map. */
+.service-card--icon .service-card-content {
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  text-align: left;
+}
+
+/* Point de localisation bleu : positionné à l'emplacement approximatif du
+   centre de la région bruxelloise sur images/bruxelles.jpg (mesuré sur
+   l'image source, la carte remplissant maintenant toute la carte). Élément
+   séparé du bloc carte (plutôt qu'imbriqué dedans) pour rester au-dessus du
+   voile de lisibilité ci-dessus, quel que soit l'empilement des couches. */
+.service-card-map-dot {
+  position: absolute;
+  z-index: 4;
+  left: 57%;
+  top: 56%;
+  width: 56px;
+  height: 56px;
+  transform: translate(-50%, -50%);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease;
+}
+
+.service-card-map-dot img {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* Anneau radar : suggère une localisation "en direct" plutôt qu'un simple
+   point statique. Centré sur le petit disque plein visible au milieu du
+   halo de loc-point.png (d'où la taille bien plus petite que
+   .service-card-map-dot, qui inclut tout le halo). Pas d'animation ici
+   (cf. plus bas) : sans ça, .content-visible ne ferait que suspendre/
+   reprendre une même animation en boucle infinie au fil des cycles de
+   l'accordéon — après quelques cycles, la boucle reprend au milieu d'une
+   pulsation déjà entamée au lieu de repartir de 0%, de plus en plus
+   désynchronisée du moment où la carte s'agrandit. En ne déclarant
+   l'animation que sur .content-visible, chaque activation de la carte
+   relance à la place un exemplaire tout neuf de l'animation depuis 0%. */
+.service-card-map-dot::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 18px;
+  height: 18px;
+  margin: -9px 0 0 -9px;
+  border-radius: 50%;
+  background: #4274D9;
+  opacity: 0;
+}
+
+/* Cascade d'apparition RÉPÉTÉE à chaque fois que cette carte redevient
+   active dans l'accordéon (pas seulement la 1ère fois) : le texte, puis le
+   point bleu, puis la carte de Bruxelles elle-même (cf. plus haut) —
+   chacun avec son propre délai, tous branchés sur .content-visible
+   (ajouté/retiré à chaque cycle par goTo(), cf. initServicesAccordion,
+   script.js). La sortie (retrait de .content-visible) retombe sur les
+   transitions "de base" ci-dessus, plus rapides et sans délai — tout
+   disparaît en fondu.
+   Le tout premier affichage utilise ce même mécanisme : setImmediate()
+   applique .is-expanded en synchrone (nécessaire pour la largeur), mais
+   diffère l'ajout de .content-visible de deux frames pour que la
+   transition ci-dessus puisse réellement jouer dès la 1ère apparition. */
+.service-card--map.content-visible .service-card-header,
+.service-card--icon.content-visible .service-card-header {
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 0.45s cubic-bezier(0.22, 1, 0.36, 1) 0.45s, transform 0.45s cubic-bezier(0.22, 1, 0.36, 1) 0.45s;
+}
+.service-card--map.content-visible .service-card-sub,
+.service-card--icon.content-visible .service-card-sub {
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 0.45s cubic-bezier(0.22, 1, 0.36, 1) 0.55s, transform 0.45s cubic-bezier(0.22, 1, 0.36, 1) 0.55s;
+}
+.service-card--map.content-visible .service-card-map-dot {
+  opacity: 1;
+  transition: opacity 0.45s ease 0.72s;
+}
+
+.service-card--map.content-visible .service-card-map-dot::after {
+  animation: svcMapDotPulse 2.4s ease-out infinite 1.2s;
+}
+
+@keyframes svcMapDotPulse {
+  0%   { transform: scale(0.8); opacity: 0.55; }
+  70%  { transform: scale(2.6); opacity: 0; }
+  100% { transform: scale(2.6); opacity: 0; }
+}
+
+/* ── Carte "Prise de rendez-vous" : fusée qui décolle derrière les nuages.
+   Ciel, nuages et fusée sont tous les trois branchés sur .content-visible :
+   ils apparaissent en fondu à chaque agrandissement et disparaissent en
+   fondu à chaque réduction, laissant réapparaître le fond blanc de
+   .service-card en dessous plutôt que de rester affichés assombris. ── */
+.service-card--rocket .service-card-content {
+  margin: -1.5rem;
+  width: calc(100% + 3rem);
+  height: calc(100% + 3rem);
+  padding: 1.4rem 1.5rem;
+  opacity: 1;
+  transform: none;
+}
+
+.service-card--rocket .service-card-title {
+  color: var(--black);
+}
+.service-card--rocket .service-card-sub {
+  color: var(--grey);
+}
+
+/* Dernier maillon de la séquence de sortie (fusée, puis nuages, puis
+   texte, cf. commentaires plus bas) : un délai avant que le titre/la
+   description ne s'estompent à leur tour. Ne s'applique qu'à la sortie —
+   l'apparition reste gérée par la règle plus prioritaire
+   .service-card--icon.content-visible ... plus haut (3 classes, l'emporte
+   toujours quand .content-visible est présent). Doit rester court : la
+   largeur de la carte, elle, commence à se réduire seulement FADE_MS après
+   le retrait de .content-visible et finit WIDTH_MS plus tard (cf.
+   initServicesAccordion, script.js — 200ms puis 850ms) ; un délai plus long
+   ici laissait le texte visible sur une carte déjà réduite. */
+.service-card--rocket .service-card-header,
+.service-card--rocket .service-card-sub {
+  transition: opacity 0.25s ease 0.3s, transform 0.25s ease 0.3s;
+}
+
+.service-card-rocket-scene {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  overflow: hidden;
+}
+
+/* Largeur fixe (513px, taille native des images) plutôt que 100% : la
+   hauteur de la carte ne change jamais (260px fixe, cf. .services-cards),
+   seule sa largeur varie entre réduite et agrandie — avec une largeur en %,
+   le décor se redimensionnait visiblement pendant la transition de largeur
+   de l'accordéon. En largeur fixe et centré, il garde toujours les mêmes
+   dimensions ; c'est la carte elle-même (overflow:hidden sur
+   .service-card-rocket-scene) qui en montre plus ou moins, comme une
+   fenêtre qui s'ouvre ou se ferme sur un décor immobile. */
+.service-card-sky-img {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 513px;
+  height: 100%;
+  transform: translateX(-50%);
+  object-fit: cover;
+  display: block;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.service-card--rocket.content-visible .service-card-sky-img {
+  opacity: 1;
+  transition: opacity 0.55s ease;
+}
+
+/* Les nuages couvrent uniquement le bas de la carte (image cloud.svg, même
+   largeur que la carte) : la fusée, positionnée derrière eux dans l'ordre
+   du DOM (donc dans l'empilement, cf. .service-card-rocket ci-dessous, sans
+   z-index propre), se retrouve visuellement masquée là où les nuages sont
+   opaques, et visible dans le ciel là où elle les dépasse — d'où l'effet
+   "elle sort de derrière les nuages" en decollant, sans découpage manuel.
+   Comme le ciel ci-dessus, branchés directement sur .content-visible :
+   ils réapparaissent en glissant depuis le bas à chaque agrandissement de
+   la carte, et disparaissent en fondu à chaque réduction. */
+.service-card-clouds-img {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  width: 513px;
+  height: auto;
+  display: block;
+  pointer-events: none;
+  opacity: 0;
+  transform: translateX(-50%) translateY(45%);
+  /* Léger délai à la sortie : la séquence de sortie voulue est fusée, puis
+     nuages, puis texte (cf. plus bas) — mais doit rester courte, la
+     largeur de la carte commençant à se réduire seulement FADE_MS après le
+     retrait de .content-visible et finissant WIDTH_MS plus tard (cf.
+     initServicesAccordion, script.js — 200ms puis 850ms) ; un délai calé
+     sur la durée complète de la remontée de la fusée (1.3s) laissait les
+     nuages visibles sur une carte déjà réduite. */
+  transition: opacity 0.3s ease 0.15s, transform 0.3s ease 0.15s;
+}
+
+.service-card--rocket.content-visible .service-card-clouds-img {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+  transition: opacity 0.8s ease, transform 0.9s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.service-card-rocket {
+  position: absolute;
+  left: 50%;
+  /* Bien en dessous du cadre (carte haute de 260px, fusée de 147px) : à
+     cette position, overflow:hidden (sur .service-card-rocket-scene) la
+     masque entièrement à elle seule — contrairement à une valeur proche de
+     0 (type -20px), qui ne coupe qu'un léger débord et la laisse
+     très majoritairement visible malgré "opacity:0". C'est ce qui permet à
+     l'apparition ci-dessous de reposer sur la position (émerger par le bas
+     comme si elle traversait les nuages) plutôt que sur un fondu. */
+  bottom: -180px;
+  width: 104px;
+  height: 147px;
+  transform: translateX(-50%);
+  opacity: 0;
+  pointer-events: none;
+  /* Sortie si la carte se réduit pendant que la fusée est encore en vol,
+     donc pas encore fondue via @keyframes svcRocketLaunch ci-dessous (cas
+     rare en principe, cf. minutage plus bas) : simple fondu, sans animation
+     de repositionnement (cf. plus bas) — "bottom" retombe directement sur
+     -180px ci-dessus, déjà hors-champ, donc sans transition nécessaire dessus.
+     Sans délai sur ce fondu : un délai laissait auparavant la fusée
+     pleinement opaque à une position encore visible pendant toute sa durée,
+     d'où une réapparition brève et systématique si la réduction survenait
+     en pleine ascension (avant que -180px ne remplace -20px ci-dessus). */
+  transition: opacity 0.2s ease;
+}
+
+.service-card-rocket img {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* Apparition + ralenti + reprise, en un seul mouvement continu (jamais un
+   arrêt net) : un seul minutage fixe et prévisible plutôt que d'attendre
+   indéfiniment la réduction de la carte pour repartir.
+   0%→15% : léger fondu d'entrée, EN PLUS de l'émergence physique par le
+   bas (position de départ -180px, cf. .service-card-rocket plus haut, déjà
+   masquée par overflow:hidden) — pas pour la cacher (elle l'est déjà par
+   la position), mais pour qu'elle se voie moins à travers les nuages
+   pendant les tout premiers instants où elle les traverse.
+   0%→50% : montée (1.6s) qui ralentit progressivement en approchant du
+   centre — avec un tout petit délai (0.2s) par rapport à l'entrée des
+   nuages (cf. plus haut), pour ne pas la laisser apparaître à travers eux
+   avant qu'ils n'aient eu le temps de bien se mettre en place ; bien avant
+   le texte.
+   50%→100% : repart de plus en plus vite, à la MÊME vitesse (1.6s) que la
+   montée initiale, et sort du cadre par le haut. Les deux courbes
+   (cubic-bezier(0.3, 0.7, 0.4, 0.9) puis cubic-bezier(0.6, 0.1, 0.7, 0.3))
+   sont conçues pour se raccorder À VITESSE ÉGALE au point central (50%,
+   ~0.17 de vitesse normalisée des deux côtés) plutôt qu'à vitesse nulle —
+   une version précédente utilisait un "ease-in-out" classique de chaque
+   côté, qui retombe à vitesse EXACTEMENT nulle en 50%, créant un arrêt net
+   même si chaque moitié semblait smooth prise isolément. Ici la fusée
+   ralentit nettement sans jamais vraiment s'immobiliser, et la reprise
+   démarre à la même vitesse qu'elle avait en ralentissant, sans à-coup.
+   85%→100% : fondu de sortie (celui-ci reste un vrai fondu, pas un
+   masquage par position), pour que la fusée soit déjà invisible par
+   opacité une fois son trajet terminé — évite tout risque de la voir
+   réapparaître brièvement si le recadrage par la carte (dont la largeur
+   change au même moment, cf. is-expanded) ne se met pas à jour au bon
+   instant.
+   1.6s + 1.6s = 3.2s au total, un peu moins que les ~3.45s d'affichage
+   réel : la fusée a donc normalement fini de sortir AVANT que la carte ne
+   se réduise. Chaque agrandissement relance depuis 0%, même principe que
+   .service-card-map-dot::after plus haut. */
+.service-card--rocket.content-visible .service-card-rocket {
+  opacity: 0;
+  animation: svcRocketLaunch 3.2s ease 0.2s forwards;
+}
+
+@keyframes svcRocketLaunch {
+  0%   { bottom: -180px; opacity: 0; transform: translateX(-50%); animation-timing-function: cubic-bezier(0.3, 0.7, 0.4, 0.9); }
+  15%  { opacity: 1; }
+  50%  { bottom: 30px;   transform: translateX(-50%); animation-timing-function: cubic-bezier(0.6, 0.1, 0.7, 0.3); }
+  85%  { opacity: 1; }
+  100% { bottom: 500px;  opacity: 0; transform: translateX(-50%); }
+}
+
+/* ── Carte "Estimation du prix" : lumières chaudes vert-jaune qui
+   apparaissent en arrière-plan uniquement quand la carte est agrandie,
+   même principe que le ciel/les nuages de la carte fusée ci-dessus (fondu
+   entrée/sortie piloté par .content-visible, overflow:hidden sur
+   .service-card qui masque tout débord).
+   Une seule couche de fond (.service-card-price-glow-base) couvre TOUTE la
+   carte, bord à bord (inset:0, sans border-radius ni décalage en coin) :
+   son propre dégradé radial fait tout le travail de fondu vers la
+   transparence en bordure, donc pas de zone blanche ni de bord net comme
+   avec des taches en coin dont le flou ne remonte pas jusqu'en haut de la
+   carte. Elle est la plus intense en son centre (là où le contenu du futur
+   graphique/prix prendra place) et s'éclaircit progressivement vers les
+   bords. Deux petites taches d'accent (glow-1/2), plus saturées, dérivent
+   doucement PRÈS du centre (comme .services-ambient-blob,
+   servicesAmbientDrift plus haut) pour donner un peu de vie sans jamais
+   s'écarter assez du centre pour recréer un bord visible.
+   .service-card-content bleede par-dessus le padding (margin négative,
+   width/height compensées), exactement comme .service-card--rocket
+   ci-dessus : nécessaire pour que .service-card-price-scene (inset:0)
+   couvre TOUTE la carte plutôt que la seule boîte de .service-card-content.
+   Une simple correction de transform ne suffit pas ici : la règle
+   générique .service-card-content anime "transform" (translateY, jamais
+   la valeur "none") pour l'entrée/sortie du texte, et
+   .service-card.content-visible .service-card-content (3 classes) est
+   plus spécifique que n'importe quelle règle à 2 classes ciblant cette
+   carte — donc "transform" y reste toujours une matrice (translateY(0)),
+   jamais littéralement "none", ce qui crée malgré tout un containing
+   block CSS pour les descendants en position:absolute et les borne à la
+   boîte (rétrécie par le padding) de .service-card-content. Bleeder cette
+   boîte jusqu'aux bords de la carte rend ce containing block sans
+   incidence, quelle que soit sa taille exacte. ── */
+.service-card--price .service-card-content {
+  margin: -1.5rem;
+  width: calc(100% + 3rem);
+  height: calc(100% + 3rem);
+  padding: 1.4rem 1.5rem;
+  opacity: 1;
+  transform: none;
+}
+
+.service-card-price-scene {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+/* Sortie du fond : délai callé sur la durée du fondu du CONTENU
+   (.service-card-header/.service-card-sub/.service-card-price-bar,
+   0.25s, sans délai) — le fond n'entame son propre fondu qu'une fois
+   celui du contenu terminé, plutôt que tout disparaître d'un bloc. */
+.service-card-price-glow-base {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity 0.45s ease 0.25s;
+  background: radial-gradient(ellipse farthest-corner at 50% 50%,
+    #B7E36B 0%,
+    #C9E888 35%,
+    #E3E79A 65%,
+    rgba(230, 231, 170, 0.55) 100%);
+}
+
+/* Fond de carte gardé blanc : cette couche reste translucide (opacité
+   cible modérée, plutôt qu'un quasi-aplat) pour se lire comme des lumières
+   posées SUR un fond blanc plutôt que comme un remplacement de ce fond par
+   une couleur pleine. Entrée longue et très amortie (cubic-bezier partagé
+   avec .svc-reveal plus haut) pour une apparition en douceur ; une fois
+   entrée, une légère "respiration" (échelle seule, jamais l'opacité, pour
+   ne pas rentrer en conflit avec la transition d'entrée) lui donne un peu
+   de vie sans redevenir un aplat statique. */
+.service-card--price.content-visible .service-card-price-glow-base {
+  opacity: 0.45;
+  transition: opacity 1.4s cubic-bezier(0.22, 1, 0.36, 1) 0.1s;
+  animation: servicesPriceGlowBreathe 11s ease-in-out infinite 1.5s;
+}
+
+/* Dérive des 4 taches : amplitude propre à cette carte (bien plus marquée
+   que .services-ambient-blob/servicesAmbientDrift plus haut, pensée pour
+   de grands halos plein viewport où un déplacement de quelques % est déjà
+   énorme en pixels — ici, sur une carte de quelques centaines de pixels,
+   la même amplitude passait presque inaperçue derrière le flou de 70px).
+   Reste "doux" via une durée longue (14-20s) et un easing ease-in-out :
+   le mouvement est bien visible sans jamais être rapide ou saccadé. */
+.service-card-price-glow {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(50px);
+  opacity: 0;
+  transition: opacity 0.45s ease 0.25s;
+  will-change: transform, opacity;
+  animation: svcPriceGlowDrift 16s ease-in-out infinite;
+}
+
+@keyframes svcPriceGlowDrift {
+  0%   { transform: translate(0, 0) scale(1); }
+  25%  { transform: translate(14%, -12%) scale(1.15); }
+  50%  { transform: translate(-10%, 10%) scale(0.9); }
+  75%  { transform: translate(11%, 9%) scale(1.1); }
+  100% { transform: translate(0, 0) scale(1); }
+}
+
+/* 4 taches d'accent, chacune sa propre teinte (vert frais, jaune doux,
+   menthe, or chaud) plutôt que 2 : à s'entrecroiser et se fondre au
+   centre, avec une dérive (durée/délai d'animation) propre à chacune pour
+   qu'elles ne bougent jamais exactement en phase. Apparition volontaire-
+   ment décalée (délais de transition croissants ci-dessous) pour que les
+   lumières s'allument l'une après l'autre plutôt que toutes en même temps,
+   sans jamais viser un fondu si long qu'elles semblent indépendantes :
+   chaque décalage reste petit devant la durée de la transition elle-même,
+   donc 2-3 lumières sont toujours en train de se mélanger à un instant
+   donné. */
+.service-card--price.content-visible .service-card-price-glow-1 {
+  opacity: 0.4;
+  transition: opacity 1.2s cubic-bezier(0.22, 1, 0.36, 1) 0.3s;
+}
+.service-card--price.content-visible .service-card-price-glow-2 {
+  opacity: 0.35;
+  transition: opacity 1.2s cubic-bezier(0.22, 1, 0.36, 1) 0.5s;
+}
+.service-card--price.content-visible .service-card-price-glow-3 {
+  opacity: 0.38;
+  transition: opacity 1.2s cubic-bezier(0.22, 1, 0.36, 1) 0.7s;
+}
+.service-card--price.content-visible .service-card-price-glow-4 {
+  opacity: 0.32;
+  transition: opacity 1.2s cubic-bezier(0.22, 1, 0.36, 1) 0.9s;
+}
+
+@keyframes servicesPriceGlowBreathe {
+  0%   { transform: translate(0, 0) scale(1); }
+  50%  { transform: translate(-3%, 2%) scale(1.06); }
+  100% { transform: translate(0, 0) scale(1); }
+}
+
+/* Tailles/positions en PX FIXES plutôt qu'en % : comme pour
+   .service-card-sky-img/.service-card-clouds-img plus haut (cf. leur
+   commentaire), un % obligerait le navigateur à recalculer le layout de
+   CES ÉLÉMENTS FLOUTÉS (filter:blur, déjà coûteux à repeindre) à CHAQUE
+   frame pendant les 0.85s où la largeur de la carte change (accordéon,
+   WIDTH_MS) — d'où le ralentissement observé à l'agrandissement/
+   réduction. En px fixes, leur layout ne dépend plus de la largeur de la
+   carte ; .service-card-price-scene (overflow:hidden) les rogne
+   simplement un peu plus ou moins selon l'état réduit/agrandi, exactement
+   comme le ciel/les nuages de la carte fusée. Valeurs choisies pour
+   correspondre visuellement aux anciens % sur une carte agrandie
+   d'environ 500×260px. */
+.service-card-price-glow-1 {
+  top: 31px;
+  left: 50px;
+  width: 275px;
+  height: 169px;
+  background: radial-gradient(circle, #9AD65C 0%, #9AD65C 25%, rgba(154, 214, 92, 0) 75%);
+  animation-duration: 15s;
+}
+
+.service-card-price-glow-2 {
+  bottom: 26px;
+  right: 60px;
+  width: 290px;
+  height: 177px;
+  background: radial-gradient(circle, #EADE72 0%, #EADE72 25%, rgba(234, 222, 114, 0) 75%);
+  animation-duration: 19s;
+  animation-delay: -9s;
+}
+
+.service-card-price-glow-3 {
+  top: 21px;
+  right: 70px;
+  width: 250px;
+  height: 156px;
+  background: radial-gradient(circle, #7ED9A6 0%, #7ED9A6 25%, rgba(126, 217, 166, 0) 75%);
+  animation-duration: 17s;
+  animation-delay: -4s;
+}
+
+.service-card-price-glow-4 {
+  bottom: 31px;
+  left: 40px;
+  width: 260px;
+  height: 161px;
+  background: radial-gradient(circle, #F2C94C 0%, #F2C94C 25%, rgba(242, 201, 76, 0) 75%);
+  animation-duration: 20s;
+  animation-delay: -14s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .service-card-price-glow,
+  .service-card-price-glow-base { animation: none; }
+}
+
+/* Compteur de prix (3 chiffres + €), entre le sous-titre et les colonnes
+   (dans le flux normal, contrairement aux colonnes ancrées en bas — cf.
+   plus bas — puisqu'il n'a pas besoin d'être détaché du texte : il occupe
+   justement l'espace laissé libre entre les deux). Centré horizontalement
+   comme les colonnes (width:fit-content + margin:auto), et rejoint le
+   même groupe d'entrée/sortie que le reste du texte (apparition en
+   cascade après le sous-titre à l'entrée, fondu simple et sans délai à la
+   sortie — cf. .service-card-header/.service-card-sub plus haut et
+   .service-card-price-bar plus bas pour la même logique). */
+.service-card-price-counter {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  width: fit-content;
+  margin: 0.5rem auto 0;
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 800;
+  font-size: 1.7rem;
+  color: #fff;
+  opacity: 0;
+  transform: translateY(6px);
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+
+.service-card--price.content-visible .service-card-price-counter {
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 0.45s cubic-bezier(0.22, 1, 0.36, 1) 0.65s,
+              transform 0.45s cubic-bezier(0.22, 1, 0.36, 1) 0.65s;
+}
+
+/* Chaque chiffre : position FIXE — pas de tambour 3D qui tourne, pas de
+   bande qui défile hors cadre. Les 10 valeurs (0-9) sont superposées au
+   même endroit (position:absolute, inset:0, sur .service-card-price-digit
+   qui sert de repère). Chaque face reste TOUJOURS dans les limites de la
+   boîte (overflow:hidden, léger déplacement de ±6px seulement, jamais la
+   pleine hauteur) : l'impression de mouvement façon odomètre vient
+   uniquement du COMBO fondu + petit glissement vertical en place (jamais
+   d'un vrai défilement qui sortirait de la zone). Les 10 faces partagent
+   la même durée totale (--dur, propre à chaque CHIFFRE) mais avec un
+   animation-delay négatif propre à chaque face (--delay = -(index/10) *
+   durée, cf. HTML) : ce déphasage les fait s'enchaîner dans le bon ordre
+   (0,1,2...9) au sein d'un seul cycle en boucle. Tourne EN PERMANENCE,
+   indépendamment de .content-visible (comme la dérive des lumières,
+   servicesAmbientDrift/svcPriceGlowDrift plus haut) — seule la visibilité
+   du conteneur parent dépend de l'accordéon. */
+.service-card-price-digit {
+  position: relative;
+  height: 1.15em;
+  width: 0.62em;
+  overflow: hidden;
+}
+
+.service-card-price-digit-face {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  animation: svcPriceDigitRoll var(--dur, 2.4s) ease-in-out infinite;
+  animation-delay: var(--delay, 0s);
+}
+
+@keyframes svcPriceDigitRoll {
+  0%   { opacity: 0; transform: translateY(-11px); filter: blur(2px); }
+  8%   { opacity: 1; transform: translateY(0); filter: blur(0); }
+  10%  { opacity: 1; transform: translateY(0); filter: blur(0); }
+  18%  { opacity: 0; transform: translateY(11px); filter: blur(2px); }
+  100% { opacity: 0; transform: translateY(11px); filter: blur(2px); }
+}
+
+.service-card-price-currency {
+  margin-left: 0.2em;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .service-card-price-digit-face { animation: none; }
+  .service-card-price-digit-face:first-child { opacity: 1; transform: none; }
+}
+
+/* Colonnes façon graphique d'estimation, sous le titre/sous-titre. Hauteurs
+   fixes mais volontairement irrégulières (--bar-h par colonne, cf. HTML)
+   pour un rendu "aléatoire" plutôt qu'un histogramme propre. z-index:2 :
+   au-dessus de .service-card-price-scene (z-index:1, cf. plus haut) mais
+   sous le texte (.service-card-header/.service-card-sub, z-index:3).
+   Chaque colonne grandit depuis sa base (scaleY, transform-origin:bottom)
+   plutôt qu'un simple fondu, pour bien lire l'effet "graphique qui se
+   dessine". Délai croissant par colonne (--i, calc()) : elles apparaissent
+   une à une de gauche à droite plutôt que toutes en même temps. Comme le
+   reste de cette carte (lumières, cf. plus haut), le fondu de SORTIE
+   (règle de base ci-dessous, hors .content-visible) reste rapide et sans
+   décalage : seule l'ENTRÉE est étalée dans le temps.
+   width:fit-content + margin:auto sur le conteneur : le groupe de colonnes
+   reste centré horizontalement dans la carte quel que soit le nombre de
+   colonnes, plutôt que de s'étirer bord à bord (cf. .service-card-price-bar
+   width fixe ci-dessous, pas flex-grow).
+   Ancré en bas de la carte (position:absolute, bottom) plutôt que poussé
+   par une marge sous le sous-titre : détache le groupe du flux normal du
+   texte, pour qu'il reste collé au bas de la carte plutôt qu'au milieu,
+   et pour laisser tout l'espace entre le sous-titre et lui libre (prévu
+   pour une future animation de prix). left/right:0 + margin:auto reprend
+   le même centrage horizontal qu'avant, cette fois via une boîte pleine
+   largeur plutôt que le flux du texte. */
+.service-card-price-bars {
+  position: absolute;
+  z-index: 2;
+  left: 0;
+  right: 0;
+  bottom: 1.4rem;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 8px;
+  height: 90px;
+  margin: 0 auto;
+  width: fit-content;
+  /* Fondu sur les bords gauche/droit du graphique (pas de la carte
+     entière : le masque est relatif à cette boîte, dimensionnée à
+     width:fit-content sur le seul groupe de colonnes) — adoucit la
+     coupure nette des colonnes les plus à l'extérieur plutôt que de les
+     laisser s'arrêter net. */
+  -webkit-mask-image: linear-gradient(to right, transparent 0%, black 14%, black 86%, transparent 100%);
+  mask-image: linear-gradient(to right, transparent 0%, black 14%, black 86%, transparent 100%);
+}
+
+/* Sortie : simple fondu, sans décalage ni collapse par colonne — même
+   durée (0.25s, sans délai) que .service-card-header/.service-card-sub
+   ci-dessus (règle générique), pour que le "contenu" de la carte (texte +
+   colonnes) disparaisse comme un seul bloc cohérent. C'est le fond
+   (.service-card-price-glow-base/-glow, plus bas) qui attend ensuite que
+   CE fondu soit terminé avant de démarrer le sien (transition-delay callé
+   sur cette même durée) — pas l'inverse. */
+.service-card-price-bar {
+  flex: 0 0 auto;
+  width: 20px;
+  height: var(--bar-h);
+  border-radius: 5px;
+  background: rgba(255, 255, 255, 0.92);
+  transform: scaleY(0);
+  transform-origin: bottom;
+  opacity: 0;
+  transition: transform 0.25s ease, opacity 0.25s ease;
+}
+
+/* Une fois la colonne sortie de terre (transition scaleY 0→1 ci-dessous),
+   une animation continue (svcPriceBarWobble) prend le relais SUR LA MÊME
+   propriété "transform" pour la faire monter/descendre sans arrêt, comme
+   un égaliseur audio. Son animation-delay reprend exactement le même calc
+   que le délai + la durée de la transition d'entrée (i * 0.055s + 0.2s +
+   0.55s), afin qu'elle démarre pile au moment où la colonne finit
+   d'apparaître ("dès qu'elle apparaît", pas avant ni après) — sa 1ère
+   étape (0%) vaut scaleY(1) pour repartir sans à-coup de la valeur où la
+   transition l'a laissée. Durée propre à chaque colonne (--dur, cf. HTML,
+   2.3-4s) plutôt qu'une seule durée partagée : combinée aux étapes
+   irrégulières du keyframe (jamais un simple va-et-vient sinusoïdal), les
+   colonnes se désynchronisent vite et donnent une impression de mouvement
+   aléatoire plutôt qu'une pulsation d'ensemble bien visible. Une
+   animation continue non gated par .content-visible casserait la
+   transition d'entrée (une "animation" l'emporte toujours sur une
+   "transition" ciblant la même propriété) — elle est donc déclarée
+   uniquement ici, pas sur la règle de base. */
+.service-card--price.content-visible .service-card-price-bar {
+  transform: scaleY(1);
+  opacity: 1;
+  transition: transform 0.55s cubic-bezier(0.22, 1, 0.36, 1) calc(var(--i) * 0.055s + 0.2s),
+              opacity 0.45s ease calc(var(--i) * 0.055s + 0.2s);
+  animation: svcPriceBarWobble var(--dur, 3s) ease-in-out infinite calc(var(--i) * 0.055s + 0.75s);
+}
+
+@keyframes svcPriceBarWobble {
+  0%   { transform: scaleY(1); }
+  18%  { transform: scaleY(0.92); }
+  34%  { transform: scaleY(1.07); }
+  52%  { transform: scaleY(0.96); }
+  71%  { transform: scaleY(1.1); }
+  88%  { transform: scaleY(0.98); }
+  100% { transform: scaleY(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .service-card-price-bar { transition: none; }
+  .service-card--price.content-visible .service-card-price-bar { animation: none; transition: none; }
+}
+
+/* Pas de relais de secours pour "bottom" si la carte se réduit en pleine
+   ascension (cas rare, cf. minutage ci-dessus) : une version précédente
+   relançait alors une @keyframes dédiée depuis une position fixe (30px),
+   mais celle-ci pouvait se déclencher juste après que la fusée ait déjà
+   quitté le cadre par ses propres moyens — provoquant une réapparition
+   brève et bien visible au milieu de la carte. Sans cette règle, le
+   retrait de .content-visible fait simplement retomber "bottom" sur la
+   valeur de base (-180px, hors-champ) — sans transition dessus, donc d'un
+   coup, mais invisible puisque déjà masqué par overflow:hidden — pendant
+   que l'opacité s'estompe normalement (cf. .service-card-rocket
+   ci-dessus). Seul inconvénient : si la carte se réduit vraiment pendant
+   le vol (rare), la fusée s'arrête net au lieu de continuer sa montée —
+   un compromis largement préférable à une réapparition parasite. */
 
 /* ── Apparition en cascade (déclenchée par .lights-active), + transition
    flex-grow de l'accordéon (cf. commentaire sur .service-card ci-dessus pour
@@ -1084,20 +1878,244 @@ body.is-loading .hero-highlight-glow {
 #services.lights-active .svc-reveal-3 { transition-delay: 0.65s, 0.65s, 0s, 0s; }
 #services.lights-active .svc-reveal-4 { transition-delay: 0.85s, 0.85s, 0s, 0s; }
 
-/* Mobile : mêmes proportions, gabarit plus compact */
+/* Mobile : plus d'accordéon horizontal (pas assez de place pour 3 cartes
+   même réduites) — les 3 cartes sont empilées exactement à la même
+   position (position:absolute, inset:0, dans .services-cards passé en
+   position:relative) plutôt que côte à côte. Aucune des 3 n'est jamais
+   agrandie/réduite (flex-grow devient sans effet dès qu'un enfant est en
+   position:absolute, sort du flux flex) : la carte ne bouge ni ne change
+   de taille. Seul CE QUI EST DESSUS continue d'alterner, exactement comme
+   avant, via les mêmes classes .content-visible déjà posées par
+   initServicesAccordion (script.js, inchangé) — chaque variante (fond de
+   carte de Bruxelles, ciel/nuages, lumières/colonnes/prix) est déjà
+   entièrement pilotée par .content-visible (opacity:0 par défaut), donc
+   les 3 jeux de contenu se fondent l'un dans l'autre sans rien connaître
+   de plus. Le coffrage translucide (fond blanc/flou/ombre) des 3 cartes,
+   lui, N'EST PAS masqué ici : il reste affiché en permanence (identique
+   d'une carte à l'autre, donc invisible en tant que tel une fois
+   superposé) plutôt que de tout faire disparaître pendant la fenêtre
+   FADE_MS+WIDTH_MS où aucune carte n'est encore .content-visible — sans
+   ça, la carte semblerait s'effacer entièrement une seconde entre deux
+   contenus au lieu de rester en place, vide, comme sur desktop pendant
+   ce même intervalle. */
 @media (max-width: 768px) {
   .services-cards {
-    max-width: 400px;
-    height: 220px;
-    margin-top: 1.2rem;
-    gap: 0.4rem;
+    position: relative;
+    /* .section-inner (parent) n'a pas de padding propre : les 2rem de
+       .section (hérités par #services) sont ce qui borde la carte de
+       chaque côté. On en "reprend" une partie (20px sur les 32px) pour
+       agrandir la carte, tout en gardant un petit espace (12px) plutôt que
+       d'aller pile au bord de l'écran. */
+    width: calc(100% + 40px);
+    max-width: 460px;
+    margin: 1.2rem -20px 0;
+    /* Mêmes proportions que la carte agrandie sur ordinateur (mesurée à
+       512.66×260px, cf. .service-card.is-expanded plus haut) plutôt qu'un
+       ratio propre au mobile : aspect-ratio calcule la hauteur à partir de
+       la largeur réellement disponible, donc la carte grandit/rétrécit
+       globalement tout en gardant la même forme qu'en version ordinateur. */
+    aspect-ratio: 512.664 / 260;
+    height: auto;
   }
   .service-card {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
     padding: 1.1rem;
   }
+  /* Fondu de sortie de la carte ENTIÈRE (pas seulement son texte/décor,
+     cf. .content-visible plus bas pour ceux-là) : chaque affichage
+     (carte de Bruxelles, fusée, prix) disparaît maintenant en douceur
+     avant que le suivant n'apparaisse, plutôt que de rester un coffrage
+     vide entre deux contenus.
+     Préfixe #services.lights-active OBLIGATOIRE ici : .svc-reveal (plus
+     haut) porte la règle #services.lights-active .svc-reveal { opacity:1 }
+     — un sélecteur avec ID, donc de spécificité bien supérieure à un
+     simple .service-card. Sans ce même préfixe, CETTE règle-ci (opacity:0)
+     perdait systématiquement face à celle de .svc-reveal (qui s'applique
+     en continu dès que la section est active, sans rapport avec
+     .content-visible) et la carte ne disparaissait jamais. */
+  #services.lights-active .service-card {
+    opacity: 0;
+    transition: opacity 0.5s ease;
+  }
+  /* z-index:2 : sans ça, les 2 cartes inactives (coffrage blanc
+     translucide + backdrop-filter, jamais transparent même sans contenu)
+     se retrouveraient empilées PAR-DESSUS la carte active selon l'ordre
+     du DOM (map, rocket, price) — et la masqueraient complètement plutôt
+     que de rester discrètement dessous. */
+  #services.lights-active .service-card.content-visible {
+    opacity: 1;
+    z-index: 2;
+    transition: opacity 0.4s ease 0.1s;
+  }
+  .service-card--map {
+    padding: 0;
+  }
+  /* Le "bleed" (marge négative + largeur/hauteur compensées) de
+     .service-card-content--map/--rocket/--price plus haut est calé sur le
+     padding DESKTOP (1.5rem, soit -1.5rem/+3rem) : sur mobile, le padding
+     de .service-card vaut 1.1rem (cf. ci-dessus), donc ces constantes ne
+     correspondent plus et le contenu déborde de la carte au lieu d'aller
+     pile bord à bord. On les recale ici sur 1.1rem (soit -1.1rem/+2.2rem)
+     — nécessaire seulement maintenant que chaque carte occupe TOUJOURS sa
+     pleine taille (empilées, cf. plus haut) : un mauvais calage ne
+     passait pas inaperçu avant (cartes réduites, contenu invisible), il
+     l'est désormais. */
+  .service-card-content--map {
+    margin: 0;
+    width: 100%;
+    height: 100%;
+    padding: 1rem 1.1rem;
+  }
+  .service-card--rocket .service-card-content,
+  .service-card--price .service-card-content {
+    margin: -1.1rem;
+    width: calc(100% + 2.2rem);
+    height: calc(100% + 2.2rem);
+    padding: 1rem 1.1rem;
+  }
+  .service-card-map-dot {
+    width: 42px;
+    height: 42px;
+  }
+  /* Taille resserrée (plutôt que le 1.1rem hérité du desktop) pour que
+     même le titre le plus long ("Estimation du prix en quelques minutes")
+     tienne sur une seule ligne dans la largeur désormais disponible,
+     comme sur ordinateur — au lieu du repli en 2 lignes (white-space:
+     normal) utilisé quand la carte était plus étroite. */
   .service-card-title {
-    font-size: 0.95rem;
-    white-space: normal;
+    font-size: 0.85rem;
+    white-space: nowrap;
+  }
+  .service-card-sub {
+    font-size: 0.78rem;
+  }
+
+  /* Carte prix : la carte mobile est maintenant plus basse (aspect-ratio
+     calée sur ordinateur, cf. .services-cards plus haut) qu'avant
+     (220px de haut fixe) — le compteur de prix et les colonnes, pensés
+     pour les 260px de la carte ordinateur, se chevauchaient désormais.
+     Compteur rétréci, et colonnes réduites en bloc via transform:scale
+     (jamais leur --bar-h individuelle, cf. HTML) pour garder les mêmes
+     proportions relatives entre elles sans avoir à toucher aux 15
+     valeurs une par une. */
+  .service-card-price-counter {
+    font-size: 1.3rem;
+    margin: 0.3rem auto 0;
+  }
+  /* Centrage explicite (left:50% + translateX(-50%), combiné au scale)
+     plutôt que left:0/right:0/margin:auto (base, plus haut) : plus
+     robuste une fois combiné à un transform de mise à l'échelle, qui ne
+     dépend plus du calcul de largeur fit-content dans le contexte replié
+     de la carte mobile. */
+  .service-card-price-bars {
+    left: 50%;
+    right: auto;
+    bottom: 0.5rem;
+    margin: 0;
+    transform: translateX(-50%) scale(0.62);
+    transform-origin: bottom center;
+  }
+
+  /* Fusée légèrement plus petite sur mobile (proportion ~80% de sa taille
+     ordinateur) : à cette échelle mobile, elle paraissait un peu grande
+     par rapport au reste de la carte. */
+  .service-card-rocket {
+    width: 82px;
+    height: 116px;
+  }
+
+  /* Les 3 cartes étant desormais superposées au même endroit, les faire
+     apparaître au même instant (plutôt que le décalage en cascade prévu
+     pour 3 cartes côte à côte) évite un effet de "triple flash" au tout
+     premier affichage de la section. */
+  #services.lights-active .svc-reveal-2,
+  #services.lights-active .svc-reveal-3 {
+    transition-delay: 0.25s, 0.25s, 0s, 0s;
+  }
+}
+
+/* ─────────────────────────────────────────────
+   Barre de progression de l'accordéon (3 traits, un par carte du
+   dessus) : indique quelle carte est active, comme les story bars
+   d'Instagram. Pilotée par initServicesAccordion (script.js) via
+   .is-filling, posée UNIQUEMENT sur la carte active : le trait s'allonge
+   et se remplit en 4.5s (même durée que STEP_MS), puis se réduit à
+   nouveau une fois .is-filling retiré (carte suivante) — redevenant
+   identique aux traits pas encore atteints (même gris, même taille
+   réduite), sans état "plein" intermédiaire qui le ferait ressortir
+   d'une teinte différente une fois réduit. .is-done (cartes déjà vues
+   dans le tour en cours) est toujours posée par le JS mais n'a plus
+   d'effet visuel ici. ── */
+.services-progress {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  max-width: 300px;
+  margin: 1.5rem auto 0;
+  opacity: 0;
+  transform: translateY(10px);
+  transition: opacity 0.7s cubic-bezier(0.22, 1, 0.36, 1),
+              transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Apparition en cascade après les 4 cartes (mêmes délais, cf. .svc-reveal-4
+   ci-dessous : 0.85s), donc la barre arrive juste après elles. Disparition
+   (retrait de .lights-active) sans délai, comme .svc-reveal — même
+   principe, juste appliqué au groupe des 3 traits plutôt qu'à chaque
+   carte individuellement. */
+#services.lights-active .services-progress {
+  opacity: 1;
+  transform: translateY(0);
+  transition-delay: 0.95s;
+}
+
+/* Petits traits courts par défaut (24px) : seul celui de la carte active
+   s'allonge (flex-basis, pas une largeur en % du conteneur — chaque trait
+   garde sa propre taille indépendamment des 2 autres) pour devenir la
+   barre de progression, puis se réduit à nouveau une fois terminé quand
+   le suivant prend le relais. */
+.services-progress-seg {
+  flex: 0 0 24px;
+  height: 4px;
+  border-radius: 2px;
+  background: rgba(0, 0, 0, 0.22);
+  overflow: hidden;
+  opacity: 0.7;
+  transition: flex-basis 0.4s ease, opacity 0.3s ease;
+}
+
+.services-progress-seg.is-filling {
+  flex-basis: 70px;
+  opacity: 1;
+}
+
+.services-progress-fill {
+  display: block;
+  height: 100%;
+  width: 100%;
+  border-radius: inherit;
+  background: var(--black);
+  transform: scaleX(0);
+  transform-origin: left;
+}
+
+.services-progress-seg.is-filling .services-progress-fill {
+  animation: servicesProgressFill 4.5s linear forwards;
+}
+
+@keyframes servicesProgressFill {
+  from { transform: scaleX(0); }
+  to   { transform: scaleX(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .services-progress-seg.is-filling .services-progress-fill {
+    animation: none;
+    transform: scaleX(1);
   }
 }
 
@@ -3160,15 +4178,46 @@ form {
     width: min(720px, 94%);
   }
 
+  /* Sur mobile, la "carte verre" (fond, flou, bordure, ombre, halo ::before)
+     disparaît : seuls le titre, la description et les boutons restent,
+     posés directement sur le fond du hero. */
   .hero-card {
-    padding: 2.2rem 1.1rem;
-    border-radius: 24px;
+    padding: 2.2rem 0 0;
+    background: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    border: none;
+    box-shadow: none;
+  }
+
+  .hero-card::before {
+    content: none;
+  }
+
+  /* Plus de carte visible à faire "atterrir" : l'envol 3D (heroCardDrop) et
+     le flottement continu (heroCardFloat) sont coupés, sinon le bloc de
+     texte entier tanguerait/pencherait sans aucun repère visuel de carte
+     autour de lui. Seules les animations mot par mot du titre/description
+     (.hero-reveal-word) et des boutons (.hero-actions .btn-primary/
+     .btn-outline) restent : elles suffisent à faire "apparaître" le contenu. */
+  .hero-card,
+  .hero-card.is-entering {
+    animation: none;
+  }
+
+  /* Regroupe "à votre rythme et à votre budget." sur sa propre ligne (cf.
+     .hero-desc-break plus haut, masqué par défaut). */
+  .hero-desc-break {
+    display: inline;
   }
 
   /* Titre plafonné pour rester lisible sur petit écran, sans les clamp
-     desktop qui viseraient jusqu'à 5rem. */
+     desktop qui viseraient jusqu'à 5rem. Plancher abaissé à 1.7rem (au lieu
+     de 2.1rem) : sur les écrans étroits (~320-360px), l'ancien plancher
+     dépassait la valeur fluide (vw) et forçait un troisième retour à la
+     ligne disgracieux malgré le <br/> déjà posé dans le HTML. */
   .hero-content h1 {
-    font-size: clamp(2.1rem, 9vw, 2.8rem);
+    font-size: clamp(1.7rem, 8.5vw, 2.8rem);
   }
 
   .hero-content p {
