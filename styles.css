@@ -5203,21 +5203,83 @@ form {
    RESPONSIVE
    ============================================= */
 @media (max-width: 768px) {
-  /* perspective sur la nav : nécessaire pour que le rotateX du panneau
-     plein écran ci-dessous se perçoive comme un vrai panneau qui bascule
-     (effet "billboard flip"), et non comme un simple aplatissement. */
-  .nav {
-    perspective: 1400px;
+  /* Menu mobile façon panneau publicitaire "trivision" : 8 lattes
+     horizontales empilées (.nav-flip-slat, une par 1/8 de la hauteur
+     d'écran, cf. index.html) basculent chacune de 0 à 180deg autour de
+     leur bord supérieur, avec un léger décalage (transition-delay) entre
+     lattes voisines - la 1ère en haut part avant la suivante juste en
+     dessous, etc., ce qui donne la vague de bascule "de haut en bas"
+     caractéristique de ces panneaux. Chaque latte a une face avant
+     transparente (laisse voir la page au repos) et une face arrière
+     blanche (backface-visibility:hidden classique des flip-cards) : au
+     repos on ne voit donc rien, à l'ouverture l'écran devient blanc latte
+     par latte. .nav-links (juste après) affiche ensuite les liens
+     par-dessus, une fois la cascade de lattes terminée. */
+  .nav-flip {
+    position: fixed;
+    inset: 0;
+    height: 100dvh;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    pointer-events: none;
   }
 
-  /* Menu plein écran façon panneau d'affichage à bascule ("billboard
-     flip") : le panneau blanc est articulé en haut (transform-origin:top)
-     et pivote autour de l'axe X, replié hors champ (rotateX(-100deg), donc
-     invisible) au repos puis rabattu à plat (rotateX(0)) à l'ouverture -
-     comme un volet qui se déploie de haut en bas. Toujours dans le flux
-     (display:flex) : la visibilité passe par transform + visibility, pas
-     display:none, pour pouvoir s'animer dans les deux sens (cf.
-     closeMobileMenu, script.js). */
+  .nav-flip.open {
+    pointer-events: auto;
+  }
+
+  .nav-flip-slat {
+    flex: 1 1 0%;
+    position: relative;
+    perspective: 900px;
+  }
+
+  .nav-flip-slat-inner {
+    position: absolute;
+    inset: 0;
+    transform-style: preserve-3d;
+    transform-origin: top;
+    transform: rotateX(0deg);
+    transition: transform 0.48s cubic-bezier(0.7, 0, 0.3, 1);
+  }
+
+  .nav-flip.open .nav-flip-slat-inner {
+    transform: rotateX(180deg);
+  }
+
+  /* Décalage en cascade, haut -> bas : s'applique dans les deux sens
+     (ouverture ET fermeture utilisent le même ordre de lattes) puisqu'il
+     est posé sur .nav-flip-slat-inner lui-même, pas sur une variante
+     ".open". */
+  .nav-flip-slat:nth-child(2) .nav-flip-slat-inner { transition-delay: 0.07s; }
+  .nav-flip-slat:nth-child(3) .nav-flip-slat-inner { transition-delay: 0.14s; }
+  .nav-flip-slat:nth-child(4) .nav-flip-slat-inner { transition-delay: 0.21s; }
+  .nav-flip-slat:nth-child(5) .nav-flip-slat-inner { transition-delay: 0.28s; }
+  .nav-flip-slat:nth-child(6) .nav-flip-slat-inner { transition-delay: 0.35s; }
+  .nav-flip-slat:nth-child(7) .nav-flip-slat-inner { transition-delay: 0.42s; }
+  .nav-flip-slat:nth-child(8) .nav-flip-slat-inner { transition-delay: 0.49s; }
+
+  .nav-flip-face {
+    position: absolute;
+    inset: 0;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+  }
+
+  .nav-flip-face-front {
+    background: transparent;
+  }
+
+  .nav-flip-face-back {
+    background: var(--white);
+    transform: rotateX(180deg);
+  }
+
+  /* .nav-links n'est plus le panneau blanc lui-même (désormais porté par
+     .nav-flip ci-dessus) : juste un calque transparent qui centre les
+     liens par-dessus, visible/cliquable seulement une fois le menu
+     ouvert. */
   .nav-links {
     display: flex;
     position: fixed;
@@ -5229,28 +5291,24 @@ form {
     justify-content: center;
     gap: 0;
     padding: 2rem 1.6rem;
-    background-color: var(--white);
+    background: transparent;
     visibility: hidden;
     pointer-events: none;
-    transform-origin: top center;
-    transform: rotateX(-100deg);
-    backface-visibility: hidden;
-    transition:
-      transform  0.6s cubic-bezier(0.65, 0, 0.35, 1),
-      visibility 0s linear 0.6s;
+    transition: visibility 0s linear 0.6s;
   }
 
   .nav-links.open {
     visibility: visible;
     pointer-events: auto;
-    transform: rotateX(0deg);
-    transition: transform 0.6s cubic-bezier(0.65, 0, 0.35, 1);
+    transition: visibility 0s linear 0s;
   }
 
   /* Boutons du menu affichés "par-dessus" l'écran blanc : ils apparaissent
      en fondu + léger glissement, décalés dans le temps les uns après les
-     autres et seulement une fois le panneau largement rabattu, pour ne
-     jamais se voir pendant la bascule elle-même. */
+     autres, une fois la cascade de lattes (~0.97s au total) bien avancée -
+     jamais pendant que les lattes basculent encore. À la fermeture, pas de
+     délai : le texte s'efface tout de suite, avant que les lattes ne
+     remontent. */
   .nav-links li {
     opacity: 0;
     transform: translateY(16px);
@@ -5261,15 +5319,15 @@ form {
   .nav-links.open li {
     opacity: 1;
     transform: translateY(0);
-    transition-delay: 0.32s;
+    transition-delay: 0.86s;
   }
 
   .nav-links.open li:nth-child(2) {
-    transition-delay: 0.4s;
+    transition-delay: 0.94s;
   }
 
   .nav-links.open li:nth-child(3) {
-    transition-delay: 0.48s;
+    transition-delay: 1.02s;
   }
 
   .nav-links li:not(:last-child) {
@@ -5317,11 +5375,11 @@ form {
     display: none;
   }
 
-  /* position:relative + z-index : le panneau plein écran (.nav-links) est
-     lui aussi positionné (position:fixed), donc empilé au-dessus de tout
-     élément non positionné du même contexte par défaut, quel que soit
-     l'ordre dans le DOM - sans cela le burger (qui doit rester cliquable
-     pour refermer le menu, transformé en croix) disparaîtrait sous l'écran
+  /* position:relative + z-index : .nav-flip et .nav-links sont eux aussi
+     positionnés (position:fixed), donc empilés au-dessus de tout élément
+     non positionné du même contexte par défaut, quel que soit l'ordre dans
+     le DOM - sans cela le burger (qui doit rester cliquable pour refermer
+     le menu, transformé en croix) disparaîtrait sous les lattes/l'écran
      blanc une fois le menu ouvert. */
   .nav-burger {
     display: flex;

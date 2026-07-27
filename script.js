@@ -1806,17 +1806,20 @@ function submitDevis(event) {
 // Mobile nav
 // ─────────────────────────────────────────────
 function toggleMenu() {
+  const flip = document.querySelector('.nav-flip');
   const links = document.querySelector('.nav-links');
   const burger = document.querySelector('.nav-burger');
   const isOpen = links.classList.toggle('open');
+  flip.classList.toggle('open', isOpen);
   burger.classList.toggle('open', isOpen);
   burger.setAttribute('aria-expanded', String(isOpen));
-  // Le menu occupe désormais tout l'écran (effet "billboard flip") : on
+  // Le menu occupe désormais tout l'écran (effet "trivision" à lattes) : on
   // bloque le scroll de la page derrière tant qu'il est ouvert.
   document.body.style.overflow = isOpen ? 'hidden' : '';
 }
 
 function closeMobileMenu() {
+  document.querySelector('.nav-flip').classList.remove('open');
   document.querySelector('.nav-links').classList.remove('open');
   document.querySelector('.nav-burger').classList.remove('open');
   document.querySelector('.nav-burger').setAttribute('aria-expanded', 'false');
