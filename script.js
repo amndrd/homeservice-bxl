@@ -271,6 +271,14 @@ const SERVICES = [
       { id: 'typeTravaux', label: 'Quel type de travaux ?', options: ['Peinture', 'Réparation', 'Plomberie', 'Électricité', 'Maçonnerie', 'Autre'] },
       { id: 'urgenceTravaux', label: "Quel est le degré d'urgence ?", options: ['Dès que possible', 'Cette semaine', 'Pas urgent'] }
     ]
+  },
+  // Pas de questions dédiées : ouvert via openDevisWithService('sur-mesure')
+  // depuis la carte "service sur mesure" (index.html), buildSteps() saute
+  // donc directement aux étapes communes - la carte "description" (déjà
+  // présente sur tous les parcours) sert alors à détailler la demande.
+  {
+    key: 'sur-mesure', label: 'Service sur mesure', icon: 'ph-sparkle',
+    questions: []
   }
 ];
 
@@ -1874,6 +1882,20 @@ function initSmoothAnchorScroll() {
 }
 
 // ─────────────────────────────────────────────
+// Titre + description des cartes d'info : découpés mot par mot (même
+// wrapWordsForReveal que le hero/l'intro services, cf. plus haut) pour
+// l'effet "écriture" une fois la carte retournée (cf. .info-card.is-visible
+// .info-card-title/.info-card-sub .hero-reveal-word, styles.css). L'apparition
+// elle-même reste pilotée en CSS par le même .is-visible que la carte
+// (initScrollReveal, ci-dessous) : contrairement à l'intro services, cette
+// page n'est jamais retraversée en arrière jusqu'ici, donc pas besoin de
+// rejouer/réinitialiser - poser les spans une fois au chargement suffit.
+// ─────────────────────────────────────────────
+function initInfoCardWordReveal() {
+  document.querySelectorAll('.info-card-title, .info-card-sub').forEach(wrapWordsForReveal);
+}
+
+// ─────────────────────────────────────────────
 // Apparition au scroll (.reveal → .reveal.is-visible)
 // ─────────────────────────────────────────────
 function initScrollReveal() {
@@ -1885,16 +1907,254 @@ function initScrollReveal() {
     return;
   }
 
-  const observer = new IntersectionObserver((entries) => {
+  // IntersectionObserver passe sa propre instance en 2ᵉ argument au
+  // callback : la même fonction sert donc aux deux observateurs ci-dessous,
+  // chacun avec ses propres seuils.
+  const reveal = (entries, observer) => {
     entries.forEach(entry => {
       if (entry.isIntersecting) {
         entry.target.classList.add('is-visible');
         observer.unobserve(entry.target);
       }
     });
-  }, { threshold: 0.2, rootMargin: '0px 0px -60px 0px' });
+  };
 
-  targets.forEach(el => observer.observe(el));
+  const observer = new IntersectionObserver(reveal, { threshold: 0.2, rootMargin: '0px 0px -60px 0px' });
+
+  // Cartes d'info (retournement 3D, cf. styles.css) : seuil dédié, plus
+  // strict que le reste du site (50% de la carte visible, sans marge
+  // négative en bas) - avec le seuil générique ci-dessus, ces cartes
+  // pouvaient déjà satisfaire "20% visible à 60px près du bas d'écran" dès
+  // l'arrivée en haut de la section services sur un viewport assez haut,
+  // et donc apparaître avant tout geste de scroll de la part du visiteur.
+  // Révélées en 2 temps, rangée du haut (cartes 1-2) PUIS rangée du bas
+  // (cartes 3-4) une fois qu'on scrolle plus loin : même seuil (50% de la
+  // carte visible) pour les deux, mais la rangée du bas utilise en plus un
+  // rootMargin négatif en bas (rétrécit la zone de détection aux 95% hauts
+  // de l'écran) - sans lui, les deux rangées entrent dans l'écran presque
+  // ensemble (elles se suivent de près verticalement) et se révéleraient
+  // quasi simultanément plutôt que l'une après l'autre. Marge minime (-5%,
+  // réduite depuis -15% puis -35%) : juste assez pour garder un ordre
+  // haut-puis-bas, la rangée du bas doit se révéler très tôt dans le scroll.
+  // Même avec les seuils ci-dessus, un viewport assez haut peut encore
+  // satisfaire "50% de la carte visible" dès l'arrivée en haut de #services
+  // (juste après la transition hero → services, avant tout geste de scroll
+  // du visiteur dans le contenu lui-même) : les cartes se révélaient donc
+  // parfois sans qu'aucun scroll n'ait eu lieu. On bloque donc leur
+  // révélation tant qu'aucun scroll réel n'a été détecté - sur #services
+  // (son overflow-y:auto interne, desktop) ou sur window (repli mobile/
+  // reduced-motion, où #services redevient une section en flux normal,
+  // cf. media queries dans styles.css) - puis on révèle immédiatement les
+  // cartes déjà intersectantes dès ce premier scroll, sans attendre un
+  // nouveau changement d'intersection.
+  let hasScrolledIntoContent = false;
+  const pendingInfoCards = new Set();
+
+  // Bloque le survol (.info-card:hover et tout ce qui en dépend - horloge,
+  // dossier, ticket...) tant que la carte n'a pas ENTIÈREMENT terminé son
+  // retournement 3D (cf. pointer-events:none sur .info-cards .reveal,
+  // styles.css) : sans ça, survoler une carte encore sur la tranche ou en
+  // plein retournement pouvait déclencher le soulèvement au survol en
+  // pleine bascule, un mouvement qui entre en concurrence avec l'animation
+  // d'entrée plutôt que de la laisser se terminer proprement. .is-settled
+  // (posée ici, jamais en CSS) lève ce blocage une fois le retournement
+  // réellement fini - transitionend sur `transform` plutôt qu'un délai fixe
+  // dupliqué en JS, pour rester juste même si les durées/délais CSS
+  // (transition-delay par carte, cf. styles.css) changent un jour.
+  // pointer-events n'est volontairement pas mis dans la liste `transition`
+  // CSS elle-même (essayé d'abord) : ce n'est pas une propriété
+  // interpolable, un navigateur sans `transition-behavior: allow-discrete`
+  // (encore récent) l'aurait basculée instantanément en ignorant tout délai
+  // - d'où ce passage par transitionend, fiable partout.
+  function armInfoCardSettle(el) {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      el.classList.add('is-settled');
+      return;
+    }
+    let settled = false;
+    function settle() {
+      if (settled) return;
+      settled = true;
+      el.classList.add('is-settled');
+      el.removeEventListener('transitionend', onTransitionEnd);
+      window.clearTimeout(fallbackId);
+    }
+    function onTransitionEnd(e) {
+      if (e.target === el && e.propertyName === 'transform') settle();
+    }
+    el.addEventListener('transitionend', onTransitionEnd);
+    // Filet de sécurité : au cas où transitionend ne se déclencherait pas
+    // (ex. élément retiré du DOM, transition coupée ailleurs) - 1000ms
+    // couvre largement le pire cas réel (délai carte 0.24s + durée 0.7s =
+    // 0.94s, cf. styles.css).
+    const fallbackId = window.setTimeout(settle, 1000);
+  }
+
+  const revealInfoCards = (entries, observer) => {
+    entries.forEach(entry => {
+      if (!entry.isIntersecting) return;
+      if (hasScrolledIntoContent) {
+        entry.target.classList.add('is-visible');
+        armInfoCardSettle(entry.target);
+        observer.unobserve(entry.target);
+      } else {
+        pendingInfoCards.add(entry.target);
+      }
+    });
+  };
+
+  function onFirstContentScroll() {
+    if (hasScrolledIntoContent) return;
+    hasScrolledIntoContent = true;
+    pendingInfoCards.forEach(el => {
+      el.classList.add('is-visible');
+      armInfoCardSettle(el);
+    });
+    pendingInfoCards.clear();
+  }
+  const servicesEl = document.getElementById('services');
+  if (servicesEl) servicesEl.addEventListener('scroll', onFirstContentScroll, { passive: true, once: true });
+  window.addEventListener('scroll', onFirstContentScroll, { passive: true, once: true });
+
+  const infoCardTopObserver = new IntersectionObserver(revealInfoCards, { threshold: 0.5 });
+  const infoCardBottomObserver = new IntersectionObserver(revealInfoCards, { threshold: 0.5, rootMargin: '0px 0px -5% 0px' });
+
+  targets.forEach(el => {
+    const infoCards = el.closest('.info-cards');
+    if (!infoCards) { observer.observe(el); return; }
+    const isBottomRow = Array.from(infoCards.children).indexOf(el) >= 2;
+    (isBottomRow ? infoCardBottomObserver : infoCardTopObserver).observe(el);
+  });
+}
+
+// ─────────────────────────────────────────────
+// Carte 4 (Estimation du prix) : le nombre défile aléatoirement en continu
+// (cf. .odometer-wheel/-strip/-digit, styles.css), comme un compteur qui
+// n'affiche jamais deux fois la même estimation - purement décoratif
+// (parent déjà aria-hidden), donc pas besoin de retomber sur une valeur
+// "propre" à un moment donné. Tourne dès le chargement (la carte reste
+// invisible tant que .is-visible n'est pas posée par initScrollReveal, donc
+// aucun flash avant révélation) plutôt que d'attendre le reveal.
+//
+// Chaque chiffre est une roue façon odomètre mécanique (une bande de 0 à 9
+// répétée 3 fois, cf. buildWheel) plutôt qu'un simple changement de texte :
+// on ne tourne jamais que vers l'avant (jamais en arrière, comme un vrai
+// compteur), même pour atteindre un chiffre "plus petit" (ex. 8 → 2 tourne
+// en avant à travers 9, 0, 1 plutôt que de reculer) - la bande étant
+// répétée 3 fois, `position` peut donc grossir au fil des tirages ; une
+// fois un tour complet dépassé (position >= 10), on le retranche
+// silencieusement (transition coupée le temps d'un frame) une fois la
+// transition en cours terminée, ce qui retombe pile sur le même chiffre
+// affiché - aucun saut visible, et `position` reste borné.
+function initInfoCardPriceTicker() {
+  const valueEl = document.querySelector('.info-card-price-value');
+  if (!valueEl) return;
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+  const MIN = 105;
+  const MAX = 195;
+  const DIGIT_COUNT = String(MAX).length;
+  const STRIP_LAPS = 3;
+
+  function buildWheel() {
+    const wheel = document.createElement('span');
+    wheel.className = 'odometer-wheel';
+    const strip = document.createElement('span');
+    strip.className = 'odometer-strip';
+    for (let lap = 0; lap < STRIP_LAPS; lap++) {
+      for (let n = 0; n <= 9; n++) {
+        const digit = document.createElement('span');
+        digit.className = 'odometer-digit';
+        digit.textContent = String(n);
+        strip.appendChild(digit);
+      }
+    }
+    wheel.appendChild(strip);
+    return { wheel, strip, position: 0 };
+  }
+
+  valueEl.innerHTML = '';
+  const wheels = Array.from({ length: DIGIT_COUNT }, buildWheel);
+  wheels.forEach(({ wheel }) => valueEl.appendChild(wheel));
+
+  function setValue(value, animate) {
+    const digits = String(value).padStart(DIGIT_COUNT, '0');
+    wheels.forEach((w, i) => {
+      const target = Number(digits[i]);
+      const delta = (target - (w.position % 10) + 10) % 10;
+      if (delta === 0) return;
+      w.position += delta;
+      w.strip.style.transition = animate ? '' : 'none';
+      w.strip.style.transform = `translateY(-${w.position}em)`;
+      if (w.position >= 10) {
+        w.strip.addEventListener('transitionend', function onEnd() {
+          w.strip.removeEventListener('transitionend', onEnd);
+          w.position -= 10;
+          w.strip.style.transition = 'none';
+          w.strip.style.transform = `translateY(-${w.position}em)`;
+        }, { once: true });
+      }
+    });
+  }
+
+  setValue(MIN, false);
+
+  function tick() {
+    setValue(Math.floor(MIN + Math.random() * (MAX - MIN + 1)), true);
+    setTimeout(tick, 700 + Math.random() * 500);
+  }
+  setTimeout(tick, 600);
+}
+
+// ─────────────────────────────────────────────
+// Carte 2 (RDV -24h) : horloge animée - les 3 aiguilles (cf.
+// .info-card-clock-hand-hour/-minute/-second, styles.css) tournent en
+// continu à une vitesse volontairement accélérée et purement décorative
+// (PERIOD_MS ci-dessous, propre à chaque aiguille - plus aucun rapport avec
+// l'heure réelle), pour un visuel plus vivant qu'un cadran qui semble figé.
+// Boucle rAF sur le temps écoulé (performance.now() - start) plutôt qu'un
+// compteur incrémental : reste juste même si l'onglet est mis en arrière-
+// plan puis reactivé (pas de rattrapage brutal). Rotation posée frame par
+// frame, jamais par une transition CSS sur le transform des aiguilles,
+// sinon le passage de 359° à 0° à chaque tour se rejouerait comme un tour
+// complet à l'envers au lieu d'un saut instantané.
+// Sous prefers-reduced-motion : repli sur l'heure réelle, mise à jour une
+// fois par minute seulement (pas de balayage continu, qui est lui
+// purement décoratif) - une horloge qui indique l'heure plutôt qu'un
+// spinner qui tourne vite reste plus approprié pour ce préférence.
+function initInfoCardClock() {
+  const hourHand = document.querySelector('.info-card-clock-hand-hour');
+  const minuteHand = document.querySelector('.info-card-clock-hand-minute');
+  const secondHand = document.querySelector('.info-card-clock-hand-second');
+  if (!hourHand || !minuteHand || !secondHand) return;
+
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    function renderRealTime() {
+      const now = new Date();
+      const minutes = now.getMinutes();
+      const hours = (now.getHours() % 12) + minutes / 60;
+      hourHand.style.transform = `rotate(${hours * 30}deg)`;
+      minuteHand.style.transform = `rotate(${minutes * 6}deg)`;
+      secondHand.style.transform = `rotate(${now.getSeconds() * 6}deg)`;
+    }
+    renderRealTime();
+    setInterval(renderRealTime, 60000);
+    return;
+  }
+
+  const HOUR_PERIOD_MS = 48000;
+  const MINUTE_PERIOD_MS = 12000;
+  const SECOND_PERIOD_MS = 2000;
+  const start = performance.now();
+
+  function loop(now) {
+    const elapsed = now - start;
+    hourHand.style.transform = `rotate(${(elapsed % HOUR_PERIOD_MS) / HOUR_PERIOD_MS * 360}deg)`;
+    minuteHand.style.transform = `rotate(${(elapsed % MINUTE_PERIOD_MS) / MINUTE_PERIOD_MS * 360}deg)`;
+    secondHand.style.transform = `rotate(${(elapsed % SECOND_PERIOD_MS) / SECOND_PERIOD_MS * 360}deg)`;
+    requestAnimationFrame(loop);
+  }
+  requestAnimationFrame(loop);
 }
 
 // ─────────────────────────────────────────────
@@ -1969,6 +2229,22 @@ function wrapWordsForReveal(el) {
   el.replaceChildren(frag);
 }
 
+// Vrai tant que l'atterrissage de la carte centrale et/ou des 6 cartes
+// flottantes (playHeroCardEntrance/playHeroFloatCardsEntrance ci-dessous)
+// est en cours - posé au premier chargement et à chaque retour vers
+// l'accueil (goBackward/replayHomeEntrance, initHeroPageTransition). Lu par
+// goForward (initHeroPageTransition) pour ignorer un geste de scroll vers
+// l'avant tant que l'atterrissage n'est pas terminé : sans cette garde, un
+// scroll trop rapide coupe l'atterrissage en plein vol (renderHeroExit/
+// renderFloatCardsExit posent `animation:none` puis un `transform` calculé
+// depuis la position de repos), ce qui fait "téléporter" la carte/les
+// cartes flottantes à cette position avant de repartir vers services - un
+// décroché bien visible plutôt qu'un enchaînement fluide.
+let heroEntranceCount = 0;
+function isHeroEntranceActive() {
+  return heroEntranceCount > 0;
+}
+
 // ─────────────────────────────────────────────
 // Entrée de la carte du hero (.hero-card)
 // .is-entering porte l'animation d'atterrissage 3D depuis le haut de
@@ -1981,8 +2257,12 @@ function wrapWordsForReveal(el) {
 // en arrière depuis services vers l'accueil (cf. goBackward,
 // initHeroPageTransition), pour la même animation d'arrivée dans les deux
 // cas plutôt qu'un simple fondu différent au retour.
+// extraDelayMs (retour services → accueil uniquement, cf. animateTo dans
+// initHeroPageTransition) décale l'atterrissage entier, pour que la carte ne
+// commence à apparaître qu'une fois la rangée de contenu (.services-intro-
+// row) bien avancée dans sa dispersion, plutôt qu'en même temps qu'elle.
 // ─────────────────────────────────────────────
-function playHeroCardEntrance(card) {
+function playHeroCardEntrance(card, extraDelayMs = 0) {
   // Distance de survol dynamique (même logique que measureHeroExitRise pour
   // la sortie au scroll, cf. initHeroPageTransition) : la carte doit
   // visiblement venir d'au-dessus de l'écran, pas d'une distance fixe qui
@@ -1997,13 +2277,157 @@ function playHeroCardEntrance(card) {
   card.style.transform = prevTransform;
   card.style.animation = prevAnimation;
   card.style.setProperty('--hero-entrance-rise', `${-(rect.top + rect.height + 80)}px`);
+  card.style.animationDelay = extraDelayMs > 0 ? `${extraDelayMs / 1000}s` : '';
 
   card.classList.add('is-entering');
+  heroEntranceCount++;
   card.addEventListener('animationend', function onEnd(e) {
     if (e.animationName !== 'heroCardDrop') return;
     card.classList.remove('is-entering');
+    card.style.animationDelay = '';
     card.removeEventListener('animationend', onEnd);
+    heroEntranceCount--;
   });
+}
+
+// Même principe que playHeroCardEntrance ci-dessus, mais pour les 6 cartes
+// flottantes (icônes de service) : chacune survole depuis le haut de son
+// propre point de départ (--hfc-entrance-rise, remesurée à chaque rejeu),
+// avec un décalage croissant par carte (--entrance-delay, posé en HTML) pour
+// qu'elles n'arrivent jamais toutes en même temps. Rejouable comme
+// playHeroCardEntrance (premier chargement + retour arrière services →
+// accueil, cf. animateTo dans initHeroPageTransition).
+// extraDelayMs (retour services → accueil uniquement, cf. animateTo) décale
+// l'atterrissage tout entier après --entrance-delay, pour que les 6 cartes ne
+// commencent à apparaître qu'une fois la rangée de contenu (.services-intro-
+// row) entièrement effacée, plutôt qu'en même temps que sa sortie.
+function playHeroFloatCardsEntrance(extraDelayMs = 0) {
+  const cards = document.querySelectorAll('.hero-float-card');
+  const viewportWidth = window.innerWidth;
+  const viewportHeight = window.innerHeight;
+  cards.forEach((card) => {
+    const prevTransform = card.style.transform;
+    const prevAnimation = card.style.animation;
+    card.style.animation = 'none';
+    card.style.transform = 'none';
+    const rect = card.getBoundingClientRect();
+    card.style.transform = prevTransform;
+    card.style.animation = prevAnimation;
+    card.style.setProperty('--hfc-entrance-rise', `${-(rect.top + rect.height + 80)}px`);
+    // Variante mobile (cf. heroFloatCardDropSide, styles.css) : distance
+    // jusqu'au coin d'écran le plus proche (gauche/droite ET haut/bas)
+    // plutôt que jusqu'en haut de l'écran, pour une carte qui glisse en
+    // diagonale depuis son coin. Calculée dans tous les cas (coût
+    // négligeable) même si seul le palier téléphone l'utilise réellement.
+    const entersFromLeft = rect.left + rect.width / 2 < viewportWidth / 2;
+    const riseX = entersFromLeft ? -(rect.right + 80) : (viewportWidth - rect.left + 80);
+    card.style.setProperty('--hfc-entrance-rise-x', `${riseX}px`);
+    const entersFromTop = rect.top + rect.height / 2 < viewportHeight / 2;
+    const riseY = entersFromTop ? -(rect.top + rect.height + 80) : (viewportHeight - rect.top + 80);
+    card.style.setProperty('--hfc-entrance-rise-y', `${riseY}px`);
+
+    if (extraDelayMs > 0) {
+      const baseDelay = parseFloat(getComputedStyle(card).getPropertyValue('--entrance-delay')) || 0;
+      card.style.animationDelay = `${baseDelay + extraDelayMs / 1000}s`;
+    }
+
+    card.classList.add('is-entering');
+    heroEntranceCount++;
+    card.addEventListener('animationend', function onEnd(e) {
+      if (e.animationName !== 'heroFloatCardDrop' && e.animationName !== 'heroFloatCardDropSide') return;
+      card.classList.remove('is-entering');
+      card.removeEventListener('animationend', onEnd);
+      heroEntranceCount--;
+    });
+  });
+}
+
+// ─────────────────────────────────────────────
+// Repositionnement des 4 cartes flottantes visibles sur mobile (hfc-1..4,
+// cf. palier téléphone <=768px dans styles.css). Les offsets fixes posés en
+// CSS (top/bottom en px) supposent une hauteur d'écran "courante" ; sur les
+// téléphones plus courts, ou dès que le texte du hero prend plus de place
+// que prévu, la carte de contenu (#heroContent) peut grandir jusqu'à
+// chevaucher ces offsets fixes. Cette fonction mesure la position réelle du
+// contenu et replace chaque carte dans l'espace qui reste effectivement
+// libre au-dessus (hfc-1/2) ou en dessous (hfc-3/4), en la rétrécissant si
+// cet espace est trop court plutôt que de la laisser chevaucher le texte —
+// et la masque si vraiment aucune place utile ne reste (écrans très bas).
+// Rejouée au chargement, avant playHeroFloatCardsEntrance (pour que la
+// distance de survol d'entrée se mesure déjà sur la bonne position finale),
+// puis à chaque redimensionnement/rotation/chargement de police (cf. appels
+// plus bas), aucun de ces événements ne devant laisser une ancienne position
+// invalide en place.
+function layoutMobileHeroFloatCards() {
+  if (!window.matchMedia('(max-width: 768px)').matches) return;
+
+  const hero = document.querySelector('.hero');
+  const content = document.getElementById('heroContent');
+  const topCards = [document.querySelector('.hfc-1'), document.querySelector('.hfc-2')];
+  const bottomCards = [document.querySelector('.hfc-3'), document.querySelector('.hfc-4')];
+  if (!hero || !content || topCards.some((c) => !c) || bottomCards.some((c) => !c)) return;
+
+  const heroRect = hero.getBoundingClientRect();
+  const contentRect = content.getBoundingClientRect();
+  const contentTop = contentRect.top - heroRect.top;
+  const contentBottom = contentRect.bottom - heroRect.top;
+
+  const margin = 18; // marge mini garantie entre une carte et le contenu central
+  // .hero a overflow:hidden (cf. styles.css) : l'ombre de .hfc-glass (box-shadow
+  // 0 12px 26px) déborde d'environ 38px sous la carte. Une marge de bord trop
+  // courte la fait couper net pile à la frontière avec #services, dessinant une
+  // ligne parasite à la jonction des deux sections - cette marge doit donc
+  // couvrir ce débordement, pas juste "coller" la carte au bord de l'écran.
+  const edgeMargin = 44;
+  const navClearance = 70; // dégagement mini sous la nav fixe (haut)
+  const maxSize = 78; // taille par défaut du palier téléphone (cf. --hfc-size, styles.css)
+  const minSize = 44; // en dessous, une carte n'apporte plus rien visuellement : on la masque
+
+  // ratios : position de chaque carte dans l'espace dispo (0 = collée au
+  // bord loin du contenu, 1 = collée au bord proche du contenu), pour
+  // garder un léger décalage entre les deux cartes d'une même paire plutôt
+  // qu'un empilement parfaitement symétrique (même esprit que les offsets
+  // distincts 200/254 et 100/90 du CSS d'origine).
+  function layoutPair(cards, spaceAvailable, from, edgeStart, ratios) {
+    const size = Math.min(maxSize, spaceAvailable);
+    if (size < minSize) {
+      cards.forEach((c) => { c.style.display = 'none'; });
+      return;
+    }
+    cards.forEach((c) => { c.style.display = ''; });
+    const slack = Math.max(0, spaceAvailable - size);
+    cards.forEach((card, i) => {
+      card.style.setProperty('--hfc-size', `${size}px`);
+      const offset = edgeStart + slack * ratios[i];
+      if (from === 'top') {
+        card.style.top = `${offset}px`;
+        card.style.bottom = 'auto';
+      } else {
+        card.style.bottom = `${offset}px`;
+        card.style.top = 'auto';
+      }
+    });
+  }
+
+  const topSpace = contentTop - navClearance - margin;
+  layoutPair(topCards, topSpace, 'top', navClearance, [0.2, 0.7]);
+
+  const bottomSpace = heroRect.height - contentBottom - margin - edgeMargin;
+  layoutPair(bottomCards, bottomSpace, 'bottom', edgeMargin, [0.7, 0.2]);
+}
+
+let mobileHfcResizeTimer = null;
+function scheduleLayoutMobileHeroFloatCards() {
+  clearTimeout(mobileHfcResizeTimer);
+  mobileHfcResizeTimer = setTimeout(layoutMobileHeroFloatCards, 120);
+}
+window.addEventListener('resize', scheduleLayoutMobileHeroFloatCards, { passive: true });
+window.addEventListener('orientationchange', scheduleLayoutMobileHeroFloatCards);
+// Le swap de police web (display:swap, cf. index.html) peut changer la
+// hauteur du texte après la première mesure : on rejoue une fois les polices
+// prêtes pour rattraper un éventuel décalage.
+if (window.document.fonts && window.document.fonts.ready) {
+  window.document.fonts.ready.then(layoutMobileHeroFloatCards);
 }
 
 // Rejoue l'apparition du titre/description (mot par mot) et des deux
@@ -2022,6 +2446,12 @@ function initHeroCardEntrance() {
   const card = document.getElementById('heroCard');
   if (!card) return;
 
+  // Repositionne d'abord les 4 cartes flottantes mobiles (no-op au-dessus de
+  // 768px) : playHeroFloatCardsEntrance, plus bas, mesure leur position pour
+  // calculer la distance de survol d'entrée — elle doit donc déjà être
+  // correcte à ce stade.
+  layoutMobileHeroFloatCards();
+
   const title = card.querySelector('h1');
   const desc = card.querySelector('p');
   if (title) wrapWordsForReveal(title);
@@ -2030,6 +2460,8 @@ function initHeroCardEntrance() {
   // .is-entering est déjà posé en HTML : playHeroCardEntrance se contente
   // ici de mesurer la distance et d'armer le nettoyage de fin d'animation.
   playHeroCardEntrance(card);
+  // Idem pour les 6 cartes flottantes (.is-entering déjà posé en HTML aussi).
+  playHeroFloatCardsEntrance();
 }
 
 // ─────────────────────────────────────────────
@@ -2053,8 +2485,11 @@ function initHeroPageTransition() {
   const stage = document.getElementById('heroScrollStage');
   const heroContent = document.getElementById('heroContent');
   const heroWarmLight = document.getElementById('heroWarmLight');
+  const heroFloatCards = Array.from(document.querySelectorAll('.hero-float-card'));
   const nav = document.querySelector('.nav');
   const services = document.getElementById('services');
+  const servicesIntroHeading = document.getElementById('servicesIntroHeading');
+  const servicesIntroRow = document.getElementById('servicesIntroRow');
   const servicesBlobs = Array.from(document.querySelectorAll('.services-ambient-blob'));
   const devisWaveFall = document.getElementById('devisWaveFall');
   const devisWaveFallInner = document.getElementById('devisWaveFallInner');
@@ -2065,7 +2500,97 @@ function initHeroPageTransition() {
 
   document.documentElement.classList.add('is-paged');
 
+  // Titre + description de l'intro services : découpés mot par mot (même
+  // wrapWordsForReveal que le titre du hero, cf. plus haut) pour une
+  // animation d'écriture (cf. playIntroHeadingReveal plus bas), au lieu
+  // d'un simple fondu du bloc entier. Fait uniquement ici (jamais sur
+  // mobile/reduced-motion, cf. gardes en tout début de fonction) : ce texte
+  // y reste du texte brut, immédiatement lisible, sans étape de révélation.
+  // Les mots sont posés "animation:none" + "opacity:0" juste après le
+  // découpage - "animation:none" seul ne suffit PAS à les cacher : sans
+  // animation active, .hero-reveal-word retombe sur son opacité de base
+  // (1, aucune règle non-animée ne la fixe à 0), donc le texte resterait
+  // visible en permanence dès le chargement sans ce style inline explicite.
+  // playIntroHeadingReveal (plus bas) retire ce blocage au bon moment.
+  let introWordEls = [];
+  if (servicesIntroHeading) {
+    const introTitle = servicesIntroHeading.querySelector('h2');
+    const introDesc = servicesIntroHeading.querySelector('p');
+    if (introTitle) wrapWordsForReveal(introTitle);
+    if (introDesc) wrapWordsForReveal(introDesc);
+    introWordEls = Array.from(servicesIntroHeading.querySelectorAll('.hero-reveal-word'));
+    introWordEls.forEach((el) => { el.style.animation = 'none'; el.style.opacity = '0'; });
+  }
+  let introWordsRevealed = false;
+  // Déclenche l'écriture mot par mot : retire d'abord le blocage d'opacité
+  // (l'animation, elle, reprendra la main sur l'opacité dès qu'elle
+  // redémarre - la retirer avant évite un flash à l'opacité de base entre
+  // les deux) puis force un reflow avant de relâcher `animation` - même
+  // technique que replayHeroContentWords pour le hero, seule façon fiable
+  // de faire redémarrer une animation CSS déjà "armée".
+  function playIntroHeadingReveal() {
+    introWordEls.forEach((el) => { el.style.animation = 'none'; el.style.opacity = ''; });
+    if (servicesIntroHeading) void servicesIntroHeading.offsetWidth;
+    introWordEls.forEach((el) => { el.style.animation = ''; });
+  }
+  // Symétrique : remet le blocage (animation ET opacité), pour que
+  // l'écriture puisse rejouer proprement si l'utilisateur revient en
+  // arrière avant ce seuil puis rescroll à nouveau vers services.
+  function resetIntroHeadingReveal() {
+    introWordEls.forEach((el) => { el.style.animation = 'none'; el.style.opacity = '0'; });
+  }
+
   const DURATION_MS = 900;
+  // Durée de la course accueil <-> services uniquement (cf. animateTo plus
+  // bas) : sert surtout au déclenchement de .lights-active (reste de la
+  // page) à la fin. Ni la carte centrale (HERO_CARD_EXIT_DURATION_MS), ni
+  // les 6 cartes flottantes (FLOAT_CARDS_DURATION_MS), ni le fondu croisé
+  // (CROSSFADE_DELAY_MS/FADE_MS, plus bas) ne dépendent plus de cette durée
+  // - chacun a sa propre échelle de temps réelle et linéaire, pour que
+  // leurs décalages/délais respectifs (FLOAT_CARDS_EXIT_DELAY...)
+  // correspondent à un temps réel prévisible plutôt qu'à une fraction d'une
+  // courbe globale déjà adoucie (ce qui rendait un "léger décalage" bien
+  // plus long que prévu en pratique).
+  const PAGE_TRANSITION_DURATION_MS = 3300;
+  // Durée de la sortie de LA CARTE CENTRALE elle-même (heroContent) :
+  // volontairement identique à DURATION_MS (900ms, son rythme d'origine,
+  // inchangé) plutôt que PAGE_TRANSITION_DURATION_MS ci-dessus. cf.
+  // animateTo plus bas, qui calcule sa propre progression (heroCardProgress)
+  // sur cette durée courte, indépendamment de `progress`.
+  const HERO_CARD_EXIT_DURATION_MS = DURATION_MS;
+  // Durée totale (réelle, linéaire) de la chorégraphie des 6 cartes
+  // flottantes (assemblage + descente, cf. FLOAT_CARDS_EXIT_DELAY et suite
+  // plus bas) : indépendante de PAGE_TRANSITION_DURATION_MS, pour que
+  // FLOAT_CARDS_EXIT_DELAY (le délai avant que les cartes ne bougent,
+  // volontairement léger) corresponde à un vrai temps court plutôt qu'à une
+  // fraction d'une courbe globale beaucoup plus lente au démarrage. cf.
+  // animateTo plus bas, qui calcule sa propre progression LINÉAIRE
+  // (floatCardsProgress, jamais pré-adoucie) sur cette durée.
+  // L'assemblage se termine à floatCardsP=0.69 (cf. FLOAT_CARDS_EXIT_DELAY +
+  // 4*STAGGER + ASSEMBLE_WINDOW plus bas), soit ~1277ms - le reste jusqu'à
+  // 1850ms n'est qu'un temps mort, ligne immobile : gardé assez long pour ne
+  // jamais couper l'assemblage (cf. CROSSFADE_DELAY_MS ci-dessous, qui elle
+  // démarre bien avant la fin de cette durée) sans pour autant ralentir
+  // l'assemblage lui-même, qui reste cadencé sur cette même durée.
+  const FLOAT_CARDS_DURATION_MS = 1850;
+  // Fondu croisé de #services (cf. crossfadeProgress dans animateTo plus
+  // bas, calculée à partir de ces deux constantes) : ne doit commencer
+  // qu'une fois les 6 cartes flottantes ENTIÈREMENT immobiles à leur
+  // position finale (~1387ms, cf. FLOAT_CARDS_DURATION_MS ci-dessus), jamais
+  // avant, sous peine de voir la rangée réelle apparaître dessous pendant
+  // que la carte flottante est encore en train de descendre les derniers
+  // pixels (cf. renderFloatCardsExit) - un simple découpage de `p` (adoucie
+  // sur toute la course, donc extrêmement compressée dans son dernier
+  // centième) s'est avéré trop imprécis pour garantir ce délai de façon
+  // fiable. Temps réel et linéaire, comme HERO_CARD_EXIT_DURATION_MS/
+  // FLOAT_CARDS_DURATION_MS ci-dessus : le fondu démarre pile
+  // CROSSFADE_DELAY_MS après le début de la course et dure CROSSFADE_FADE_MS.
+  // Volontairement plus proche de la fin de l'assemblage qu'avant (~112ms
+  // d'écart au lieu de ~522ms) : la pause avant que la rangée ne s'abaisse
+  // (cf. ROW_DESCEND_DELAY_MS plus bas, qui en dépend) se voulait plus courte
+  // une fois les cartes alignées.
+  const CROSSFADE_DELAY_MS = 1500;
+  const CROSSFADE_FADE_MS = 400;
   // Sortie de la carte : s'envole vers le haut de l'écran en se réduisant et
   // en s'estompant, comme aspirée vers le ciel — la grille reste immobile,
   // seule la carte s'en va. flightT (cf. renderHeroExit) applique une légère
@@ -2095,6 +2620,389 @@ function initHeroPageTransition() {
     heroExitRisePx = rect.top + rect.height + 80;
   }
   measureHeroExitRise();
+
+  // Sortie des 6 cartes flottantes — UN SEUL temps, l'ASSEMBLAGE : chaque
+  // carte rejoint, via une courbe (jamais une ligne droite), une ligne
+  // horizontale centrée au milieu de l'écran (là où se trouvait la carte
+  // centrale du hero) — cf. measureFloatCardsExitTargets pour la cible
+  // (assembleDx/Dy) et renderFloatCardsExit pour la courbe elle-même.
+  // Décalage croissant par carte (FLOAT_CARD_STAGGER) pour qu'elles
+  // n'arrivent jamais toutes en même temps, comme 6 éléments qui flottent et
+  // se posent l'un après l'autre plutôt qu'en bloc. Une fois assemblées, les
+  // cartes restent immobiles : la DESCENTE proprement dite n'est plus jouée
+  // par ces cartes flottantes mais par .services-intro-row elle-même (la
+  // vraie rangée de la page), qui prend le relais après le fondu croisé -
+  // cf. rowDescendProgress dans animateTo plus bas, et son usage dans
+  // render().
+  //
+  // Association par icône, pas par simple ordre du DOM : la Nème
+  // .hero-float-card (tableau ci-dessus, ordre hfc-1..hfc-6) rejoint le slot
+  // FLOAT_CARD_SLOT_ORDER[N] dans .services-intro-row (index.html) - cette
+  // rangée a un ordre volontairement différent (peinture puis panier en
+  // tête), donc l'ancienne correspondance "Nème carte -> Nème slot du DOM"
+  // ne suffit plus : ce tableau fait toujours atterrir chaque carte dans le
+  // slot portant SA PROPRE icône, quelle que soit sa position dans la
+  // rangée. hfc-1 (brouette) -> slot d'index 2, hfc-2 (fleur) -> 3, hfc-3
+  // (peinture) -> 0, hfc-4 (panier) -> 1, hfc-5 (poubelle) -> 4 (inchangé),
+  // hfc-6 (clé) -> 5 (inchangé). Les cibles sont mesurées en coordonnées
+  // viewport (measureFloatCardsExitTargets), comme measureHeroExitRise
+  // ci-dessus — #services est position:fixed (opacity 0 au repos mais bien
+  // mis en page), donc sa rangée d'icônes est mesurable même avant le fondu
+  // croisé.
+  const introSlots = Array.from(document.querySelectorAll('.services-intro-slot'));
+  const FLOAT_CARD_SLOT_ORDER = [2, 3, 0, 1, 4, 5];
+  // Toutes les fractions ci-dessous (FLOAT_CARDS_EXIT_DELAY, STAGGER,
+  // ASSEMBLE_WINDOW, DESCEND_START/END) s'appliquent à floatCardsProgress
+  // (cf. animateTo plus bas) : une progression LINÉAIRE en temps réel sur
+  // FLOAT_CARDS_DURATION_MS (2300ms), jamais pré-adoucie par une courbe
+  // globale - une fraction de 0.05 correspond donc bien à 5% de 2300ms
+  // (~115ms), de façon prévisible, contrairement à l'ancienne version qui se
+  // basait sur `p` (adoucie sur toute la course accueil→services) : un délai
+  // "léger" y correspondait en réalité à un temps réel bien plus long,
+  // puisque cette courbe démarre très lentement.
+  //
+  // Décalage avant que les 6 cartes ne commencent elles-mêmes à bouger :
+  // volontairement léger - la carte centrale du hero (cf. renderHeroExit,
+  // sur sa propre durée courte HERO_CARD_EXIT_DURATION_MS) entame sa sortie
+  // une fraction de seconde avant les cartes flottantes, sans que les deux
+  // animations ne paraissent totalement dissociées.
+  const FLOAT_CARDS_EXIT_DELAY = 0.05;
+  // Décalage entre chaque carte pendant l'assemblage : combiné à
+  // FLOAT_CARD_ASSEMBLE_WINDOW ci-dessous, la carte suivante ne démarre son
+  // propre trajet qu'après que la précédente ait bien entamé le sien, pour
+  // un effet de cascade bien lisible plutôt que 6 cartes qui bougent
+  // quasiment en même temps.
+  const FLOAT_CARD_STAGGER = 0.06;
+  // Durée (large) du trajet courbé d'UNE carte vers la ligne centrale :
+  // chaque carte dispose d'un temps confortable (~40% de
+  // FLOAT_CARDS_DURATION_MS, soit un peu plus de 900ms) pour un mouvement
+  // bien smooth plutôt qu'expédié.
+  const FLOAT_CARD_ASSEMBLE_WINDOW = 0.4;
+  // Intensité de la courbure (proportion de la distance à parcourir) :
+  // le point de contrôle de la Bézier est décalé perpendiculairement à la
+  // ligne départ→arrivée d'autant, ce qui garantit une vraie courbe (jamais
+  // une ligne droite, quels que soient les points) plutôt qu'un simple arc
+  // approximatif.
+  const FLOAT_CARD_BULGE_RATIO = 0.32;
+  // Dernière carte (data-exit-order max = 4, peinture) assemblée à
+  // FLOAT_CARDS_EXIT_DELAY + 4 * FLOAT_CARD_STAGGER + FLOAT_CARD_ASSEMBLE_WINDOW
+  // = 0.69. Les 6 cartes flottantes s'arrêtent là : au lieu de continuer leur propre
+  // descente jusqu'à la rangée, elles restent immobiles (le reste de
+  // floatCardsProgress, jusqu'à 1, sert de temps mort) pendant que
+  // .services-intro-row (la VRAIE rangée de la page, cf. plus bas) se
+  // superpose exactement à leur position via le fondu croisé, puis prend le
+  // relais pour sa propre descente (cf. rowDescendProgress dans animateTo,
+  // et son usage dans render()) - une seule ligne réelle anime la descente,
+  // jamais les cartes flottantes elles-mêmes.
+  // Easing dédié au déplacement des 6 cartes (assemblage) :
+  // plus doux qu'easeInOutCubic (utilisée ailleurs, ex. sortie de la carte
+  // centrale) - accélération/décélération plus progressives aux deux
+  // extrémités, pour un mouvement bien fluide, jamais brusque, qui démarre
+  // et se termine tout en douceur.
+  function easeInOutSoft(t) {
+    return t < 0.5 ? 16 * t * t * t * t * t : 1 - Math.pow(-2 * t + 2, 5) / 2;
+  }
+  // Inclinaison 3D statique de chaque .hfc-inner (cf. .hfc-N .hfc-inner,
+  // styles.css) : redressée à 0 en JS au fil de l'assemblage, pour que la
+  // carte arrive bien à plat sur la ligne plutôt que penchée.
+  const HFC_TILT = [
+    { ry: 18, rx: -6 },
+    { ry: -18, rx: -6 },
+    { ry: 18, rx: 6 },
+    { ry: -18, rx: 6 },
+    { ry: 20, rx: 0 },
+    { ry: -20, rx: 0 },
+  ];
+  // Position le long d'une courbe départ(0,0) → arrivée (dx,dy) à l'instant
+  // t (0..1) : la composante (dx*t, dy*t) avance en ligne droite (garantit
+  // une progression toujours nette vers la cible, jamais un mouvement qui
+  // recule ou piétine), à laquelle s'ajoute un arc perpendiculaire
+  // (perpX/perpY * bulge * sin(π·t)) qui vaut exactement 0 en t=0 ET t=1
+  // (la carte part bien de sa position réelle et arrive bien pile sur sa
+  // cible) et culmine à mi-parcours - d'où une vraie courbe, jamais une
+  // ligne droite dès que bulge != 0, sans jamais de "faux départ" à
+  // rebours ni de virage brusque (le sinus est lisse par nature).
+  function floatCardCurvedOffset(t, dx, dy, perpX, perpY, bulge) {
+    const arc = Math.sin(Math.PI * t) * bulge;
+    return {
+      x: dx * t + perpX * arc,
+      y: dy * t + perpY * arc,
+    };
+  }
+  function measureFloatCardsExitTargets() {
+    const centerX = window.innerWidth / 2;
+    const centerY = window.innerHeight / 2;
+    heroFloatCards.forEach((card, i) => {
+      const slot = introSlots[FLOAT_CARD_SLOT_ORDER[i]];
+      if (!slot) return;
+      // offsetTop/offsetLeft/offsetWidth/offsetHeight (contrairement à
+      // getBoundingClientRect) ignorent tout `transform` en cours - qu'il
+      // vienne de l'atterrissage d'entrée (.is-entering, heroFloatCardDrop),
+      // de la dérive continue au repos (heroFloatCardDrift) ou d'un
+      // transform JS inline (assemblage en cours) - et donnent donc
+      // directement la position de repos CSS pure de la carte, déjà
+      // viewport-relative puisque .hero-float-card est position:fixed sans
+      // ancêtre transformé (cf. plus haut). Utilisées ici À LA PLACE de
+      // l'ancien couple transform:none/animation:none + getBoundingClientRect
+      // (qui neutralisait temporairement `animation` avant de la restaurer) :
+      // ce couple forçait un reflow (getBoundingClientRect) pendant que
+      // `animation` valait "none", ce qui - si la carte avait encore sa
+      // classe .is-entering à cet instant, l'atterrissage n'étant piloté par
+      // AUCUN `animation` inline mais par la règle CSS de cette classe -
+      // relançait l'atterrissage depuis son tout début (délai d'entrée
+      // compris) au lieu de le laisser continuer : perçu comme les cartes
+      // qui remontent brutalement hors de l'écran avant de rejouer leur
+      // arrivée. Se produisait de façon certaine à CHAQUE chargement (cet
+      // appel a lieu juste après le déclenchement de l'entrée, cf.
+      // initHeroCardEntrance avant initHeroPageTransition) et pouvait se
+      // reproduire à chaque resize survenant encore pendant l'atterrissage
+      // (cf. garde isHeroEntranceActive() sur onResize, plus bas - qui ne
+      // protégeait que CET appel-là, jamais celui-ci, le tout premier,
+      // inconditionnel). Mesurer via offsetTop/Left/Width/Height élimine le
+      // problème à la racine, quel que soit le moment de l'appel.
+      const startCx = card.offsetLeft + card.offsetWidth / 2;
+      const startCy = card.offsetTop + card.offsetHeight / 2;
+
+      // Pas de mise à l'échelle : .services-intro-slot partage le même
+      // --hfc-size que .hero-float-card à chaque palier (cf. styles.css),
+      // donc la carte garde son design et ses dimensions d'origine du hero
+      // jusqu'à la rangée - seule sa position change.
+      const slotRect = slot.getBoundingClientRect();
+      const slotCx = slotRect.left + slotRect.width / 2;
+      const slotCy = slotRect.top + slotRect.height / 2;
+
+      // Cible d'assemblage : directement le slot réel de la rangée finale
+      // (même x ET même y), pas une ligne intermédiaire au centre du
+      // viewport - les cartes atterrissent donc pile là où elles doivent
+      // rester, sans étape de "descente" supplémentaire ensuite (cf.
+      // floatCardsDescendDy, retiré : toujours 0 maintenant que la cible EST
+      // la position finale). Ancien comportement : assembleDy visait le
+      // centre du viewport, puis .services-intro-row (la vraie rangée)
+      // s'abaissait depuis cette ligne jusqu'à sa position réelle une fois
+      // le fondu croisé lancé (cf. render()) - un mouvement additionnel
+      // demandé à retirer : la rangée doit désormais rester immobile une
+      // fois alignée, seuls le titre/la description au-dessus et le reste
+      // de la page se révèlent ensuite.
+      card.dataset.assembleDx = String(slotCx - startCx);
+      card.dataset.assembleDy = String(slotCy - startCy);
+
+      // Direction "vers l'extérieur" (du centre du viewport vers la
+      // position de départ de la carte), normalisée : sert uniquement à
+      // choisir de quel côté la courbe bulge (cf. renderFloatCardsExit),
+      // jamais directement comme déplacement - reste basée sur le centre du
+      // viewport (pas le slot) : ce n'est qu'un repère de direction pour la
+      // courbure, indépendant de la cible réelle de la carte.
+      const outX = startCx - centerX;
+      const outY = startCy - centerY;
+      const outMag = Math.hypot(outX, outY) || 1;
+      card.dataset.outX = String(outX / outMag);
+      card.dataset.outY = String(outY / outMag);
+    });
+  }
+  measureFloatCardsExitTargets();
+
+  // Distance de montée jusqu'à disparition, propre à chaque carte (même
+  // principe que measureHeroExitRise pour la carte centrale, mais une valeur
+  // par carte puisque leur position de départ dans le hero diffère) — sert à
+  // renderFloatCardsExitUp ci-dessous, la variante "montée + fondu" jouée
+  // uniquement à l'ouverture de Devis depuis l'accueil (jamais pendant la
+  // transition vers services, qui garde l'assemblage existant ; cf.
+  // floatCardsExitMode).
+  let floatCardsRiseExitPx = [];
+  function measureFloatCardsRiseExit() {
+    // offsetTop/offsetHeight plutôt que transform:none/animation:none +
+    // getBoundingClientRect : même raison qu'au-dessus, dans
+    // measureFloatCardsExitTargets (relance sinon l'atterrissage d'entrée en
+    // cours si la carte a encore sa classe .is-entering à cet instant).
+    floatCardsRiseExitPx = heroFloatCards.map((card) => card.offsetTop + card.offsetHeight + 80);
+  }
+  measureFloatCardsRiseExit();
+
+  // Bascule entre les deux animations de sortie des 6 cartes flottantes :
+  // 'assemble' (existante, cf. renderFloatCardsExit) pendant la transition
+  // accueil ↔ services, 'rise' (cf. renderFloatCardsExitUp) à l'ouverture de
+  // Devis depuis l'accueil. Choisie par render()/renderDevisFromHome à chaque
+  // appel (donc toujours à jour à la frame suivante) ; onResize (plus bas) ne
+  // la modifie jamais, pour réappliquer la bonne animation quelle que soit
+  // celle en cours au moment du redimensionnement.
+  let floatCardsExitMode = 'assemble';
+
+  // Sens de sortie de LA VRAIE RANGÉE (.services-intro-row) : 'settle' (vers
+  // services, comportement d'origine, cf. render()) ou 'fade-down' (retour
+  // vers l'accueil : les 6 cartes se dispersent en tombant vers le bas de
+  // l'écran, chacune avec sa propre trajectoire CSS, cf. ROW_CARD_FALL et
+  // playServicesIntroRowExit plus bas) — posé par animateTo() selon la
+  // cible, lu par render() à chaque frame.
+  let rowExitDirection = 'settle';
+  // Trajectoire de sortie propre à chacune des 6 .services-intro-slot
+  // (retour vers l'accueil, cf. playServicesIntroRowExit) : dx/dy
+  // (translation, px) + rot (rotation, deg), un jeu de valeurs par carte pour
+  // qu'elles se dispersent plutôt que de tomber toutes selon la même ligne
+  // verticale - même esprit que HFC_TILT plus haut (un tableau de variations
+  // fixes, indexé comme les 6 .services-intro-slot du DOM). dx croît de
+  // façon strictement monotone de gauche (le plus négatif) à droite (le plus
+  // positif) : chaque carte s'écarte donc TOUJOURS de sa voisine (jamais vers
+  // elle), quelle que soit la paire considérée - condition suffisante pour
+  // qu'aucune ne recouvre sa voisine pendant la chute, l'écart entre deux
+  // cartes adjacentes ne pouvant que grandir avec le temps. L'ancien jeu de
+  // valeurs (signes alternés, pas liés à la position dans la rangée)
+  // pouvait au contraire rapprocher deux cartes voisines l'une de l'autre,
+  // d'où la superposition observée. Le fondu de sortie, lui, est posé
+  // directement dans le keyframe CSS (.is-falling, cf. styles.css) : la
+  // carte tombe et se disperse d'abord, nettement visible, puis s'estompe
+  // sur la fin de son propre trajet.
+  const ROW_CARD_FALL = [
+    { dx: -30, dy: 225, rot: -7 },
+    { dx: -18, dy: 205, rot: -4 },
+    { dx: -7,  dy: 235, rot: -2 },
+    { dx: 7,   dy: 210, rot: 2 },
+    { dx: 18,  dy: 230, rot: 4 },
+    { dx: 30,  dy: 215, rot: 7 },
+  ];
+  // Décalage croissant par carte (fraction de ROW_DESCEND_DURATION_MS, cf.
+  // playServicesIntroRowExit) : la carte d'index 0 commence à tomber dès le
+  // début de la course, les suivantes un peu après - un vrai effet de
+  // dispersion plutôt que 6 cartes qui tombent en un seul bloc rigide.
+  // Combiné à ROW_CARD_FALL_WINDOW ci-dessous, la dernière carte (index 5)
+  // termine sa chute pile à la fin de la course (5 * 0.07 + 0.65 = 1).
+  const ROW_CARD_STAGGER = 0.07;
+  const ROW_CARD_FALL_WINDOW = 0.65;
+
+  // delayedP<=0 (donc p <= FLOAT_CARDS_EXIT_DELAY) : rien à faire, la dérive
+  // continue (heroFloatCardDrift, CSS) garde la main sur `transform` — ne
+  // jamais désactiver l'animation pour une valeur de repos, sinon la dérive
+  // resterait figée en dehors de toute transition. Au-delà, `animation:none`
+  // inline (prioritaire sur la classe) laisse ce rendu piloter `transform`
+  // frame par frame ; resetHeroFloatCardsToIdle (plus bas) rend la main à la
+  // dérive une fois revenu à l'accueil. L'ordre d'assemblage (data-exit-order,
+  // posé en HTML) part du haut vers le bas — l'inverse de l'ordre d'arrivée
+  // (--entrance-delay, bas → centre → haut), plutôt que le simple ordre du
+  // DOM. Les cartes restent nettes et opaques (pas de fondu/flou : ce n'est
+  // pas une disparition) — c'est le fondu croisé de #services
+  // (crossfadeProgress, cf. render() plus bas) qui les recouvre
+  // progressivement une fois la ligne posée dans la rangée.
+  function renderFloatCardsExit(p) {
+    const delayedP = Math.max(p - FLOAT_CARDS_EXIT_DELAY, 0);
+    if (delayedP <= 0) return;
+
+    heroFloatCards.forEach((card, i) => {
+      const offset = Number(card.dataset.exitOrder || 0) * FLOAT_CARD_STAGGER;
+      const assembleT = Math.min(Math.max((delayedP - offset) / FLOAT_CARD_ASSEMBLE_WINDOW, 0), 1);
+      const easedAssembleT = easeInOutSoft(assembleT);
+
+      const adx = Number(card.dataset.assembleDx) || 0;
+      const ady = Number(card.dataset.assembleDy) || 0;
+      const outX = Number(card.dataset.outX) || 0;
+      const outY = Number(card.dataset.outY) || 0;
+
+      // Arc PERPENDICULAIRE à la ligne départ→arrivée (jamais le long de
+      // cette ligne, ce qui garantit une vraie courbe même quand la carte
+      // part déjà presque alignée avec sa cible) ; le sens de cet arc
+      // (lequel des deux côtés perpendiculaires) est choisi pour qu'il
+      // bulge vers l'extérieur de l'écran, comme une carte qui flotterait
+      // naturellement avant de venir se ranger, plutôt que de couper à
+      // travers le centre.
+      const dist = Math.hypot(adx, ady) || 1;
+      const dirX = adx / dist;
+      const dirY = ady / dist;
+      const perpX = -dirY;
+      const perpY = dirX;
+      const side = (outX * perpX + outY * perpY) >= 0 ? 1 : -1;
+      const bulge = dist * FLOAT_CARD_BULGE_RATIO * side;
+
+      const assembled = floatCardCurvedOffset(easedAssembleT, adx, ady, perpX, perpY, bulge);
+
+      card.style.animation = 'none';
+      card.style.transform = `translate(${assembled.x}px, ${assembled.y}px)`;
+
+      const tilt = HFC_TILT[i];
+      const inner = card.querySelector('.hfc-inner');
+      if (inner && tilt) {
+        inner.style.transform = `perspective(900px) rotateY(${tilt.ry * (1 - easedAssembleT)}deg) rotateX(${tilt.rx * (1 - easedAssembleT)}deg)`;
+      }
+    });
+  }
+
+  // Deuxième animation de sortie des 6 cartes flottantes, jouée à l'ouverture
+  // de Devis depuis l'accueil (cf. floatCardsExitMode/renderDevisFromHome) :
+  // au lieu de rejoindre la rangée de services, chaque carte suit la carte
+  // centrale du hero et s'envole vers le haut de l'écran en s'estompant —
+  // même trajectoire (translateY + scale), même fondu/flou que heroContent
+  // (cf. renderHeroExit), pour ne faire qu'un seul mouvement d'ensemble.
+  // FLOAT_CARD_RISE_LAG (en fraction de p, cf. p===heroCardP===floatCardsP
+  // dans ce cas précis, tous trois égaux à la même progression de
+  // DURATION_MS) retarde légèrement chaque carte selon data-exit-order
+  // (haut → bas, déjà posé en HTML pour l'assemblage) : un effet de cortège
+  // qui suit la carte centrale plutôt que 6 cartes qui décollent toutes en
+  // même temps qu'elle.
+  const FLOAT_CARD_RISE_LAG = 0.045;
+  function renderFloatCardsExitUp(p) {
+    heroFloatCards.forEach((card, i) => {
+      const lag = Number(card.dataset.exitOrder || 0) * FLOAT_CARD_RISE_LAG;
+      const cardP = Math.min(Math.max((p - lag) / (1 - lag), 0), 1);
+      const contentT = Math.min(cardP / CONTENT_FADE_END, 1);
+      const flightT = Math.pow(contentT, 1.3);
+      const risePx = floatCardsRiseExitPx[i] || 0;
+
+      card.style.animation = 'none';
+      card.style.opacity = String(1 - contentT);
+      card.style.filter = `blur(${7 * contentT}px)`;
+      card.style.transform = `translateY(${-risePx * flightT}px) scale(${1 - CONTENT_SHRINK * flightT})`;
+    });
+  }
+
+  // Remet les cartes flottantes dans leur état de repos (dérive CSS reprend
+  // la main) : appelé au retour complet vers l'accueil, avant de rejouer
+  // leur arrivée (playHeroFloatCardsEntrance) — jamais pendant une sortie en
+  // cours, sinon la dérive reprendrait au milieu du fondu.
+  function resetHeroFloatCardsToIdle() {
+    heroFloatCards.forEach((card) => {
+      card.style.animation = '';
+      card.style.animationDelay = '';
+      card.style.opacity = '';
+      card.style.filter = '';
+      card.style.transform = '';
+      const inner = card.querySelector('.hfc-inner');
+      if (inner) inner.style.transform = '';
+    });
+  }
+
+  // Déclenche la dispersion des 6 .services-intro-slot (retour vers
+  // l'accueil) : posée une seule fois, au moment où rowExitDirection bascule
+  // sur 'fade-down' (cf. animateTo) — PAS à chaque frame comme l'ancienne
+  // version (qui recalculait/reposait transform+opacity sur les 6 cartes à
+  // chaque frame de la course, un coût inutile puisque la trajectoire de
+  // chaque carte est connue d'avance). Chaque carte reçoit sa trajectoire
+  // (--fall-dx/--fall-dy/--fall-rot, cf. ROW_CARD_FALL) et son délai
+  // (--fall-delay, cf. ROW_CARD_STAGGER) en custom properties, puis
+  // .is-falling (styles.css) prend le relais : une seule animation CSS par
+  // carte, tourne sur le compositeur plutôt que d'être recalculée en JS à
+  // chaque frame - nettement plus fluide.
+  function playServicesIntroRowExit() {
+    const fallDurationMs = ROW_CARD_FALL_WINDOW * ROW_DESCEND_DURATION_MS;
+    introSlots.forEach((slot, i) => {
+      const fall = ROW_CARD_FALL[i] || ROW_CARD_FALL[0];
+      slot.style.setProperty('--fall-dx', `${fall.dx}px`);
+      slot.style.setProperty('--fall-dy', `${fall.dy}px`);
+      slot.style.setProperty('--fall-rot', `${fall.rot}deg`);
+      slot.style.animationDuration = `${fallDurationMs}ms`;
+      slot.style.animationDelay = `${i * ROW_CARD_STAGGER * ROW_DESCEND_DURATION_MS}ms`;
+      slot.classList.add('is-falling');
+    });
+  }
+
+  // Symétrique : retire .is-falling et les styles inline posés ci-dessus,
+  // pour rendre la main à l'apparence de repos (opacité 1, sans transform) -
+  // appelé dès le premier frame d'un retour vers services (cf. render()),
+  // avant que la rangée ne rejoue son propre atterrissage (comportement
+  // inchangé, cf. rowExitDirection==='settle').
+  function resetServicesIntroRowToIdle() {
+    introSlots.forEach((slot) => {
+      slot.classList.remove('is-falling');
+      slot.style.opacity = '';
+      slot.style.transform = '';
+    });
+  }
   // Lumières chaudes du hero : s'intensifient et dérivent (échelle +
   // déplacement + saturation/luminosité) pendant la première moitié de la
   // course, puis s'effacent en fondu pendant la seconde (cf. CROSSFADE_*
@@ -2106,19 +3014,106 @@ function initHeroPageTransition() {
   const WARM_DRIFT_PX = 70;
   // Fondu croisé : #services (et ses propres taches chaudes, cf.
   // servicesBlobs) apparaît en fondu pendant que celles du hero
-  // disparaissent, sur la même fenêtre de progression — puisque c'est une
-  // fonction continue de `p`, l'aller (accueil → services) et le retour
-  // (services → accueil) sont automatiquement symétriques, sans code séparé.
-  const CROSSFADE_START = 0.45;
-  const CROSSFADE_END = 0.92;
+  // disparaissent. Piloté par crossfadeP (cf. animateTo plus bas), PAS `p` -
+  // #services est au-dessus du hero (z-index), donc ce fondu couvre aussi
+  // progressivement les 6 cartes flottantes assemblées (immobiles, cf.
+  // renderFloatCardsExit) PENDANT que .services-intro-row (la VRAIE rangée
+  // de la page, cf. index.html), positionnée par JS exactement à la même
+  // altitude qu'elles (cf. rowDescendProgress plus bas), apparaît par ce
+  // même fondu, pile à cette position : la carte flottante et la rangée
+  // réelle se superposent donc parfaitement pendant tout le fondu, sans
+  // jamais faire cohabiter deux lignes visibles à des hauteurs différentes.
+  // crossfadeP (temps réel, cf. CROSSFADE_DELAY_MS/FADE_MS plus haut) ne
+  // démarre qu'une fois les cartes ENTIÈREMENT assemblées, contrairement à un
+  // simple découpage de `p` (essayé puis abandonné : sa courbe eased est si
+  // compressée dans son dernier centième qu'elle rendait ce délai imprécis).
   // Opacité cible de chaque tache (cf. #services.lights-active .services-
   // ambient-blob-N, styles.css) : reprise ici pour piloter le fondu croisé
   // en JS, en overrideant ces valeurs via inline style (plus prioritaire).
   const SERVICES_BLOB_OPACITY = [0.38, 0.30, 0.34, 0.26];
+  // Descente de LA VRAIE RANGÉE (.services-intro-row), qui prend le relais
+  // des cartes flottantes une fois le fondu croisé bien entamé (cf.
+  // rowDescendProgress dans animateTo) : démarre un peu AVANT la fin du
+  // fondu (recouvrement volontaire, pour enchaîner sans rupture visible),
+  // et dure ROW_DESCEND_DURATION_MS - généreuse et adoucie (cf.
+  // easeInOutSoft), pour une descente bien douce plutôt qu'expédiée.
+  // easeInOutSoft étant une quintique, la majorité du trajet est déjà
+  // parcourue tôt (~95% dès 70% du temps) - sur une durée courte, ce dernier
+  // ralenti tient donc en une poignée de frames et se lit comme un arrêt net
+  // plutôt qu'un vrai ralenti. Allonger cette seule durée (sans toucher à
+  // easeInOutSoft ni à l'assemblage des cartes flottantes, cf. plus haut)
+  // étire ce ralenti final sur davantage de frames bien réelles, pour une
+  // arrivée en ligne sensiblement plus douce - le reste de la course
+  // (assemblage, fondu) garde exactement le même rythme qu'avant.
+  const ROW_DESCEND_DELAY_MS = CROSSFADE_DELAY_MS + CROSSFADE_FADE_MS - 100;
+  const ROW_DESCEND_DURATION_MS = 1150;
+  // Retour vers l'accueil (cf. animateTo) : la carte centrale et les 6
+  // cartes flottantes du hero ne commencent à apparaître qu'après ce délai -
+  // ROW_DESCEND_DURATION_MS (le temps que la rangée de contenu ait
+  // entièrement fini de se disperser) plus une courte pause supplémentaire,
+  // pour un enchaînement net plutôt qu'un atterrissage qui démarre pile au
+  // même instant que la dernière carte de contenu ne finisse de s'effacer.
+  const HOME_ENTRANCE_DELAY_MS = ROW_DESCEND_DURATION_MS + 150;
+  // Écriture du titre + description (#servicesIntroHeading, cf.
+  // playIntroHeadingReveal plus haut) : quasiment 0, pour démarrer PILE
+  // quand la VRAIE rangée commence à s'abaisser (pas avant - le texte ne
+  // doit jamais être visible tant que la ligne n'a pas commencé à bouger,
+  // ni les cartes flottantes) - c'est ce tout premier mouvement de descente
+  // qui "découvre" le titre posé juste au-dessus, jamais après coup.
+  const INTRO_HEADING_WRITE_THRESHOLD = 0.02;
 
   let page = 0; // 0 = accueil, 1 = services
   let animating = false;
   let progress = 0;
+  // Identifiant du "geste" d'entrée en cours (molette, tactile OU clavier -
+  // cf. markGestureInput plus bas, appelée en tout premier dans les TROIS
+  // gestionnaires wheel/touchstart+touchmove/keydown) : incrémenté dès
+  // qu'une entrée arrive après un silence d'au moins GESTURE_GAP_MS - un
+  // vrai geste n'envoie JAMAIS ses événements avec un tel trou, même dans sa
+  // traîne d'inertie la plus longue (l'inertie décélère en continu, elle ne
+  // "s'arrête puis repart" pas). activeTransitionGestureId retient QUEL
+  // geste a déclenché la course accueil<->services actuellement en cours ou
+  // tout juste terminée (posé dans goForward/goBackward ci-dessous, jamais
+  // réinitialisé ailleurs) - y compris un déclenchement par CLIC (liens
+  // #services, cf. plus bas), qui capture simplement la valeur courante,
+  // sans jamais la faire progresser lui-même.
+  //
+  // Pourquoi : un vrai geste de molette/trackpad ne s'arrête jamais net -
+  // l'inertie envoie encore des événements (parfois avec un signe de deltaY
+  // inversé le temps que la vitesse retombe à zéro puis légèrement au-delà)
+  // pendant une bonne fraction de seconde après que les doigts ont quitté le
+  // pavé, et PAGE_TRANSITION_DURATION_MS (3300ms) suffit largement à ce que
+  // cette traîne soit encore active au moment même où la course se termine.
+  // Sans cette garde, le tout premier événement résiduel de signe opposé
+  // (deltaY/delta négatif) qui arrive juste après l'atterrissage sur
+  // services, alors que `services.scrollTop` vaut encore 0, déclenchait
+  // aussitôt goBackward() - qui réinitialise ET REJOUE l'atterrissage des 6
+  // cartes flottantes depuis leur position de départ hors écran
+  // (resetHeroFloatCardsToIdle + playHeroFloatCardsEntrance, cf. animateTo
+  // ci-dessous) : perçu comme les cartes qui repartent brutalement vers le
+  // haut de la page au lieu de rester rangées en ligne - alors même que
+  // l'assemblage venait tout juste de se terminer correctement. Un simple
+  // délai fixe après l'arrivée (essayé d'abord) reste un pari sur la durée
+  // de cette traîne, qui varie avec la force du geste - trop court pour un
+  // flick vigoureux, il laisse le rebond passer. Comparer les IDENTIFIANTS
+  // de geste au lieu d'un chrono élimine ce pari : quelle que soit sa durée
+  // réelle, la traîne d'un même geste ne peut jamais, par construction,
+  // déclencher le sens inverse de celui qui l'a lancée. Suivre les TROIS
+  // canaux d'entrée (pas seulement wheel) est nécessaire : sinon,
+  // activeTransitionGestureId, une fois posé par un geste tactile/clavier,
+  // ne serait plus jamais dépassé par currentGestureId tant qu'aucun wheel
+  // ne survient - bloquant alors pour de bon tout nouveau geste
+  // tactile/clavier ultérieur (y compris un simple retour en arrière
+  // parfaitement légitime).
+  let currentGestureId = 0;
+  let lastGestureInputTime = -Infinity;
+  let activeTransitionGestureId = -1;
+  const GESTURE_GAP_MS = 180;
+  function markGestureInput() {
+    const now = performance.now();
+    if (now - lastGestureInputTime > GESTURE_GAP_MS) currentGestureId += 1;
+    lastGestureInputTime = now;
+  }
   // Dernière valeur appliquée à la sortie du hero (contenu), qu'elle vienne
   // de render() (transition accueil → services) ou de renderDevisFromHome()
   // (ouverture Devis) : sert à la ré-appliquer correctement au resize, quel
@@ -2145,10 +3140,10 @@ function initHeroPageTransition() {
   // Toute la séquence Devis tient dans UNE seule course de DURATION_MS — la
   // même durée que la plongée accueil ↔ services, pour une vitesse
   // identique.
-  // Depuis services (pas de contenu de hero à animer) : fondu rapide de la
-  // page courante (30 premiers %), vague blanche démarrant avec un léger
-  // décalage (15 %) pour un chevauchement plus prononcé.
-  const SERVICES_FADE_END = 0.3;
+  // Depuis services (pas de contenu de hero à animer) : la vague blanche
+  // démarre avec un léger décalage (15 %) pour un chevauchement plus
+  // prononcé - cf. renderDevisFromServices, où le contenu s'efface sur ce
+  // même rythme (waveP) plutôt que sur un minutage indépendant.
   const DEVIS_WAVE_START_SERVICES = 0.15;
   // Doit rester synchro avec calc(100% + 160px) en CSS (.devis-wave-fall-inner).
   const DEVIS_WAVE_EXTRA_PX = 160;
@@ -2185,11 +3180,23 @@ function initHeroPageTransition() {
   // l'identique par la transition accueil → services ET par l'ouverture de
   // la page Devis depuis l'accueil — ces deux transitions ne se distinguent
   // que par leur vague, jamais par cette animation de sortie.
-  function renderHeroExit(p) {
+  //
+  // heroCardP est la progression PROPRE à la carte centrale (heroContent) ;
+  // floatCardsP celle des 6 cartes flottantes (assemblage + descente) ;
+  // crossfadeP celle du fondu croisé vers #services (cf. render() plus bas).
+  // Les trois sont indépendantes de `p` et entre elles (cf. animateTo plus
+  // bas, qui les calcule chacune sur sa propre durée réelle et linéaire :
+  // HERO_CARD_EXIT_DURATION_MS, FLOAT_CARDS_DURATION_MS,
+  // CROSSFADE_DELAY_MS/FADE_MS) - jamais des fractions de la courbe globale
+  // `p`, dont l'amorce/la fin très compressées rendaient délais et
+  // enchaînements imprécis en pratique. Par défaut = p (comportement
+  // d'origine) pour les autres appelants (ouverture Devis depuis l'accueil,
+  // resize) qui n'ont qu'une seule progression à fournir.
+  function renderHeroExit(p, heroCardP = p, floatCardsP = p, crossfadeP = p) {
     scatterAmount = p;
 
     if (!suppressHeroContentExit) {
-      const contentT = Math.min(p / CONTENT_FADE_END, 1);
+      const contentT = Math.min(heroCardP / CONTENT_FADE_END, 1);
       // Fondu bien visible et régulier sur toute la course (contentT tout
       // seul) ; la position/l'échelle gardent une légère accélération
       // (flightT, puissance plus douce qu'avant) pour rester un envol
@@ -2204,35 +3211,89 @@ function initHeroPageTransition() {
       // fondu) — miroir du flou net→flou inversé de l'entrée (heroCardDrop).
       heroContent.style.filter = `blur(${7 * contentT}px)`;
       heroContent.style.transform = `translateY(${-heroExitRisePx * flightT}px) scale(${1 - CONTENT_SHRINK * flightT})`;
-      heroContent.style.pointerEvents = p > 0.5 ? 'none' : '';
+      heroContent.style.pointerEvents = heroCardP > 0.5 ? 'none' : '';
+
+      if (floatCardsExitMode === 'rise') {
+        renderFloatCardsExitUp(floatCardsP);
+      } else {
+        renderFloatCardsExit(floatCardsP);
+      }
     }
 
     const warmT = Math.min(p / WARM_INTENSIFY_END, 1);
-    // Fondu de sortie, sur la même fenêtre que le fondu croisé de #services
-    // (cf. render() plus bas) : les lumières du hero s'effacent pile pendant
-    // que celles de services prennent le relais, jamais avant ni après.
-    const warmFadeT = Math.min(Math.max((p - CROSSFADE_START) / (CROSSFADE_END - CROSSFADE_START), 0), 1);
+    // Fondu de sortie, sur la même progression que le fondu croisé de
+    // #services (crossfadeP, cf. render() plus bas) : les lumières du hero
+    // s'effacent pile pendant que celles de services prennent le relais,
+    // jamais avant ni après.
     heroWarmLight.style.transform = `translate(${WARM_DRIFT_PX * 0.3 * warmT}px, ${-WARM_DRIFT_PX * warmT}px) scale(${1 + (WARM_SCALE_MAX - 1) * warmT})`;
     heroWarmLight.style.filter = `saturate(${1 + 0.6 * warmT}) brightness(${1 + 0.15 * warmT})`;
-    heroWarmLight.style.opacity = String(1 - warmFadeT);
+    heroWarmLight.style.opacity = String(1 - crossfadeP);
   }
 
-  function render(p) {
-    renderHeroExit(p);
+  function render(p, heroCardP = p, floatCardsP = p, crossfadeP = p, rowDescendP = p) {
+    floatCardsExitMode = 'assemble';
+    renderHeroExit(p, heroCardP, floatCardsP, crossfadeP);
 
-    // Fondu croisé de #services (panneau + ses propres taches chaudes) sur
-    // la même fenêtre que le fondu de sortie des lumières du hero
-    // (CROSSFADE_START/END) : fonction continue de `p`, donc automatiquement
-    // symétrique à l'aller comme au retour.
-    const crossT = Math.min(Math.max((p - CROSSFADE_START) / (CROSSFADE_END - CROSSFADE_START), 0), 1);
-    services.style.opacity = String(crossT);
+    // Fondu croisé de #services (panneau + ses propres taches chaudes) :
+    // crossfadeP déjà entièrement calculée (temps réel, gated après
+    // l'atterrissage des cartes flottantes, cf. animateTo plus bas) - utilisée
+    // telle quelle, sans remapping supplémentaire.
+    services.style.opacity = String(crossfadeP);
     servicesBlobs.forEach((blob, i) => {
-      blob.style.opacity = String(SERVICES_BLOB_OPACITY[i] * crossT);
+      blob.style.opacity = String(SERVICES_BLOB_OPACITY[i] * crossfadeP);
     });
 
-    // Interactif seulement une fois la bascule quasi terminée ; le hero,
-    // symétriquement, cesse d'intercepter les clics à ce même seuil.
-    const settled = p >= CROSSFADE_END;
+    // VRAIE rangée (vers services, rowExitDirection==='settle') : n'a plus
+    // aucun mouvement propre à jouer - les 6 cartes flottantes atterrissent
+    // désormais directement sur leur slot final (cf. measureFloatCardsExitTargets,
+    // assembleDx/Dy = cible du slot lui-même, plus une ligne intermédiaire au
+    // centre du viewport), donc la rangée réelle est déjà exactement là où
+    // elle doit être dès que le fondu croisé la révèle - aucune "descente"
+    // à part jouer. rowDescendP (cf. animateTo) continue néanmoins de servir
+    // de minuterie pour l'écriture du titre/description ci-dessous et pour
+    // le seuil "settled" plus bas, même si elle ne pilote plus aucun
+    // transform ici.
+    // Retour vers l'accueil (rowExitDirection==='fade-down') : la dispersion
+    // des 6 .services-intro-slot reste entièrement pilotée par CSS
+    // (.is-falling, cf. playServicesIntroRowExit et styles.css), déclenchée
+    // une seule fois dans animateTo plutôt que recalculée ici à chaque frame
+    // - render() n'a donc rien à faire tant que cette direction est active,
+    // si ce n'est laisser l'animation CSS suivre son cours.
+    if (servicesIntroRow) {
+      if (rowExitDirection !== 'fade-down') {
+        resetServicesIntroRowToIdle();
+        servicesIntroRow.style.opacity = '';
+        servicesIntroRow.style.transform = '';
+      }
+      // .is-row-animating (cf. styles.css) désactive temporairement le
+      // backdrop-filter des 6 icônes (et la transition CSS de survol des
+      // .services-intro-slot) le temps de la dispersion CSS au retour vers
+      // l'accueil (rowExitDirection==='fade-down') : ce flou devrait sinon se
+      // ré-échantillonner à chaque frame tant que la rangée bouge. N'a plus
+      // d'effet utile dans l'autre sens (settle) puisque la rangée n'y bouge
+      // plus du tout, mais reste inoffensif à y activer/désactiver.
+      servicesIntroRow.classList.toggle('is-row-animating', rowDescendP > 0 && rowDescendP < 1);
+    }
+
+    // Titre + description : déclenchement à seuil (une seule fois, cf.
+    // INTRO_HEADING_WRITE_THRESHOLD plus haut), pas un fondu continu -
+    // l'écriture mot par mot suit ensuite son propre rythme (cf.
+    // .services-intro-heading .hero-reveal-word, styles.css), indépendante
+    // de rowDescendP une fois lancée. Symétrique : repasse sous le seuil
+    // (retour en arrière) réarme le déclenchement pour la prochaine fois.
+    if (introWordEls.length) {
+      if (rowDescendP >= INTRO_HEADING_WRITE_THRESHOLD && !introWordsRevealed) {
+        introWordsRevealed = true;
+        playIntroHeadingReveal();
+      } else if (rowDescendP < INTRO_HEADING_WRITE_THRESHOLD && introWordsRevealed) {
+        introWordsRevealed = false;
+        resetIntroHeadingReveal();
+      }
+    }
+
+    // Interactif seulement une fois la VRAIE rangée posée à sa place ; le
+    // hero, symétriquement, cesse d'intercepter les clics à ce même seuil.
+    const settled = rowDescendP >= 1;
     services.style.pointerEvents = settled ? 'auto' : 'none';
     stage.style.pointerEvents = settled ? 'none' : '';
   }
@@ -2300,6 +3361,7 @@ function initHeroPageTransition() {
   // sortie de hero (renderHeroExit), au même rythme que la vague blanche :
   // seule la vague diffère, jamais l'animation de sortie du contenu.
   function renderDevisFromHome(p) {
+    floatCardsExitMode = 'rise';
     renderHeroExit(p);
     devisProgress = p;
     renderDevisWave(p);
@@ -2318,19 +3380,46 @@ function initHeroPageTransition() {
     heroWarmLight.style.transform = '';
     heroWarmLight.style.filter = '';
     heroWarmLight.style.opacity = '';
+    // Même atterrissage 3D que le retour services → accueil (cf. target===0
+    // dans animateTo) : la carte centrale et les 6 cartes flottantes
+    // rejouent leur survol/pose depuis le haut de l'écran, plutôt que de
+    // simplement réapparaître sans mouvement.
+    const card = document.getElementById('heroCard');
+    if (card) playHeroCardEntrance(card);
+    resetHeroFloatCardsToIdle();
+    playHeroFloatCardsEntrance();
     replayHeroContentWords(heroContent);
   }
 
   function renderDevisFromServices(p) {
-    const fadeT = Math.min(Math.max(p / SERVICES_FADE_END, 0), 1);
-    services.style.opacity = String(1 - fadeT);
-    // Bascule le texte de nav dès que le fond bleu de services devient plus
-    // transparent que visible — fonctionne dans les deux sens (ouverture ET
-    // fermeture), puisque fadeT est une pure fonction de p.
-    if (nav) nav.classList.toggle('nav-on-dark', 1 - fadeT > 0.5);
-
     const waveP = Math.min(Math.max((p - DEVIS_WAVE_START_SERVICES) / (1 - DEVIS_WAVE_START_SERVICES), 0), 1);
     devisProgress = waveP;
+    // Le contenu de #services s'efface au même rythme que la progression de
+    // LA VAGUE elle-même (waveP), plutôt que sur son propre minutage
+    // indépendant et bien plus court (ancien SERVICES_FADE_END = 0.3) : ce
+    // dernier faisait disparaître le contenu bien avant que la vague n'ait
+    // parcouru le quart de l'écran, laissant le reste de sa descente balayer
+    // du vide plutôt que du contenu visible - perceptible comme "tout
+    // blanchit d'un coup" plutôt qu'une vraie vague qui recouvre au fur et à
+    // mesure. Avec waveP, le contenu reste net jusqu'à ce que le bord de la
+    // vague l'atteigne réellement.
+    services.style.opacity = String(1 - waveP);
+    // Bascule le texte de nav dès que le fond bleu de services devient plus
+    // transparent que visible — fonctionne dans les deux sens (ouverture ET
+    // fermeture), puisque waveP est une pure fonction de p.
+    if (nav) nav.classList.toggle('nav-on-dark', 1 - waveP > 0.5);
+    // Les 6 cartes flottantes du hero (cf. plus haut) restent figées, nettes
+    // et opaques, à la ligne d'assemblage d'origine (mi-hauteur de l'ex-carte
+    // centrale) depuis l'atterrissage sur services (cf. renderFloatCardsExit)
+    // - un point DIFFÉRENT de la position au repos de la vraie rangée
+    // (.services-intro-row, déjà descendue plus bas). Seule l'opacité de
+    // #services (par-dessus) les masque d'ordinaire : les faire fondre au
+    // même rythme que lui laisserait donc voir un second rang fantôme,
+    // décalé au-dessus du vrai, tant que le fondu n'est pas terminé. On les
+    // masque plutôt d'un coup dès le tout début de la transition, jamais
+    // censées être visibles ici de toute façon.
+    heroFloatCards.forEach((card) => { card.style.opacity = '0'; });
+
     renderDevisWave(waveP);
   }
 
@@ -2398,12 +3487,62 @@ function initHeroPageTransition() {
   // tant que cette transition animée est active (motion non réduite).
   window.HSDevis = { open: openDevisPage, close: closeDevisPage };
 
+  // Depuis l'accueil, clic sur "Nos services" (hero) ou "Services" (nav) :
+  // rejoue EXACTEMENT la même sortie que l'ouverture de Devis (cartes qui
+  // s'envolent vers le haut + vague blanche descendante, cf.
+  // renderDevisFromHome) au lieu de l'assemblage habituel vers la rangée
+  // d'icônes (cf. goForward/animateTo) - seule la destination change une
+  // fois l'écran entièrement recouvert : au lieu de révéler #devisPage, on
+  // pose d'un coup l'état "arrivé sur services" (via render(1), le même
+  // calcul que la fin de animateTo(1), donc rigoureusement identique à une
+  // arrivée classique) pendant que tout reste invisible sous la vague, on
+  // pré-scrolle #services jusqu'au carrousel, puis la vague remonte pour
+  // révéler la page déjà installée, carrousel centré à l'écran.
+  async function openServicesWave() {
+    if (animating || devisOpen || page === 1 || isHeroEntranceActive()) return;
+    animating = true;
+
+    // Jamais de fondu du logo ici (contrairement à Devis) : la nav entière
+    // (logo compris) reste affichée normalement tout du long, puisqu'elle
+    // reste pleinement fonctionnelle une fois sur #services - une valeur
+    // périmée laissée par une précédente ouverture de Devis fausserait sinon
+    // ce fondu (cf. renderDevisWave, qui ne l'applique que si non-null).
+    devisLogoCrossP = null;
+    rowExitDirection = 'settle';
+    await tween(DURATION_MS, 0, 1, renderDevisFromHome);
+
+    // Pose de l'état d'arrivée d'un coup (masqué sous la vague, pleinement
+    // descendue à cet instant) - identique à ce que produirait la fin de
+    // animateTo(1), cf. cette fonction plus bas.
+    progress = 1;
+    render(1);
+    page = 1;
+    services.classList.add('lights-active');
+    if (window.HSServicesReveal) window.HSServicesReveal.update();
+
+    // Pré-scroll instantané (toujours masqué) vers le carrousel, centré
+    // verticalement dans #services - calculé à partir des rects actuels
+    // plutôt que offsetTop (fiable quelle que soit la chaîne d'offsetParent
+    // entre le carrousel et #services).
+    const carouselSection = document.getElementById('servicesCarouselSection');
+    if (carouselSection) {
+      const rect = carouselSection.getBoundingClientRect();
+      const containerRect = services.getBoundingClientRect();
+      const centeredDelta = (rect.top - containerRect.top) - Math.max((services.clientHeight - rect.height) / 2, 0);
+      services.scrollTop = Math.max(services.scrollTop + centeredDelta, 0);
+    }
+
+    await tween(DURATION_MS, 1, 0, (p) => { devisProgress = p; renderDevisWave(p); });
+
+    animating = false;
+  }
+
   function animateTo(target) {
     animating = true;
     // L'opacité de #services (panneau + lumières) est désormais pilotée en
-    // continu par render() (fondu croisé sur CROSSFADE_START/END, cf. plus
-    // haut) — il n'y a donc plus de snap à poser ici, dans un sens comme
-    // dans l'autre. Seul .lights-active (qui pilote .svc-reveal, indépendant
+    // continu par render() (fondu croisé sur crossfadeProgress, calculée
+    // plus bas) — il n'y a donc plus de snap à poser ici, dans un sens comme
+    // dans l'autre. Seul .lights-active (qui pilote .svc-flip-reveal, indépendant
     // du fondu croisé des lumières) reste géré au début/à la fin de la
     // course : repart de zéro dès qu'on quitte services...
     if (target === 0) services.classList.remove('lights-active');
@@ -2422,20 +3561,68 @@ function initHeroPageTransition() {
       heroContent.style.transform = '';
       heroContent.style.pointerEvents = '';
       const card = document.getElementById('heroCard');
-      if (card) playHeroCardEntrance(card);
+      // Décalées après la sortie de .services-intro-row (cf.
+      // HOME_ENTRANCE_DELAY_MS plus haut) : la carte centrale et les 6 cartes
+      // flottantes du hero ne commencent à apparaître qu'une fois la rangée
+      // de contenu entièrement dispersée, jamais en même temps que sa chute -
+      // un enchaînement net plutôt que deux animations superposées.
+      if (card) playHeroCardEntrance(card, HOME_ENTRANCE_DELAY_MS);
+      resetHeroFloatCardsToIdle();
+      playHeroFloatCardsEntrance(HOME_ENTRANCE_DELAY_MS);
       replayHeroContentWords(heroContent);
     } else {
       suppressHeroContentExit = false;
     }
+    // Sens de sortie de LA VRAIE RANGÉE (.services-intro-row, cf. render()
+    // plus bas) : vers services (target=1), elle s'installe depuis la ligne
+    // d'assemblage des cartes flottantes (comportement inchangé). Vers
+    // l'accueil (target=0), elle ne rejoue plus l'inverse de cet assemblage
+    // (les cartes flottantes rejouent désormais leur propre entrée ci-dessus,
+    // indépendamment) — chacune de ses 6 cartes se disperse en tombant à la
+    // place (cf. playServicesIntroRowExit, rowExitDirection dans render()).
+    rowExitDirection = target === 0 ? 'fade-down' : 'settle';
+    if (rowExitDirection === 'fade-down') playServicesIntroRowExit();
 
     const start = progress;
     const delta = target - start;
     const startTime = performance.now();
 
     function step(now) {
-      const t = Math.min((now - startTime) / DURATION_MS, 1);
+      const elapsed = now - startTime;
+      const t = Math.min(elapsed / PAGE_TRANSITION_DURATION_MS, 1);
       progress = start + delta * easeInOutCubic(t);
-      render(progress);
+      // Progression indépendante et courte pour la carte centrale (cf.
+      // HERO_CARD_EXIT_DURATION_MS plus haut) : atteint sa cible bien avant
+      // que `progress` (et donc les cartes flottantes/le titre) n'ait
+      // terminé sa propre course, bien plus longue.
+      const heroT = Math.min(elapsed / HERO_CARD_EXIT_DURATION_MS, 1);
+      const heroCardProgress = start + delta * easeInOutCubic(heroT);
+      // Progression LINÉAIRE (jamais eased ici) pour les 6 cartes flottantes
+      // (cf. FLOAT_CARDS_DURATION_MS plus haut) : renderFloatCardsExit
+      // applique déjà son propre easing (easeInOutSoft) par carte/par phase -
+      // lui fournir une entrée déjà adoucie par easeInOutCubic ferait perdre
+      // toute correspondance prévisible entre FLOAT_CARDS_EXIT_DELAY (ou les
+      // autres fractions) et un temps réel court.
+      const floatCardsT = Math.min(elapsed / FLOAT_CARDS_DURATION_MS, 1);
+      const floatCardsProgress = start + delta * floatCardsT;
+      // Progression du fondu croisé (cf. CROSSFADE_DELAY_MS/FADE_MS plus
+      // haut) : à l'aller (target 1), attend que les cartes flottantes
+      // soient posées avant de démarrer ; au retour (target 0), pas de
+      // raison d'attendre (les cartes rejouent une tout autre animation
+      // d'entrée, cf. animateTo plus haut), le fondu inverse démarre donc
+      // immédiatement.
+      const crossfadeDelayMs = target === 1 ? CROSSFADE_DELAY_MS : 0;
+      const crossfadeT = Math.min(Math.max((elapsed - crossfadeDelayMs) / CROSSFADE_FADE_MS, 0), 1);
+      const crossfadeProgress = start + delta * crossfadeT;
+      // Progression de la descente de la VRAIE rangée (cf. ROW_DESCEND_
+      // DELAY_MS/DURATION_MS plus haut) : même logique de délai directionnel
+      // que crossfadeProgress - au retour, la rangée remonte aussitôt
+      // (l'entrée du hero est de toute façon rejouée par un tout autre
+      // mécanisme, cf. plus haut), pas de raison d'attendre.
+      const rowDescendDelayMs = target === 1 ? ROW_DESCEND_DELAY_MS : 0;
+      const rowDescendT = Math.min(Math.max((elapsed - rowDescendDelayMs) / ROW_DESCEND_DURATION_MS, 0), 1);
+      const rowDescendProgress = start + delta * rowDescendT;
+      render(progress, heroCardProgress, floatCardsProgress, crossfadeProgress, rowDescendProgress);
       if (t < 1) {
         requestAnimationFrame(step);
       } else {
@@ -2461,17 +3648,132 @@ function initHeroPageTransition() {
   }
 
   function goForward() {
-    if (animating || devisOpen || page === 1) return;
+    // Ignore un geste de scroll déclenché pendant que la carte centrale et/ou
+    // les 6 cartes flottantes sont encore en train d'atterrir (cf.
+    // isHeroEntranceActive, plus haut dans le fichier) - au tout premier
+    // chargement notamment, rien n'empêchait sinon un scroll trop rapide de
+    // couper cet atterrissage en plein vol et de faire "téléporter" les
+    // cartes à leur position de repos avant de repartir vers services.
+    if (animating || devisOpen || page === 1 || isHeroEntranceActive()) return;
+    // cf. déclaration de currentGestureId/activeTransitionGestureId plus
+    // haut : un geste dont la traîne d'inertie a déjà servi à ARRIVER sur
+    // l'accueil (retour depuis services) ne peut pas, par la même traîne,
+    // relancer aussitôt la course inverse.
+    if (currentGestureId === activeTransitionGestureId) return;
+    activeTransitionGestureId = currentGestureId;
+    // Remesure fraîche, ICI et MAINTENANT, juste avant de lancer la course -
+    // plutôt que de faire confiance aux mesures d'origine (posées une seule
+    // fois à l'initialisation, cf. measureHeroExitRise()/
+    // measureFloatCardsExitTargets() plus haut) ou à un `resize` hypothétique
+    // pour les garder à jour (cf. onResize, plus bas : ne se déclenche que
+    // si le navigateur émet réellement un `resize`, à un instant qui peut ne
+    // jamais tomber au bon moment - DevTools qui s'ouvre/se redimensionne,
+    // écran externe (dé)connecté, fenêtre déplacée entre deux écrans à
+    // résolutions différentes... autant d'événements qui ne redéclenchent
+    // pas toujours un `resize` de façon fiable ou synchrone). Une mesure
+    // devenue périmée n'était jusqu'ici JAMAIS rattrapée avant la prochaine
+    // transition, qui repartait alors avec des cibles (assembleDx/Dy)
+    // calculées pour une tout autre taille de fenêtre - les 6 cartes
+    // flottantes visaient alors un point sans aucun rapport avec l'écran
+    // réel, parfois bien au-dessus de son bord supérieur : perçu comme les
+    // cartes qui s'envolent au lieu de s'aligner. Remesurer systématiquement
+    // ici, à chaque déclenchement, élimine ce risque de péremption une fois
+    // pour toutes, quelle que soit sa cause exacte.
+    measureHeroExitRise();
+    measureFloatCardsExitTargets();
     animateTo(1);
   }
 
   function goBackward() {
     if (animating || devisOpen || page === 0) return;
-    // Repart du haut de la page services, quel que soit l'endroit où on
-    // l'avait laissée défilée : au retour, son contenu doit réapparaître
-    // depuis le début plutôt que mi-scroll.
+    // cf. déclaration de currentGestureId/activeTransitionGestureId plus
+    // haut : bloque précisément la traîne d'inertie du geste qui vient de
+    // nous faire arriver sur services, tant qu'aucune vraie pause (
+    // GESTURE_GAP_MS) n'a séparé cette traîne d'un nouveau geste.
+    if (currentGestureId === activeTransitionGestureId) return;
+    activeTransitionGestureId = currentGestureId;
+    // Déclenché uniquement à la limite haute de #services (cf. gestes
+    // molette/tactile/clavier plus bas, seuls appelants de goBackward) :
+    // scrollTop vaut donc déjà 0 ici, ce reset est sans effet visible.
     services.scrollTop = 0;
     animateTo(0);
+  }
+
+  // Retour accueil via le logo (cf. plus bas) : contrairement aux gestes
+  // molette/tactile/clavier ci-dessus, peut se déclencher depuis n'importe
+  // quelle position de défilement dans #services. Plutôt qu'un simple fondu
+  // croisé en place, on rejoue ici la même vague blanche que la transition
+  // vers Devis (cf. logoReloadWave, index.html), puis - une fois l'écran
+  // entièrement recouvert - on affiche le même écran de chargement que le
+  // préchargeur initial et on déclenche un vrai rechargement de la page :
+  // l'accueil se retrouve ainsi présenté exactement comme lors d'un
+  // rafraîchissement (hero rejoué depuis le tout début, scroll remis à zéro),
+  // plutôt qu'un simple retour en place de l'état déjà en mémoire.
+  function goHomeFromLogo() {
+    if (animating || devisOpen || page === 0) return;
+
+    const loader = document.getElementById('logoReloadLoader');
+
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches || !loader) {
+      window.location.reload();
+      return;
+    }
+
+    // Le temps que le spinner reste visible avant le rechargement, pour que
+    // l'écran de chargement ne soit pas qu'un flash imperceptible.
+    const HOLD_MS = 280;
+
+    animating = true;
+    devisLogoCrossP = computeDevisLogoCrossP();
+    services.style.pointerEvents = 'none';
+
+    // PAS de nav-devis ici (contrairement à openDevisPage/closeDevisPage) :
+    // cette classe déclenche son propre fondu CSS indépendant (0.35s, cf.
+    // .nav-links/.nav>.btn-primary/.nav-burger/.nav-logo dans styles.css),
+    // pensé pour la page Devis où seul le logo doit rester synchronisé avec
+    // la vague pendant que le reste de la nav s'efface à son propre rythme,
+    // plus rapide. Ici, tout doit disparaître ENSEMBLE, au même rythme que
+    // le reste du contenu et de la vague elle-même : liens, bouton "Devis
+    // gratuit", burger ET logo rejoignent donc tous la même valeur
+    // d'opacité ci-dessous plutôt que de partir chacun à son rythme.
+    // `transition: none` désactive le fondu CSS de 0.35s posé sur chacun
+    // (pensé pour un simple bascule de classe, jamais pour un pilotage
+    // continu image par image) : sans ça, chaque élément lisserait sa
+    // propre course vers l'opacité qu'on lui repose à chaque frame,
+    // prenant perpétuellement du retard sur la vraie progression de la
+    // vague plutôt que de la suivre au pixel près.
+    const navFadeEls = [
+      logoLink,
+      nav ? nav.querySelector('.nav-links') : null,
+      nav ? nav.querySelector(':scope > .btn-primary') : null,
+      nav ? nav.querySelector('.nav-burger') : null,
+    ].filter(Boolean);
+    navFadeEls.forEach((el) => {
+      el.style.transition = 'none';
+      el.style.pointerEvents = 'none';
+    });
+
+    // Rejoue EXACTEMENT la même vague blanche (durée, easing, fondu de
+    // #services) que l'ouverture de la page Devis depuis #services (cf.
+    // openDevisPage/renderDevisFromServices plus haut) - seule la suite
+    // diffère : au lieu de révéler #devisPage une fois la vague en place, on
+    // affiche l'écran de chargement (mêmes classes que le préchargeur
+    // initial) puis on recharge réellement la page, qui se retrouve donc
+    // affichée exactement comme lors d'un rafraîchissement.
+    tween(DURATION_MS, 0, 1, (p) => {
+      renderDevisFromServices(p);
+      // renderDevisFromServices vient de recalculer l'opacité du logo (cf.
+      // renderDevisWave, synchronisée au passage réel du bord de la vague à
+      // sa hauteur) : on la réutilise telle quelle pour le reste de la nav,
+      // plutôt que de la recalculer, pour une disparition rigoureusement
+      // identique - même valeur, même frame - entre logo, liens, bouton et
+      // burger.
+      const navOpacity = logoLink.style.opacity;
+      navFadeEls.forEach((el) => { el.style.opacity = navOpacity; });
+    }).then(() => {
+      loader.classList.add('is-visible');
+      window.setTimeout(() => { window.location.reload(); }, HOLD_MS);
+    });
   }
 
   // Tant qu'on est sur l'accueil (page 0), il n'y a rien à défiler : tout
@@ -2483,6 +3785,13 @@ function initHeroPageTransition() {
   // reprend la main à la place).
   const WHEEL_THRESHOLD = 10;
   window.addEventListener('wheel', (e) => {
+    // cf. déclaration de markGestureInput plus haut : tenue à jour pour
+    // CHAQUE wheelevent, avant tout autre traitement/sortie anticipée - la
+    // continuité d'un geste (et donc de sa traîne d'inertie) ne dépend que
+    // du silence ou non entre deux événements consécutifs, jamais de l'état
+    // de la page (devisOpen, animating...) à cet instant.
+    markGestureInput();
+
     if (devisOpen) return;
     if (animating) {
       e.preventDefault();
@@ -2502,11 +3811,13 @@ function initHeroPageTransition() {
   let touchStartY = null;
   const TOUCH_THRESHOLD = 40;
   window.addEventListener('touchstart', (e) => {
+    markGestureInput();
     if (devisOpen) return;
     touchStartY = e.touches[0].clientY;
   }, { passive: true });
 
   window.addEventListener('touchmove', (e) => {
+    markGestureInput();
     if (devisOpen || touchStartY === null) return;
     if (animating) {
       e.preventDefault();
@@ -2533,6 +3844,7 @@ function initHeroPageTransition() {
     const isDown = e.key === 'ArrowDown' || e.key === 'PageDown' || e.key === ' ';
     const isUp = e.key === 'ArrowUp' || e.key === 'PageUp';
     if (!isDown && !isUp) return;
+    markGestureInput();
 
     if (page === 0) {
       if (isDown) {
@@ -2547,20 +3859,38 @@ function initHeroPageTransition() {
     }
   });
 
-  // Liens d'ancre vers #services (nav + CTA du hero) : déclenchent la même
+  // Liens d'ancre vers #services (nav + CTA du hero) : déclenchent une
   // transition animée plutôt qu'un saut natif vers un élément position:fixed.
+  // Depuis l'accueil, la vague blanche de Devis (openServicesWave, cf.
+  // plus haut) mène directement au carrousel ; depuis #services déjà
+  // atteint, rien à faire (goForward() y est de toute façon un no-op, cf.
+  // sa propre garde page === 1).
   document.querySelectorAll('a[href="#services"]').forEach((link) => {
     link.addEventListener('click', (e) => {
       e.preventDefault();
+      if (page === 0) {
+        openServicesWave();
+        return;
+      }
+      // cf. markGestureInput/currentGestureId plus haut : un clic est par
+      // nature un geste neuf et délibéré, jamais la traîne d'un geste
+      // molette/tactile précédent - sans cet appel, goForward() pourrait se
+      // retrouver bloqué à tort si ce clic suit de près une transition
+      // déclenchée par molette/tactile (currentGestureId n'aurait alors
+      // jamais progressé depuis, faute d'un nouvel événement molette/
+      // tactile/clavier entre-temps).
+      markGestureInput();
       goForward();
     });
   });
 
   // Logo : un cran en arrière. Si la page Devis est ouverte, la referme
-  // (retour vers la page d'où elle a été ouverte) ; sinon, retour classique
-  // accueil ↔ services. goBackward()/closeDevisPage() ignorent déjà la
-  // position de scroll, contrairement aux gestes molette/tactile/clavier qui
-  // n'agissent qu'à la limite haute.
+  // (retour vers la page d'où elle a été ouverte) ; sinon, retour vers
+  // l'accueil - via goHomeFromLogo (vague blanche + rechargement réel de la
+  // page, cf. plus haut) plutôt que goBackward (réservée aux gestes molette/
+  // tactile/clavier, qui n'agissent qu'à la limite haute) : le logo, lui,
+  // peut être cliqué depuis n'importe quelle position de défilement dans
+  // #services.
   const logoLink = document.querySelector('.nav-logo');
   if (logoLink) {
     logoLink.addEventListener('click', (e) => {
@@ -2568,19 +3898,75 @@ function initHeroPageTransition() {
       if (devisOpen) {
         closeDevisPage();
       } else {
-        goBackward();
+        goHomeFromLogo();
       }
     });
   }
 
   function onResize() {
+    // Si une transition (accueil<->services, ou ouverture/fermeture Devis)
+    // est en cours, sa propre boucle rAF (animateTo/tween) continue de
+    // tourner et rappelle déjà render()/renderHeroExit() à chaque frame avec
+    // la progression correcte et spécifique à chaque axe (carte centrale,
+    // 6 cartes flottantes, fondu croisé, descente de la rangée - cf.
+    // animateTo, chacun sur son propre timing réel). Ni ce `render(progress)`
+    // global, NI les mesures ci-dessous ne doivent s'appliquer pendant cette
+    // course : measureFloatCardsExitTargets (et measureHeroExitRise/
+    // measureFloatCardsRiseExit) recalculent des cibles absolues
+    // (data-assembleDx/Dy) que renderFloatCardsExit/renderFloatCardsExitUp
+    // reconsomment ENTIÈREMENT à chaque frame (curvedOffset(t, dx, dy, ...))
+    // - jamais de façon incrémentale. Les rafraîchir en cours de route change
+    // donc dx/dy alors que `t` a déjà avancé, ce qui fait sauter la carte sur
+    // un point totalement différent de la NOUVELLE courbe plutôt que de
+    // continuer la sienne - perçu comme les cartes "remontant" hors de
+    // l'écran au lieu de s'aligner. Un redimensionnement (fenêtre, zoom
+    // navigateur, pincement sur trackpad...) survenant pile pendant un
+    // scroll suffit à le déclencher. On reporte donc TOUTE remesure à la fin
+    // de la transition en cours plutôt que de risquer cette discontinuité -
+    // la course en cours garde ses cibles d'origine (valables au moment où
+    // elle a démarré), et un redimensionnement réel sera de toute façon
+    // capturé par un prochain resize une fois `animating` retombé à false.
+    //
+    // Même chose, pour une raison différente mais tout aussi destructive,
+    // tant que l'ENTRÉE (atterrissage 3D de la carte centrale + des 6 cartes
+    // flottantes, cf. isHeroEntranceActive/heroEntranceCount) est encore en
+    // cours : measureHeroExitRise/measureFloatCardsExitTargets/
+    // measureFloatCardsRiseExit neutralisent chacune temporairement
+    // `card.style.animation` ("none" puis restauration de la valeur
+    // précédente) pour mesurer la position AU REPOS de la carte, hors de
+    // toute transformation en cours. Si la carte a encore sa classe
+    // .is-entering à cet instant (son animation `heroCardDrop`/
+    // `heroFloatCardDrop` est donc en réalité pilotée par la RÈGLE CSS de
+    // cette classe, jamais par un `animation` inline), cette bascule
+    // "none" -> valeur précédente (qui vaut simplement "", cf. cascade)
+    // relance l'animation CSS depuis son tout début - délai d'entrée
+    // (--entrance-delay) inclus - plutôt que de la laisser simplement
+    // continuer. La carte, déjà posée ou en train de descendre, saute donc
+    // brutalement en arrière à sa position de départ (hors écran, au-dessus
+    // du viewport) avant de rejouer l'atterrissage depuis zéro - perçu
+    // comme les cartes qui "remontent" en haut de la page. Un resize
+    // survenant tôt après le chargement (quasi garanti : l'ajout de
+    // .is-paged juste après, cf. plus haut dans ce fichier, masque la
+    // scrollbar verticale de la page et élargit donc le viewport de sa
+    // largeur - Chrome/Firefox émettent bien un `resize` pour ce seul
+    // changement) tombe presque toujours PILE pendant cette entrée
+    // (~0.95-1.35s), qui n'a même pas besoin d'un vrai redimensionnement de
+    // fenêtre par l'utilisateur pour se reproduire à quasi CHAQUE
+    // chargement de page. On reporte donc, ici aussi, toute remesure
+    // jusqu'à la fin de l'entrée.
+    if (animating || isHeroEntranceActive()) return;
     devisRiseHeightPx = devisWaveFallInner.clientHeight;
     measureHeroExitRise();
+    measureFloatCardsExitTargets();
+    measureFloatCardsRiseExit();
     render(progress);
     renderDevisWave(devisProgress);
     // Ré-applique le bon état de sortie en dernier : render() vient de le
     // recalculer via `progress` (axe accueil ↔ services), ce qui serait
-    // erroné si c'est en réalité l'ouverture de Devis qui l'a positionné.
+    // erroné si c'est en réalité l'ouverture de Devis qui l'a positionné —
+    // render() vient aussi de remettre floatCardsExitMode à 'assemble', donc
+    // on la restaure à 'rise' dans ce cas avant de rejouer la sortie.
+    floatCardsExitMode = (devisOpen && devisCameFromPage === 0) ? 'rise' : 'assemble';
     renderHeroExit(scatterAmount);
   }
   window.addEventListener('resize', onResize, { passive: true });
@@ -2668,128 +4054,12 @@ function initPreloader() {
 // ─────────────────────────────────────────────
 // Init
 // ─────────────────────────────────────────────
-// Accordéon automatique des 3 cartes "Nos services"
-// Une seule carte est "élargie" (.is-expanded) à la fois et affiche son
-// contenu ; les deux autres restent réduites et vides. Indépendant du
-// système .lights-active (piloté par la vague scroll-hijackée d'
-// initHeroPageTransition) : ce dernier ne se déclenche de façon fiable que
-// via l'interaction précise attendue par cette transition, ce qui rendait
-// l'accordéon silencieux dans certains cas d'usage réels. On se base donc
-// directement sur la visibilité réelle de la section (IntersectionObserver),
-// qui fonctionne quel que soit le mécanisme de scroll/transition en jeu.
+// Les 4 cartes d'info de #services (.info-card) portent directement la
+// classe .reveal : leur apparition au scroll est gérée par le mécanisme
+// générique initScrollReveal() (fondu + montée), pas par un système dédié —
+// il n'y a plus de décor par carte (photo, compteur...) à révéler en 3
+// temps comme dans l'ancienne version 3 cartes.
 // ─────────────────────────────────────────────
-function initServicesAccordion() {
-  const services = document.getElementById('services');
-  const cards = Array.from(document.querySelectorAll('.service-card'));
-  if (!services || !cards.length) return;
-
-  // Barre de progression (3 traits, cf. styles.css) : reflète la carte
-  // actuellement active (.is-filling, se remplit sur STEP_MS) et celles
-  // déjà vues dans le tour en cours (.is-done, trait plein figé) — un
-  // trait sans aucune des deux classes n'a pas encore été atteint.
-  const progressSegs = Array.from(document.querySelectorAll('.services-progress-seg'));
-  function setProgress(activeIndex) {
-    progressSegs.forEach((seg, i) => {
-      seg.classList.toggle('is-filling', i === activeIndex);
-      seg.classList.toggle('is-done', i < activeIndex);
-    });
-  }
-
-  // .is-expanded (largeur) est posé en synchrone dès le tout premier rendu,
-  // avant la moindre peinture : la 1ère carte est déjà élargie, sinon les 3
-  // cartes apparaîtraient à la même taille puis sauteraient à leur largeur
-  // finale quand .svc-reveal les révèle (fondu + léger slide).
-  cards.forEach((card, idx) => card.classList.toggle('is-expanded', idx === 0));
-
-  function showCardContent(card) {
-    card.classList.add('content-visible');
-  }
-
-  // .content-visible (opacité du texte/carte/point bleu, cf. styles.css) ne
-  // doit, elle, être posée qu'au moment où la section devient réellement
-  // visible pour l'utilisateur — pas juste après DOMContentLoaded. #services
-  // occupe le même rectangle d'écran que le hero dès le chargement (cf.
-  // commentaire plus bas sur .lights-active) : si on l'ajoutait tout de
-  // suite (même différé de quelques frames), sa transition d'apparition se
-  // jouerait entièrement en coulisses avant que l'utilisateur n'atteigne la
-  // section, et il ne verrait donc jamais l'animation. On attend donc le
-  // vrai signal de révélation (.lights-active, posé plus bas par start()),
-  // avec un double rAF ensuite pour garantir un repaint sur l'état caché
-  // avant de basculer — sinon la transition ne joue pas non plus.
-  function revealFirstCard() {
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        showCardContent(cards[0]);
-      });
-    });
-  }
-
-  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-    showCardContent(cards[0]);
-    if (progressSegs[0]) progressSegs[0].classList.add('is-done');
-    return;
-  }
-
-  const STEP_MS = 4500;
-  // Durées des 2 étapes qui s'enchaînent (cf. styles.css) : le fade out du
-  // contenu actif doit être terminé avant que la largeur ne commence à
-  // bouger, et le fade in du nouveau contenu ne démarre qu'une fois la
-  // largeur stabilisée — 3 phases successives, jamais superposées.
-  const FADE_MS = 200;
-  const WIDTH_MS = 850;
-
-  let index = 0;
-  let timer = null;
-  let firstCardRevealed = false;
-
-  function goTo(next) {
-    cards[index].classList.remove('content-visible');
-    setTimeout(() => {
-      index = next;
-      setProgress(index);
-      cards.forEach((card, idx) => card.classList.toggle('is-expanded', idx === index));
-      setTimeout(() => {
-        showCardContent(cards[index]);
-      }, WIDTH_MS);
-    }, FADE_MS);
-  }
-
-  function start() {
-    // 1ère fois seulement : la carte 0 n'a encore aucun contenu visible
-    // (cf. plus haut) — on le révèle maintenant que la section est
-    // effectivement affichée, pour que son animation d'entrée soit vue.
-    if (!firstCardRevealed) {
-      firstCardRevealed = true;
-      revealFirstCard();
-      setProgress(0);
-    }
-    if (timer) return;
-    timer = setInterval(() => {
-      goTo((index + 1) % cards.length);
-    }, STEP_MS);
-  }
-
-  function stop() {
-    clearInterval(timer);
-    timer = null;
-  }
-
-  // Déclenché par #services.lights-active — PAS par un IntersectionObserver
-  // brut sur #services : cette section occupe le même rectangle d'écran que
-  // le hero dès le chargement de la page (mise en page "paged" pilotée par
-  // initHeroPageTransition, cf. plus haut), donc elle serait considérée
-  // "visible" immédiatement, bien avant que l'utilisateur n'y accède
-  // réellement. .lights-active, elle, n'est posée qu'une fois la section
-  // effectivement affichée (opacité amenée à 1) — c'est le signal déjà
-  // utilisé par les lumières d'ambiance et l'apparition en cascade.
-  if (services.classList.contains('lights-active')) start();
-
-  const mo = new MutationObserver(() => {
-    if (services.classList.contains('lights-active')) start();
-    else stop();
-  });
-  mo.observe(services, { attributes: true, attributeFilter: ['class'] });
-}
 
 // ─────────────────────────────────────────────
 // Texte scroll-reveal dans la section Services
@@ -2855,16 +4125,388 @@ function initServicesRevealText() {
   window.HSServicesReveal = { update };
 }
 
+// ─────────────────────────────────────────────
+// SORTIE AU SCROLL DE LA RANGÉE D'ICÔNES (#servicesIntroRow)
+// Une fois les 6 cartes alignées (donc #services au repos, tout en haut de
+// son propre scroll interne - cf. #services, overflow-y:auto, styles.css),
+// continuer à scroller fait s'envoler ces 6 cartes vers le haut de l'écran
+// en se dispersant, en passant par-dessus le titre + la description
+// (#servicesIntroHeading, peints après elle dans le flux - cf. index.html -
+// donc déjà au-dessus par défaut, sans z-index à poser), qui eux ne font que
+// s'estomper. Purement scroll-scrubbé : chaque frame de scroll repose
+// directement transform/opacity d'après services.scrollTop, sans easing ni
+// transition CSS (désactivée le temps du geste), pour rester visuellement
+// collé au scroll de l'utilisateur plutôt que de jouer une transition figée
+// une fois déclenchée - même esprit que renderFloatCardsExit
+// (initHeroPageTransition, plus haut), mais sur le scroll natif de #services
+// plutôt que sur la molette hijackée. Desktop uniquement (comme
+// initHeroPageTransition) : sur mobile/reduced-motion, #services repasse en
+// flux normal (overflow-y:visible, cf. styles.css) et n'a donc plus de
+// scroll interne propre à écouter ici.
+function initServicesIntroExitOnScroll() {
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  if (window.matchMedia('(max-width: 768px)').matches) return;
+
+  const services = document.getElementById('services');
+  const heading = document.getElementById('servicesIntroHeading');
+  const slots = Array.from(document.querySelectorAll('.services-intro-slot'));
+  if (!services || !heading || !slots.length) return;
+
+  // Distance de scroll (px, dans #services) sur laquelle toute la
+  // dispersion se joue : au-delà, les cartes restent hors écran et le titre
+  // masqué, jusqu'à ce qu'un retour tout en haut (scrollTop=0) ne les fasse
+  // réapparaître - purement fonction de scrollTop, aucun état à
+  // réinitialiser séparément.
+  const EXIT_RANGE_PX = 380;
+
+  // Trajectoire propre à chaque carte (dx/dy/rot, indexée comme les 6
+  // .services-intro-slot du DOM) : dx croît de façon strictement monotone de
+  // gauche (le plus négatif) à droite (le plus positif) - même logique que
+  // ROW_CARD_FALL (initHeroPageTransition, retour vers l'accueil) mais vers
+  // le HAUT plutôt que vers le bas - garantit que deux cartes voisines
+  // s'écartent toujours l'une de l'autre plutôt que de se chevaucher pendant
+  // l'envol. Les cartes restent nettes et opaques pendant tout le trajet
+  // (jamais de fondu, contrairement au titre/description ci-dessous) - seul
+  // leur déplacement hors de l'écran les fait disparaître.
+  const CARD_FLIGHT = [
+    { dx: -70, dy: -260, rot: -12 },
+    { dx: -42, dy: -300, rot: -7 },
+    { dx: -16, dy: -340, rot: -3 },
+    { dx: 16, dy: -340, rot: 3 },
+    { dx: 42, dy: -300, rot: 7 },
+    { dx: 70, dy: -260, rot: 12 },
+  ];
+  // Décalage croissant par carte (fraction de EXIT_RANGE_PX) : la carte
+  // d'index 0 commence à s'envoler dès le premier pixel de scroll, les
+  // suivantes un peu après - un vrai effet de dispersion progressive plutôt
+  // que 6 cartes qui décollent toutes en même temps.
+  const CARD_STAGGER = 0.05;
+
+  let ticking = false;
+
+  function render() {
+    ticking = false;
+    const p = Math.min(Math.max(services.scrollTop / EXIT_RANGE_PX, 0), 1);
+
+    heading.style.opacity = String(1 - p);
+    heading.style.pointerEvents = p > 0.05 ? 'none' : '';
+
+    slots.forEach((slot, i) => {
+      if (p <= 0) {
+        slot.style.transition = '';
+        slot.style.transform = '';
+        return;
+      }
+      const offset = i * CARD_STAGGER;
+      const cardT = Math.min(Math.max((p - offset) / (1 - offset), 0), 1);
+      const flight = CARD_FLIGHT[i] || CARD_FLIGHT[0];
+      slot.style.transition = 'none';
+      slot.style.transform = `translate(${flight.dx * cardT}px, ${flight.dy * cardT}px) rotate(${flight.rot * cardT}deg)`;
+    });
+  }
+
+  function onScroll() {
+    if (ticking) return;
+    ticking = true;
+    requestAnimationFrame(render);
+  }
+
+  services.addEventListener('scroll', onScroll, { passive: true });
+}
+
+// ─────────────────────────────────────────────
+// CARROUSEL DES SERVICES (#servicesCarouselStage)
+// Carrousel "à carte centrale" EN BOUCLE : un seul état, currentIndex (0..6,
+// jamais borné - cf. goTo ci-dessous, qui le fait toujours passer par un
+// modulo), pilote tout. render() n'a qu'un rôle : pour chacune des 7 cartes,
+// calculer sa distance circulaire à currentIndex (toujours ramenée entre -3
+// et +3 - cf. normalizedDiff) et lui poser la classe de rôle correspondante
+// (.is-main/.is-prev/.is-next/.is-offstage-left/.is-offstage-right, cf.
+// styles.css) - AUCUN transform/opacity calculé ici en JS : c'est la
+// transition CSS déclenchée par ce changement de classe qui anime le
+// passage d'un rôle à l'autre, à chaque fois (avance, recul, ou saut direct
+// via une puce) exactement de la même façon.
+// ─────────────────────────────────────────────
+function initServicesCarousel() {
+  const stage = document.getElementById('servicesCarouselStage');
+  const track = document.getElementById('servicesCarouselTrack');
+  const prevBtn = document.getElementById('servicesCarouselPrev');
+  const nextBtn = document.getElementById('servicesCarouselNext');
+  const dotsContainer = document.getElementById('servicesCarouselDots');
+  if (!stage || !track || !prevBtn || !nextBtn || !dotsContainer) return;
+
+  const cards = Array.from(track.children);
+  const N = cards.length;
+  if (!N) return;
+
+  // Apparition au scroll : déclenchée quand le TITRE atteint (à une fine
+  // bande près, cf. rootMargin ci-dessous) le centre vertical de l'écran
+  // (pas une simple entrée dans le viewport) - à cet instant, .is-revealed
+  // est posée sur la section, ce qui fait "s'écrire" le titre mot par mot
+  // (cf. .services-carousel-head h2 .hero-reveal-word, styles.css), PUIS
+  // .is-cards-revealed (cf. CARDS_REVEAL_DELAY_MS plus bas), qui fait
+  // apparaître (fondu + montée "depuis le bas") les 3 cartes AFFICHÉES du
+  // carrousel (.is-main/.is-prev/.is-next, cf. styles.css - jamais les 4
+  // hors-champ, déjà invisibles), puis enfin la rangée flèches+puces. Un
+  // seul déclenchement, jamais rejoué.
+  //
+  // Le carrousel lui-même ne devient interactif (goTo, donc tout ce qui en
+  // dépend - flèches, puces, clic sur une carte voisine, swipe, molette,
+  // clavier) qu'UNE FOIS ces 3 cartes réellement arrivées à leur place -
+  // carouselReady, vérifié en tout début de goTo plus bas. "Réellement
+  // arrivées" = transitionend sur la carte centrale, pas un minutage
+  // approximatif dupliqué en JS (même principe que armInfoCardSettle,
+  // initScrollReveal plus haut dans ce fichier, pour les cartes d'info).
+  let carouselReady = false;
+  const section = stage.closest('.services-carousel');
+  const titleEl = section ? section.querySelector('.services-carousel-head h2') : null;
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // Découpe le titre mot par mot (même wrapWordsForReveal/.hero-reveal-word
+  // que le hero/l'intro services/les cartes d'info, cf. plus haut dans ce
+  // fichier) pour l'effet "écriture" au moment de la révélation - cf.
+  // animation-play-state paused/running sur .is-revealed, styles.css.
+  if (titleEl) wrapWordsForReveal(titleEl);
+
+  function armCarouselReadyOnSettle() {
+    // La carte centrale (le <li>) - transitionend sur `translate`, la
+    // propriété dédiée à cette apparition (cf. styles.css, jamais retouchée
+    // par la navigation ensuite - contrairement à `transform`, partagée
+    // avec .is-main/.is-prev/.is-next et donc déclenchée à chaque
+    // changement de carte, pas seulement à l'apparition initiale).
+    const mainCard = section.querySelector('.services-carousel-card.is-main');
+    if (!mainCard) { carouselReady = true; return; }
+    let settled = false;
+    function onEnd(e) {
+      if (e.target !== mainCard || e.propertyName !== 'translate') return;
+      settle();
+    }
+    function settle() {
+      if (settled) return;
+      settled = true;
+      carouselReady = true;
+      mainCard.removeEventListener('transitionend', onEnd);
+      window.clearTimeout(fallbackId);
+    }
+    mainCard.addEventListener('transitionend', onEnd);
+    // Filet de sécurité (transitionend qui ne se déclencherait pas pour une
+    // raison ou une autre) : 1200ms couvre largement le pire cas réel
+    // (sans délai, durée 0.5s, cf. styles.css).
+    const fallbackId = window.setTimeout(settle, 1200);
+  }
+
+  // Les cartes apparaissent APRÈS le titre (pas en même temps) : .is-revealed
+  // (déclenche le titre, cf. styles.css) et .is-cards-revealed (déclenche les
+  // 3 cartes affichées, cf. .services-carousel:not(.is-cards-revealed)
+  // .is-main/.is-prev/.is-next, styles.css) sont deux classes distinctes
+  // posées à des instants différents plutôt qu'une seule - contrairement au
+  // titre (animation dédiée, delay/cascade posés une fois pour toutes en
+  // CSS), les cartes partagent leurs propriétés transform/opacity avec la
+  // navigation ultérieure (flèches/puces/swipe, cf. goTo/render plus bas) :
+  // leur donner un transition-delay CSS aurait aussi ralenti CE changement
+  // de carte, pas seulement l'apparition initiale. Décaler l'ajout de la
+  // classe elle-même (ce setTimeout) évite le problème sans toucher à cette
+  // transition partagée.
+  const CARDS_REVEAL_DELAY_MS = 300;
+
+  if (!section) {
+    carouselReady = true;
+  } else if (reduceMotion) {
+    section.classList.add('is-revealed', 'is-cards-revealed');
+    carouselReady = true;
+  } else if (!titleEl) {
+    section.classList.add('is-revealed', 'is-cards-revealed');
+    armCarouselReadyOnSettle();
+  } else {
+    // threshold:0 + rootMargin qui rogne les 30% du bas du viewport (aucune
+    // marge en haut) : isIntersecting passe à true dès que le TITRE entre
+    // dans les 70% hauts de l'écran, pas besoin d'atteindre le centre (50%)
+    // - se déclenche donc plus tôt dans le scroll, dès que le titre est
+    // "confortablement visible" plutôt qu'une fois pile au milieu. -50%/-50%
+    // (bande de hauteur EXACTEMENT 0, testé au tout début) ne fonctionne pas
+    // du tout : un rectangle d'intersection de hauteur nulle a une aire
+    // nulle, donc un ratio et un isIntersecting TOUJOURS faux, quelle que
+    // soit la position du titre - la révélation ne se déclenchait alors
+    // jamais.
+    const revealObserver = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting) {
+        section.classList.add('is-revealed');
+        revealObserver.disconnect();
+        armCarouselReadyOnSettle();
+        window.setTimeout(() => section.classList.add('is-cards-revealed'), CARDS_REVEAL_DELAY_MS);
+      }
+    }, { threshold: 0, rootMargin: '0px 0px -30% 0px' });
+    revealObserver.observe(titleEl);
+  }
+
+  // Puces : une par carte, générées plutôt que codées en dur en HTML - la
+  // liste reste juste si le nombre de services change plus tard. Chaque
+  // puce saute DIRECTEMENT à sa carte (pas forcément un pas de 1), cf. goTo.
+  const dots = cards.map((card, i) => {
+    const dot = document.createElement('button');
+    dot.type = 'button';
+    dot.className = 'services-carousel-dot';
+    dot.setAttribute('role', 'tab');
+    dot.setAttribute('aria-label', `Aller au service ${i + 1}`);
+    dot.addEventListener('click', () => goTo(i));
+    dotsContainer.appendChild(dot);
+    return dot;
+  });
+
+  // Distance circulaire de la carte i à currentIndex, toujours ramenée dans
+  // (-N/2, N/2] (pour N=7 : -3..3, une valeur distincte par carte - 7 est
+  // impair, aucune égalité possible) : c'est ce qui fait qu'avancer depuis
+  // la dernière carte ramène bien à la 1ʳᵉ (et inversement) sans jamais un
+  // grand saut visuel - la carte "suivante" de la 7ᵉ a toujours diff=+1,
+  // exactement comme n'importe quelle autre paire de voisines.
+  function normalizedDiff(i, current) {
+    let diff = (i - current) % N;
+    if (diff > N / 2) diff -= N;
+    if (diff < -N / 2) diff += N;
+    return diff;
+  }
+
+  function roleForDiff(diff) {
+    if (diff === 0) return 'is-main';
+    if (diff === -1) return 'is-prev';
+    if (diff === 1) return 'is-next';
+    return diff < 0 ? 'is-offstage-left' : 'is-offstage-right';
+  }
+
+  const ROLE_CLASSES = ['is-main', 'is-prev', 'is-next', 'is-offstage-left', 'is-offstage-right'];
+  let currentIndex = 0;
+
+  function render() {
+    cards.forEach((card, i) => {
+      const role = roleForDiff(normalizedDiff(i, currentIndex));
+      card.classList.remove(...ROLE_CLASSES);
+      card.classList.add(role);
+      // Seules les cartes réellement invisibles (opacity:0, cf. .is-
+      // offstage-* dans styles.css) sont masquées aux lecteurs d'écran - la
+      // centrale ET ses 2 voisines (visibles, juste réduites/estompées)
+      // restent annoncées, leur titre étant du vrai contenu (nom du
+      // service), pas un simple décor.
+      card.setAttribute('aria-hidden', role.startsWith('is-offstage') ? 'true' : 'false');
+    });
+    dots.forEach((dot, i) => {
+      const isActive = i === currentIndex;
+      dot.classList.toggle('is-active', isActive);
+      dot.setAttribute('aria-selected', String(isActive));
+    });
+  }
+
+  // Modulo qui reste positif quel que soit le signe de i (contrairement à
+  // l'opérateur % natif de JS, négatif pour un dividende négatif) : goPrev
+  // depuis l'index 0 doit atterrir sur N-1 (la dernière carte), pas sur une
+  // valeur négative - c'est précisément ce qui fait boucler le carrousel.
+  function goTo(i) {
+    // Aucune navigation tant que les 3 cartes affichées n'ont pas fini leur
+    // propre apparition (cf. carouselReady, plus haut) - couvre tous les
+    // chemins d'entrée (flèches, puces, clic sur une carte voisine, swipe,
+    // molette, clavier), qui passent tous par goTo/goNext/goPrev.
+    if (!carouselReady) return;
+    currentIndex = ((i % N) + N) % N;
+    render();
+  }
+  function goNext() { goTo(currentIndex + 1); }
+  function goPrev() { goTo(currentIndex - 1); }
+
+  prevBtn.addEventListener('click', goPrev);
+  nextBtn.addEventListener('click', goNext);
+
+  // Clic direct sur une carte voisine (.is-prev/.is-next, cf. styles.css -
+  // les cartes .is-offstage-* ont pointer-events:none, jamais cliquables) :
+  // l'amène au centre, comme si on avait cliqué la flèche correspondante.
+  // suppressClick (posé après un swipe commis, cf. plus bas) évite qu'un
+  // relâchement de glissement ne déclenche EN PLUS ce clic sur la carte
+  // qui se trouve alors sous le doigt/curseur.
+  let suppressClick = false;
+  track.addEventListener('click', (e) => {
+    if (suppressClick) { suppressClick = false; return; }
+    const card = e.target.closest('.services-carousel-card');
+    if (!card) return;
+    if (card.classList.contains('is-prev')) goPrev();
+    else if (card.classList.contains('is-next')) goNext();
+  });
+
+  // Clavier flèches gauche/droite quand la scène a le focus (tabindex="0"
+  // posé en HTML) - même pas "une carte" que les boutons/le swipe, pour une
+  // navigation cohérente quel que soit le moyen utilisé.
+  stage.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowRight') { e.preventDefault(); goNext(); }
+    else if (e.key === 'ArrowLeft') { e.preventDefault(); goPrev(); }
+  });
+
+  // Swipe/glisser (souris ET tactile, unifiées via Pointer Events - plus de
+  // scroll natif à laisser respirer ici, contrairement à l'ancienne version
+  // en scroll-snap) : geste discret plutôt qu'un suivi du doigt image par
+  // image - dès que le déplacement horizontal dépasse SWIPE_THRESHOLD, on
+  // déclenche IMMÉDIATEMENT goNext()/goPrev() (un seul cran, jamais plus,
+  // même pour un flick rapide - cf. "au swipe, la prochaine carte... est
+  // mise en avant" : un pas à la fois, pas un défilement libre) et on
+  // ignore le reste du geste en cours (committed) jusqu'au relâchement -
+  // évite qu'un unique glissement un peu long ne fasse avancer de 2 crans.
+  const SWIPE_THRESHOLD = 40;
+  let pointerDownX = null;
+  let pointerCommitted = false;
+
+  stage.addEventListener('pointerdown', (e) => {
+    pointerDownX = e.clientX;
+    pointerCommitted = false;
+  });
+
+  stage.addEventListener('pointermove', (e) => {
+    if (pointerDownX == null || pointerCommitted) return;
+    const dx = e.clientX - pointerDownX;
+    if (Math.abs(dx) < SWIPE_THRESHOLD) return;
+    pointerCommitted = true;
+    suppressClick = true;
+    if (dx < 0) goNext(); else goPrev();
+  });
+
+  function endPointer() {
+    pointerDownX = null;
+  }
+  stage.addEventListener('pointerup', endPointer);
+  stage.addEventListener('pointercancel', endPointer);
+  stage.addEventListener('pointerleave', endPointer);
+
+  // Molette/trackpad horizontal (desktop, où le geste "swipe" se traduit
+  // par un deltaX plutôt qu'un pointerdown/move/up) : même logique de pas
+  // unique + cooldown (au lieu d'un SWIPE_THRESHOLD sur une position, la
+  // molette envoie une rafale de petits deltaX pour un seul vrai geste -
+  // sans cooldown, un seul coup de trackpad ferait avancer de 5-6 cartes
+  // d'un coup). Ignore le deltaY dominant (scroll vertical normal de la
+  // page) : seul un mouvement principalement horizontal déclenche le
+  // carrousel.
+  const WHEEL_COOLDOWN_MS = 450;
+  let lastWheelAt = 0;
+  stage.addEventListener('wheel', (e) => {
+    if (Math.abs(e.deltaX) <= Math.abs(e.deltaY)) return;
+    e.preventDefault();
+    const now = performance.now();
+    if (now - lastWheelAt < WHEEL_COOLDOWN_MS) return;
+    lastWheelAt = now;
+    if (e.deltaX > 0) goNext(); else goPrev();
+  }, { passive: false });
+
+  render();
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   initPreloader();
   initRipples();
   initHeroCardEntrance();
   initNavLogoFade();
   initSmoothAnchorScroll();
+  initInfoCardWordReveal();
   initScrollReveal();
+  initInfoCardPriceTicker();
+  initInfoCardClock();
   initHeroPageTransition();
-  initServicesAccordion();
   initServicesRevealText();
+  initServicesIntroExitOnScroll();
+  initServicesCarousel();
 
   // initHeroPageTransition() ne s'initialise pas sur mobile ni si l'utilisateur
   // préfère moins d'animations (cf. plus haut) : #services n'est alors jamais
@@ -2881,11 +4523,21 @@ document.addEventListener('DOMContentLoaded', () => {
         // (cf. media query CSS) : à défaut de la plongée pilotée par le
         // scroll (désactivée pour laisser le document défiler nativement —
         // seul moyen pour Safari mobile de rétracter sa barre d'adresse), on
-        // rejoue ici le fondu + léger slide de .svc-reveal (déjà utilisé par
+        // rejoue ici le retournement de .svc-flip-reveal (déjà utilisé par
         // la transition sur desktop) une seule fois, dès que la section
         // entre réellement dans l'écran au scroll naturel. Déclenché une
         // seule fois (pas lié en continu au scroll, contrairement à une
         // précédente tentative qui avait buggué).
+        // threshold à 0 + rootMargin étendue vers le bas : #services étant
+        // beaucoup plus haute qu'un écran, un threshold basé sur sa propre
+        // hauteur (ex. 0.15) ne se déclenchait qu'après un long scroll dans
+        // la section, bien après que la frontière hero/#services soit déjà
+        // passée à l'écran - le fondu des taches de lumière arrivait alors
+        // en retard, avec un bref aplat blanc bien visible à la jonction.
+        // La rootMargin déclenche le fondu dès que #services est encore à
+        // 600px sous l'écran (donc quasiment au chargement, vu qu'elle
+        // commence pile au bas du hero), pour qu'il ait terminé bien avant
+        // que l'utilisateur n'atteigne réellement cette frontière.
         const servicesIntro = new IntersectionObserver((entries) => {
           for (const entry of entries) {
             if (entry.isIntersecting) {
@@ -2893,11 +4545,33 @@ document.addEventListener('DOMContentLoaded', () => {
               servicesIntro.disconnect();
             }
           }
-        }, { threshold: 0.15 });
+        }, { threshold: 0, rootMargin: '0px 0px 600px 0px' });
         servicesIntro.observe(services);
       }
     }
   }
+
+  // Même repli que ci-dessus, pour le titre/description de l'intro services
+  // (#servicesIntroHeading) et sa rangée d'icônes (#servicesIntroRow) : sur
+  // mobile, initHeroPageTransition() ne tourne jamais, donc leur révélation
+  // normalement pilotée par le scroll-hijack (playIntroHeadingReveal, plus
+  // haut) ne se déclenche jamais — ils restaient affichés en permanence sans
+  // aucune apparition. .is-visible n'a d'effet qu'en dessous de 768px (cf.
+  // styles.css) : sur desktop, où ces éléments sont réellement gérés par
+  // initHeroPageTransition, la poser ici est un no-op silencieux. threshold
+  // 0.2 + rootMargin -60px : même réglage qu'initScrollReveal, pour rester
+  // cohérent avec le reste des apparitions au scroll de la page.
+  [document.getElementById('servicesIntroHeading'), document.getElementById('servicesIntroRow')]
+    .filter(Boolean)
+    .forEach((el) => {
+      const io = new IntersectionObserver(([entry]) => {
+        if (entry.isIntersecting) {
+          el.classList.add('is-visible');
+          io.disconnect();
+        }
+      }, { threshold: 0.2, rootMargin: '0px 0px -60px 0px' });
+      io.observe(el);
+    });
 });
 
 /*
