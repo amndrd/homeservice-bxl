@@ -5237,10 +5237,24 @@ form {
        viewport). */
     perspective: 1400px;
     pointer-events: none;
+    background: transparent;
   }
 
+  /* Filet de sécurité posé sur le conteneur lui-même (calque plat, sans
+     rotation 3D) : les lattes qui basculent laissent chacune passer un
+     filet très fin de la page en dessous, à la jonction entre deux lattes
+     voisines (arrondi sub-pixel + anti-aliasing des faces tournées,
+     inévitable avec autant de plans 3D empilés). Ce fond blanc, retardé
+     jusqu'à la toute fin de la cascade (~0.97s, cf. transition-delay des
+     lattes plus bas), comble ces interstices une fois l'écran presque
+     entièrement basculé - sans lui, l'état final resterait "presque"
+     blanc au lieu de vraiment l'être. Aucun délai à la fermeture (retire
+     .open) : redevient transparent immédiatement pour ne pas masquer la
+     cascade inverse. */
   .nav-flip.open {
     pointer-events: auto;
+    background: var(--white);
+    transition: background-color 0s linear 0.94s;
   }
 
   .nav-flip-slat {
