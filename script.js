@@ -1805,6 +1805,42 @@ function submitDevis(event) {
 // ─────────────────────────────────────────────
 // Mobile nav
 // ─────────────────────────────────────────────
+// Position mémorisée le temps que le menu plein écran est ouvert (cf.
+// lockBodyScroll/unlockBodyScroll ci-dessous). navScrollLocked évite tout
+// appel redondant : closeMobileMenu() est aussi câblé au clic sur les liens
+// de .nav-links côté ordinateur (où ils sont toujours visibles, sans notion
+// d'ouverture) - sans ce garde-fou, unlockBodyScroll() y ramènerait la page
+// en haut (scrollTo(0,0)) à chaque clic sur un lien de nav.
+let navScrollLocked = false;
+let navScrollLockY = 0;
+
+// overflow:hidden seul sur le body ne suffit pas à bloquer le scroll tactile
+// sur mobile Safari (le rebond en bord de page continue de faire défiler le
+// contenu sous le menu, malgré son fond blanc plein écran) : on fige le body
+// en position:fixed à sa position de scroll actuelle, la seule méthode
+// fiable sur iOS, puis on restaure la position exacte à la fermeture.
+function lockBodyScroll() {
+  if (navScrollLocked) return;
+  navScrollLocked = true;
+  navScrollLockY = window.scrollY || window.pageYOffset || 0;
+  document.body.style.position = 'fixed';
+  document.body.style.top = `-${navScrollLockY}px`;
+  document.body.style.left = '0';
+  document.body.style.right = '0';
+  document.body.style.width = '100%';
+}
+
+function unlockBodyScroll() {
+  if (!navScrollLocked) return;
+  navScrollLocked = false;
+  document.body.style.position = '';
+  document.body.style.top = '';
+  document.body.style.left = '';
+  document.body.style.right = '';
+  document.body.style.width = '';
+  window.scrollTo(0, navScrollLockY);
+}
+
 function toggleMenu() {
   const flip = document.querySelector('.nav-flip');
   const links = document.querySelector('.nav-links');
@@ -1815,7 +1851,11 @@ function toggleMenu() {
   burger.setAttribute('aria-expanded', String(isOpen));
   // Le menu occupe désormais tout l'écran (effet "trivision" à lattes) : on
   // bloque le scroll de la page derrière tant qu'il est ouvert.
-  document.body.style.overflow = isOpen ? 'hidden' : '';
+  if (isOpen) {
+    lockBodyScroll();
+  } else {
+    unlockBodyScroll();
+  }
 }
 
 function closeMobileMenu() {
@@ -1823,7 +1863,7 @@ function closeMobileMenu() {
   document.querySelector('.nav-links').classList.remove('open');
   document.querySelector('.nav-burger').classList.remove('open');
   document.querySelector('.nav-burger').setAttribute('aria-expanded', 'false');
-  document.body.style.overflow = '';
+  unlockBodyScroll();
 }
 
 // Ferme la carte du menu (avec sa sortie animée vers le haut, cf. .nav-links
