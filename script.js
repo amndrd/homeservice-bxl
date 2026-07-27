@@ -213,7 +213,9 @@ function openDevisWithService(serviceKey) {
 }
 
 document.addEventListener('keydown', function(e) {
-  if (e.key === 'Escape') closeDevis();
+  if (e.key !== 'Escape') return;
+  closeDevis();
+  if (document.querySelector('.nav-links.open')) closeMobileMenu();
 });
 
 // ─────────────────────────────────────────────
@@ -1809,12 +1811,16 @@ function toggleMenu() {
   const isOpen = links.classList.toggle('open');
   burger.classList.toggle('open', isOpen);
   burger.setAttribute('aria-expanded', String(isOpen));
+  // Le menu occupe désormais tout l'écran (effet "billboard flip") : on
+  // bloque le scroll de la page derrière tant qu'il est ouvert.
+  document.body.style.overflow = isOpen ? 'hidden' : '';
 }
 
 function closeMobileMenu() {
   document.querySelector('.nav-links').classList.remove('open');
   document.querySelector('.nav-burger').classList.remove('open');
   document.querySelector('.nav-burger').setAttribute('aria-expanded', 'false');
+  document.body.style.overflow = '';
 }
 
 // Ferme la carte du menu (avec sa sortie animée vers le haut, cf. .nav-links

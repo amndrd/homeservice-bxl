@@ -5203,56 +5203,87 @@ form {
    RESPONSIVE
    ============================================= */
 @media (max-width: 768px) {
-  /* Toujours dans le flux (display:flex) : la visibilité/animation passe par
-     opacity + transform + visibility, ce qui permet la transition slide+fade
-     à l'ouverture comme à la fermeture (display:none ne peut pas s'animer).
-     translateY(-46px) (au lieu d'un léger -10px) : la carte arrive vraiment
-     depuis le haut de l'écran plutôt que d'un simple fondu sur place, et
-     repart dans l'autre sens à la fermeture (cf. closeMobileMenu, script.js). */
+  /* perspective sur la nav : nécessaire pour que le rotateX du panneau
+     plein écran ci-dessous se perçoive comme un vrai panneau qui bascule
+     (effet "billboard flip"), et non comme un simple aplatissement. */
+  .nav {
+    perspective: 1400px;
+  }
+
+  /* Menu plein écran façon panneau d'affichage à bascule ("billboard
+     flip") : le panneau blanc est articulé en haut (transform-origin:top)
+     et pivote autour de l'axe X, replié hors champ (rotateX(-100deg), donc
+     invisible) au repos puis rabattu à plat (rotateX(0)) à l'ouverture -
+     comme un volet qui se déploie de haut en bas. Toujours dans le flux
+     (display:flex) : la visibilité passe par transform + visibility, pas
+     display:none, pour pouvoir s'animer dans les deux sens (cf.
+     closeMobileMenu, script.js). */
   .nav-links {
     display: flex;
-    position: absolute;
-    top: calc(100% + 0.6rem);
-    left: 0; right: 0;
+    position: fixed;
+    inset: 0;
+    height: 100dvh;
+    width: 100%;
     flex-direction: column;
+    align-items: stretch;
+    justify-content: center;
     gap: 0;
-    padding: 0.6rem;
-    border-radius: var(--radius);
-    border: 1px solid rgba(90,154,58,0.14);
-    background-color: rgba(255, 251, 244, 0.97);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    box-shadow: 0 6px 20px rgba(0,0,0,0.10), 0 22px 52px rgba(0,0,0,0.18);
-    opacity: 0;
+    padding: 2rem 1.6rem;
+    background-color: var(--white);
     visibility: hidden;
     pointer-events: none;
-    transform: translateY(-46px) scale(0.96);
     transform-origin: top center;
+    transform: rotateX(-100deg);
+    backface-visibility: hidden;
     transition:
-      opacity   0.38s cubic-bezier(0.22, 1, 0.36, 1),
-      transform 0.38s cubic-bezier(0.22, 1, 0.36, 1),
-      visibility 0s linear 0.38s;
+      transform  0.6s cubic-bezier(0.65, 0, 0.35, 1),
+      visibility 0s linear 0.6s;
   }
 
   .nav-links.open {
-    opacity: 1;
     visibility: visible;
     pointer-events: auto;
-    transform: translateY(0) scale(1);
-    transition:
-      opacity   0.38s cubic-bezier(0.22, 1, 0.36, 1),
-      transform 0.38s cubic-bezier(0.22, 1, 0.36, 1);
+    transform: rotateX(0deg);
+    transition: transform 0.6s cubic-bezier(0.65, 0, 0.35, 1);
+  }
+
+  /* Boutons du menu affichés "par-dessus" l'écran blanc : ils apparaissent
+     en fondu + léger glissement, décalés dans le temps les uns après les
+     autres et seulement une fois le panneau largement rabattu, pour ne
+     jamais se voir pendant la bascule elle-même. */
+  .nav-links li {
+    opacity: 0;
+    transform: translateY(16px);
+    transition: opacity 0.4s ease, transform 0.4s ease;
+    transition-delay: 0s;
+  }
+
+  .nav-links.open li {
+    opacity: 1;
+    transform: translateY(0);
+    transition-delay: 0.32s;
+  }
+
+  .nav-links.open li:nth-child(2) {
+    transition-delay: 0.4s;
+  }
+
+  .nav-links.open li:nth-child(3) {
+    transition-delay: 0.48s;
   }
 
   .nav-links li:not(:last-child) {
-    margin-bottom: 0.2rem;
+    margin-bottom: 0.4rem;
   }
 
   .nav-links a {
-    padding: 0.95rem 1.1rem;
+    padding: 1.1rem 1.2rem;
     display: block;
     border-radius: var(--radius-sm);
-    font-weight: 500;
+    font-size: 1.6rem;
+    font-weight: 600;
+    text-align: center;
+    color: var(--black);
     transition: background-color 0.18s ease, color 0.18s ease;
   }
 
@@ -5266,26 +5297,41 @@ form {
     color: var(--green-dark);
   }
 
-  /* Bouton "Devis gratuit" dans la carte du menu : séparé des liens par un
-     filet, plein-largeur pour rester bien visible en bas de carte. */
+  /* Bouton "Devis gratuit" dans le menu plein écran : séparé des liens par
+     un filet, plein-largeur, avec un peu d'air au-dessus vu le format. */
   .nav-links-cta {
     display: block;
-    margin-top: 0.5rem;
-    padding-top: 0.7rem;
+    margin-top: 1.4rem;
+    padding-top: 1.4rem;
     border-top: 1px solid rgba(90,154,58,0.14);
   }
 
   .nav-links-cta .btn-primary {
     width: 100%;
     justify-content: center;
+    padding: 1rem 1.2rem;
+    font-size: 1.05rem;
   }
 
   .nav > .btn-primary {
     display: none;
   }
 
+  /* position:relative + z-index : le panneau plein écran (.nav-links) est
+     lui aussi positionné (position:fixed), donc empilé au-dessus de tout
+     élément non positionné du même contexte par défaut, quel que soit
+     l'ordre dans le DOM - sans cela le burger (qui doit rester cliquable
+     pour refermer le menu, transformé en croix) disparaîtrait sous l'écran
+     blanc une fois le menu ouvert. */
   .nav-burger {
     display: flex;
+    position: relative;
+    z-index: 1;
+  }
+
+  .nav-logo {
+    position: relative;
+    z-index: 1;
   }
 
   /* Le logo s'efface progressivement au scroll vers le bas ; la nav reste
