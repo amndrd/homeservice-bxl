@@ -5215,13 +5215,27 @@ form {
      repos on ne voit donc rien, à l'ouverture l'écran devient blanc latte
      par latte. .nav-links (juste après) affiche ensuite les liens
      par-dessus, une fois la cascade de lattes terminée. */
+  /* inset:0 seul (pas de height:100dvh en plus) : sur mobile, dvh peut se
+     figer à la valeur du moment où la barre d'adresse était encore visible
+     (le scroll étant verrouillé pendant que le menu est ouvert, plus rien
+     ne redéclenche son recalcul) et laisser une bande non couverte en bas -
+     vécu en vrai, cf. capture utilisateur. inset:0 sur un élément
+     position:fixed correspond toujours exactement au viewport réel, sans
+     cette ambiguïté. */
   .nav-flip {
     position: fixed;
     inset: 0;
-    height: 100dvh;
-    width: 100%;
     display: flex;
     flex-direction: column;
+    /* perspective partagée par toutes les lattes (plutôt qu'une perspective
+       par latte) : un vrai panneau trivision n'a qu'un seul point de vue,
+       pas un par latte - en plus de donner un rendu plus fidèle (les
+       lattes en haut/bas de l'écran se déforment un peu plus que celles du
+       centre, comme sur un vrai panneau), une perspective par latte faisait
+       parfois disparaître la face arrière de la toute dernière latte en bas
+       d'écran (bug de compositing 3D lié à sa position au bord du
+       viewport). */
+    perspective: 1400px;
     pointer-events: none;
   }
 
@@ -5232,7 +5246,6 @@ form {
   .nav-flip-slat {
     flex: 1 1 0%;
     position: relative;
-    perspective: 900px;
   }
 
   .nav-flip-slat-inner {
@@ -5263,6 +5276,14 @@ form {
   .nav-flip-face {
     position: absolute;
     inset: 0;
+    /* Même transform-origin que .nav-flip-slat-inner (haut) : la face
+       arrière porte elle aussi un rotateX(180deg) (ci-dessous), et deux
+       rotations de 180deg autour d'origines différentes (par défaut le
+       centre de la face, ici) ne s'annulent pas position-wise - elles
+       laissent la face décalée d'exactement sa propre hauteur une fois
+       revenue "à plat" (vécu en vrai : la toute dernière latte du bas
+       n'affichait plus rien, décalée d'une latte vers le haut). */
+    transform-origin: top;
     backface-visibility: hidden;
     -webkit-backface-visibility: hidden;
   }
@@ -5280,12 +5301,13 @@ form {
      .nav-flip ci-dessus) : juste un calque transparent qui centre les
      liens par-dessus, visible/cliquable seulement une fois le menu
      ouvert. */
+  /* inset:0 seul, même raison que .nav-flip ci-dessus (pas de height:100dvh
+     redondant qui peut se figer trop court sur mobile une fois le scroll
+     verrouillé). */
   .nav-links {
     display: flex;
     position: fixed;
     inset: 0;
-    height: 100dvh;
-    width: 100%;
     flex-direction: column;
     align-items: stretch;
     justify-content: center;
