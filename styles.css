@@ -1889,6 +1889,15 @@ body.is-loading .hero-highlight-glow {
   object-fit: cover;
 }
 
+/* Les 3 taches de lumière de la carte 1 (mêmes spans que les cartes 2-4, cf.
+   index.html) restent masquées par défaut : cette carte affiche sa photo sur
+   desktop, pas de lumières en plus par-dessus - cf. media query mobile plus
+   bas (repli inverse : photo/point masqués, lumières affichées) pour le
+   rendu "comme les 3 autres cartes" voulu sur mobile. */
+.info-card-lights--photo .info-card-light {
+  display: none;
+}
+
 /* Point de localisation bleu, façon repère "vous êtes ici" - positionné en
    %, calé sur la position de Bruxelles dans images/bruxelles.jpg/webp (le
    centre de la zone verte de la carte), donc stable même si l'image est
@@ -2511,36 +2520,92 @@ body.is-loading .hero-highlight-glow {
     gap: 1rem;
     margin: var(--section-gap) auto 0;
   }
-  /* Design "carte photo" (taches colorées + panneau flouté en bas, cf. plus
-     haut) réservé au desktop, cf. consigne d'origine ("sur la version
-     ordinateur uniquement") : repli complet ici sur la carte plate d'avant,
-     .info-card-lights masquée et .info-card-body remis dans le flux normal
-     (ni position:absolute, ni flou) - même rendu qu'avant l'introduction du
-     fond coloré. Padding droit élargi (au lieu du 1.5rem uniforme) : réserve
-     la place que la puce-icône occupe visuellement sur ce bord, pour que le
-     titre/la description ne passent jamais dessous. */
+  /* Design "carte photo" repris du desktop (taches de lumière chaude derrière
+     le texte, cf. .info-card-lights plus haut) plutôt que la carte plate
+     d'avant : la zone colorée occupe toute la carte (inset 0, pas de bande
+     blanche autour) - .info-card-lights (réactivée ci-dessous) porte le fond
+     coloré + son propre arrondi/rognage, aligné sur celui de .info-card, et
+     .info-card-body (repositionné juste en dessous) récupère l'ancien
+     padding du texte. Chaque carte garde sa propre palette "lumière chaude"
+     (cf. surcharges .info-card:nth-child(n) .info-card-light-a/b/c plus bas)
+     plutôt que la teinte ambre/orange unique du desktop (voulue identique
+     sur les 4 là-bas) : sur mobile, où les cartes s'empilent au lieu d'être
+     vues côte à côte, une teinte propre à chacune aide à les distinguer au
+     premier coup d'œil pendant le défilement. */
   .info-card {
     aspect-ratio: auto;
     min-height: 0;
     background: #fff;
-    border: 1px solid rgba(0, 0, 0, 0.06);
+    border: none;
     box-shadow: 0 16px 32px rgba(0, 0, 0, 0.08), 0 4px 10px rgba(0, 0, 0, 0.04);
-    padding: 1.7rem 4.6rem 1.7rem 1.5rem;
-    border-radius: 22px;
+    padding: 0;
+    border-radius: 26px;
   }
   /* Repli de la carte 1 (cf. .info-card:nth-child(1), plus haut dans ce
-     fichier) sur la carte plate ci-dessus : sans ça, son box-shadow dédié
-     (plus spécifique que .info-card seul, et posé hors media query)
-     l'emporterait malgré tout sur ce repli mobile commun aux 4 cartes. */
+     fichier) sur la carte ci-dessus : sans ça, son box-shadow dédié (plus
+     spécifique que .info-card seul, et posé hors media query) l'emporterait
+     malgré tout sur ce repli mobile commun aux 4 cartes. */
   .info-card:nth-child(1) {
     box-shadow: 0 16px 32px rgba(0, 0, 0, 0.08), 0 4px 10px rgba(0, 0, 0, 0.04);
   }
   .info-card-lights {
-    display: none;
+    display: block;
+    position: absolute;
+    inset: 0;
+    border-radius: 26px;
+    z-index: 0;
   }
   .info-card-body {
-    position: static;
-    padding: 0;
+    position: relative;
+    z-index: 1;
+    padding: 1.7rem 4.6rem 1.7rem 1.5rem;
+  }
+  /* Carte 1 sur mobile : repli inverse de la règle desktop juste au-dessus
+     de .info-card-lights--photo (styles.css, hors media query) - la photo
+     et le point de localisation, jugés trop chargés à cette taille, cèdent
+     la place aux 3 mêmes taches de lumière que les cartes 2-4 (déjà posées
+     dans le DOM, cf. index.html), avec la palette ambre/orange propre à
+     cette carte (héritée de .info-card:nth-child(1) .info-card-light-a/b/c,
+     hors media query - pas de surcharge de couleur nécessaire ici). */
+  .info-card-lights--photo .info-card-photo-img,
+  .info-card-lights--photo .info-card-location-dot {
+    display: none;
+  }
+  .info-card-lights--photo .info-card-light {
+    display: block;
+  }
+  /* Palette "lumière chaude" propre à chaque carte (surcharge les taches
+     ambre/orange communes posées plus haut, actives par défaut sur desktop) :
+     corail sur la carte 2, terracotta sur la 3, or sur la 4 - la carte 1
+     garde la teinte ambre/orange d'origine (déjà rattachée au ton chaud du
+     hero, cf. commentaire plus haut). Mêmes positions/tailles que la palette
+     commune, seules les couleurs changent. */
+  .info-card:nth-child(2) .info-card-light-a {
+    background: radial-gradient(circle, #FF6F5E 0%, rgba(255,111,94,0) 70%);
+  }
+  .info-card:nth-child(2) .info-card-light-b {
+    background: radial-gradient(circle, #FFC48C 0%, rgba(255,196,140,0) 70%);
+  }
+  .info-card:nth-child(2) .info-card-light-c {
+    background: radial-gradient(circle, #FF9A76 0%, rgba(255,154,118,0) 70%);
+  }
+  .info-card:nth-child(3) .info-card-light-a {
+    background: radial-gradient(circle, #E2725B 0%, rgba(226,114,91,0) 70%);
+  }
+  .info-card:nth-child(3) .info-card-light-b {
+    background: radial-gradient(circle, #FF9472 0%, rgba(255,148,114,0) 70%);
+  }
+  .info-card:nth-child(3) .info-card-light-c {
+    background: radial-gradient(circle, #C1440E 0%, rgba(193,68,14,0) 70%);
+  }
+  .info-card:nth-child(4) .info-card-light-a {
+    background: radial-gradient(circle, #FFD966 0%, rgba(255,217,102,0) 70%);
+  }
+  .info-card:nth-child(4) .info-card-light-b {
+    background: radial-gradient(circle, #F4B400 0%, rgba(244,180,0,0) 70%);
+  }
+  .info-card:nth-child(4) .info-card-light-c {
+    background: radial-gradient(circle, #FFE99B 0%, rgba(255,233,155,0) 70%);
   }
   /* Taille et débord calés sur un écran ~375-430px de large : .section
      (parent) a 2rem (32px) de padding horizontal, donc le bord droit de la
@@ -5238,6 +5303,7 @@ form {
     perspective: 1400px;
     pointer-events: none;
     background: transparent;
+    transform: translateY(0);
   }
 
   /* Filet de sécurité posé sur le conteneur lui-même (calque plat, sans
@@ -5248,13 +5314,31 @@ form {
      jusqu'à la toute fin de la cascade (~0.97s, cf. transition-delay des
      lattes plus bas), comble ces interstices une fois l'écran presque
      entièrement basculé - sans lui, l'état final resterait "presque"
-     blanc au lieu de vraiment l'être. Aucun délai à la fermeture (retire
-     .open) : redevient transparent immédiatement pour ne pas masquer la
-     cascade inverse. */
+     blanc au lieu de vraiment l'être. Aucun délai au retrait de .open :
+     ce retrait n'intervient qu'une fois le rideau de fermeture (cf.
+     .nav-flip.closing plus bas) déjà remonté hors écran, en même temps que
+     .closing (cf. closeMobileMenu, script.js) - le fond redevient
+     transparent au même instant que le panneau quitte l'écran, sans
+     transition visible ni flash. */
   .nav-flip.open {
     pointer-events: auto;
     background: var(--white);
     transition: background-color 0s linear 0.94s;
+  }
+
+  /* Fermeture façon "rideau" (cf. closeMobileMenu, script.js) : contrairement
+     à l'ouverture, la fermeture ne rejoue pas la cascade de lattes à
+     l'envers - l'écran blanc, déjà entièrement retourné (lattes à 180deg),
+     glisse d'un seul bloc vers le haut, comme un rideau qu'on remonte. Les
+     lattes restent figées dans leur état retourné (transition coupée juste
+     en dessous) : seul le conteneur .nav-flip se déplace, via translateY. */
+  .nav-flip.closing {
+    transition: transform 0.55s cubic-bezier(0.6, 0, 0.2, 1);
+    transform: translateY(-100%);
+  }
+
+  .nav-flip.closing .nav-flip-slat-inner {
+    transition: none;
   }
 
   .nav-flip-slat {

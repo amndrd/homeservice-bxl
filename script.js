@@ -1841,29 +1841,55 @@ function unlockBodyScroll() {
   window.scrollTo(0, navScrollLockY);
 }
 
-function toggleMenu() {
+// Durée de l'animation de fermeture "rideau" (cf. .nav-flip.closing,
+// styles.css) : à garder synchronisée avec sa transition CSS - c'est ce
+// délai qui détermine quand on retire .open/.closing et qu'on remet les
+// lattes à plat, prêtes pour la prochaine ouverture en cascade.
+const NAV_FLIP_CLOSE_MS = 550;
+
+function openMobileMenu() {
   const flip = document.querySelector('.nav-flip');
   const links = document.querySelector('.nav-links');
   const burger = document.querySelector('.nav-burger');
-  const isOpen = links.classList.toggle('open');
-  flip.classList.toggle('open', isOpen);
-  burger.classList.toggle('open', isOpen);
-  burger.setAttribute('aria-expanded', String(isOpen));
+  // Au cas où le menu était en train de se refermer (rideau qui remonte) :
+  // on annule cette fermeture avant de rouvrir, pour repartir d'un état net.
+  flip.classList.remove('closing');
+  flip.classList.add('open');
+  links.classList.add('open');
+  burger.classList.add('open');
+  burger.setAttribute('aria-expanded', 'true');
   // Le menu occupe désormais tout l'écran (effet "trivision" à lattes) : on
   // bloque le scroll de la page derrière tant qu'il est ouvert.
-  if (isOpen) {
-    lockBodyScroll();
-  } else {
-    unlockBodyScroll();
-  }
+  lockBodyScroll();
 }
 
 function closeMobileMenu() {
-  document.querySelector('.nav-flip').classList.remove('open');
-  document.querySelector('.nav-links').classList.remove('open');
-  document.querySelector('.nav-burger').classList.remove('open');
-  document.querySelector('.nav-burger').setAttribute('aria-expanded', 'false');
+  const flip = document.querySelector('.nav-flip');
+  const links = document.querySelector('.nav-links');
+  const burger = document.querySelector('.nav-burger');
+  if (flip.classList.contains('closing')) return;
+  links.classList.remove('open');
+  burger.classList.remove('open');
+  burger.setAttribute('aria-expanded', 'false');
   unlockBodyScroll();
+  // Contrairement à l'ouverture (cascade de lattes), la fermeture glisse
+  // l'écran blanc déjà retourné d'un bloc vers le haut, en "rideau" (cf.
+  // .nav-flip.closing, styles.css) - .open reste posé le temps de
+  // l'animation (les lattes doivent rester figées, retournées) et n'est
+  // retiré qu'une fois le rideau remonté.
+  flip.classList.add('closing');
+  window.setTimeout(() => {
+    flip.classList.remove('open', 'closing');
+  }, NAV_FLIP_CLOSE_MS);
+}
+
+function toggleMenu() {
+  const isOpen = document.querySelector('.nav-links').classList.contains('open');
+  if (isOpen) {
+    closeMobileMenu();
+  } else {
+    openMobileMenu();
+  }
 }
 
 // Ferme la carte du menu (avec sa sortie animée vers le haut, cf. .nav-links

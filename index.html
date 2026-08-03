@@ -53,7 +53,7 @@
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
   <link rel="preconnect" href="https://api.emailjs.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=Inter:wght@400;500;600&family=Poppins:wght@600;700;800&family=Montserrat:wght@500;700;800;900&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="styles.min.css?v=1785182867" />
+  <link rel="stylesheet" href="styles.min.css?v=1785188469" />
   <!-- leaflet.css ne sert qu'à la carte du quiz devis (chargée bien après le
        premier rendu) : chargement non bloquant (preload -> stylesheet au
        onload), avec repli <noscript> pour les navigateurs sans JS. -->
@@ -70,7 +70,7 @@
     "url": "https://homeservicebxl.com",
     "telephone": "+32474811145",
     "image": "https://homeservicebxl.com/images/og-image.jpg",
-    "logo": "https://homeservicebxl.com/images/logo.png?v=1785182867",
+    "logo": "https://homeservicebxl.com/images/logo.png?v=1785188469",
     "description": "HomeService BXL propose des services à domicile à Bruxelles et en périphérie : nettoyage intérieur et extérieur, lavage voiture, jardinage, déménagement, livraison de courses, montage de meubles et bricolage. Devis gratuit en ligne. Disponible 7j/7.",
     "priceRange": "€€",
     "openingHoursSpecification": {
@@ -234,8 +234,8 @@
        une fois tout le contenu chargé. -->
   <div class="preloader" id="preloader" role="status" aria-live="polite">
     <picture>
-      <source srcset="images/logo.webp?v=1785182867" type="image/webp" />
-      <img src="images/logo.png?v=1785182867" alt="" class="preloader-logo" aria-hidden="true" width="801" height="380" />
+      <source srcset="images/logo.webp?v=1785188469" type="image/webp" />
+      <img src="images/logo.png?v=1785188469" alt="" class="preloader-logo" aria-hidden="true" width="801" height="380" />
     </picture>
     <div class="preloader-spinner" aria-hidden="true"></div>
     <span class="sr-only">Chargement…</span>
@@ -246,8 +246,8 @@
   <nav class="nav" aria-label="Navigation principale">
     <a href="#" class="nav-logo">
       <picture>
-        <source srcset="images/logo.webp?v=1785182867" type="image/webp" />
-        <img src="images/logo.png?v=1785182867" alt="HomeService BXL - services à domicile à Bruxelles" class="logo-img" width="801" height="380" />
+        <source srcset="images/logo.webp?v=1785188469" type="image/webp" />
+        <img src="images/logo.png?v=1785188469" alt="HomeService BXL - services à domicile à Bruxelles" class="logo-img" width="801" height="380" />
       </picture>
     </a>
     <!-- Panneau "trivision" du menu mobile (cf. .nav-flip, styles.css) : 8
@@ -494,14 +494,19 @@
            styles.css). -->
       <div class="info-cards" id="servicesInfoCards">
 
-        <!-- Carte 1 – seule carte avec un vrai visuel pour l'instant (carte de
-             la région bruxelloise, cf. images/bruxelles.jpg/webp) : remplace
-             les 3 taches de lumière par la photo (object-fit:cover, même
-             conteneur/rognage arrondi que .info-card-lights) + un point de
-             localisation bleu animé (.info-card-location-dot) repéré sur
-             Bruxelles, cf. .info-card-location-dot-ping dans styles.css pour
-             l'anneau qui pulse. Les 3 autres cartes gardent les lumières
-             chaudes en attendant leur propre visuel. -->
+        <!-- Carte 1 – vrai visuel sur desktop (carte de la région bruxelloise,
+             cf. images/bruxelles.jpg/webp) : remplace les 3 taches de lumière
+             par la photo (object-fit:cover, même conteneur/rognage arrondi
+             que .info-card-lights) + un point de localisation bleu animé
+             (.info-card-location-dot) repéré sur Bruxelles, cf. .info-card-
+             location-dot-ping dans styles.css pour l'anneau qui pulse. Les 3
+             autres cartes gardent les lumières chaudes en attendant leur
+             propre visuel. Les 3 mêmes taches que ces cartes sont aussi
+             posées ici (masquées par défaut, cf. .info-card-lights--photo
+             .info-card-light dans styles.css) : sur mobile, la photo/le point
+             sont masqués à leur place pour que cette carte ait le même rendu
+             "lumière chaude" que les 3 autres plutôt que la photo, jugée trop
+             chargée à cette taille. -->
         <article class="info-card reveal">
           <div class="info-card-lights info-card-lights--photo" aria-hidden="true">
             <img src="images/bruxelles.jpg" alt="" class="info-card-photo-img" width="528" height="289" loading="lazy">
@@ -509,6 +514,9 @@
               <span class="info-card-location-dot-ping"></span>
               <span class="info-card-location-dot-core"></span>
             </span>
+            <span class="info-card-light info-card-light-a"></span>
+            <span class="info-card-light info-card-light-b"></span>
+            <span class="info-card-light info-card-light-c"></span>
           </div>
           <span class="info-card-chip" aria-hidden="true">
             <span class="info-card-chip-glass"></span>
@@ -552,7 +560,7 @@
           </span>
           <div class="info-card-body">
             <h3 class="info-card-title">Devis 100% gratuit</h3>
-            <p class="info-card-sub">Demandez votre devis à tout moment&nbsp;: c'est gratuit, et ça ne vous engage à rien</p>
+            <p class="info-card-sub">Demandez votre devis à tout moment</p>
           </div>
         </article>
 
@@ -567,8 +575,8 @@
             <span class="info-card-chip-white"><img src="images/price.svg" alt="" class="info-card-chip-icon" width="16" height="16" loading="lazy"></span>
           </span>
           <div class="info-card-body">
-            <h3 class="info-card-title">Estimation du prix en quelques minutes</h3>
-            <p class="info-card-sub">Obtenez votre estimation personnalisée sans engagement, sans surprise</p>
+            <h3 class="info-card-title">Estimation du prix</h3>
+            <p class="info-card-sub">Obtenez votre estimation personnalisée sans engagement</p>
           </div>
         </article>
 
@@ -838,8 +846,8 @@
        spinner) - juste avant de déclencher un vrai rechargement de la page. -->
   <div class="logo-reload-loader" id="logoReloadLoader" aria-hidden="true">
     <picture>
-      <source srcset="images/logo.webp?v=1785182867" type="image/webp" />
-      <img src="images/logo.png?v=1785182867" alt="" class="preloader-logo" width="801" height="380" />
+      <source srcset="images/logo.webp?v=1785188469" type="image/webp" />
+      <img src="images/logo.png?v=1785188469" alt="" class="preloader-logo" width="801" height="380" />
     </picture>
     <div class="preloader-spinner"></div>
   </div>
@@ -912,8 +920,8 @@
        (même pattern que devis.html). -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin="" defer></script>
   <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js" defer></script>
-  <script src="brussels-map-data.min.js?v=1785182867" defer></script>
-  <script src="script.min.js?v=1785182867" defer></script>
+  <script src="brussels-map-data.min.js?v=1785188469" defer></script>
+  <script src="script.min.js?v=1785188469" defer></script>
 
   <!-- Detail overlay : s'ouvre au clic sur la carte centrale du carrousel -->
   <div class="svc-detail-overlay" id="svcDetailOverlay" aria-hidden="true" role="dialog" aria-modal="true">
