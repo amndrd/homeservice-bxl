@@ -342,8 +342,23 @@
 
     // Une arrivée en ?service=<nom> (lien direct envoyé à un client) ouvre le
     // formulaire avec le bon service déjà choisi et son quiz déjà affiché.
-    const wanted = new URLSearchParams(location.search).get('service');
-    if (wanted && QUESTIONS[wanted]) { select.value = wanted; renderQuiz(); }
+    // SLUGS traduit les identifiants de l'ancienne version du site : des
+    // liens ?service=nettoyage-exterieur ont circulé par SMS/WhatsApp et
+    // continuent d'arriver, il n'y a aucune raison qu'ils tombent sur un
+    // formulaire vide.
+    const SLUGS = {
+      'lavage-voiture':    'Lavage voiture',
+      'nettoyage-exterieur': 'Entretien extérieur',
+      'decombrements':     'Désencombrement',
+      'courses-livraison': 'Livraison à domicile',
+      'nettoyage':         'Nettoyage intérieur',
+      'montage-bricolage': 'Montage',
+      'travaux':           'Travaux',
+      'sur-mesure':        'Service sur mesure'
+    };
+    const asked = new URLSearchParams(location.search).get('service');
+    const wanted = asked && (SLUGS[asked] || (QUESTIONS[asked] ? asked : null));
+    if (wanted) { select.value = wanted; renderQuiz(); }
 
     const fields = () => $$('input:not([name="societe"]):not([type="number"]), select, textarea', form);
     fields().forEach(f => f.addEventListener('input', () => f.parentElement.classList.remove('err')));

@@ -434,3 +434,19 @@ form{display:grid;gap:26px}
 .seo-detail h2{font-family:var(--body);font-size:13px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:rgba(246,241,233,.45);margin-bottom:16px}
 .seo-detail p+p{margin-top:6px}
 .seo-detail strong{color:rgba(246,241,233,.62);font-weight:600}
+
+/* ---------- Pages devis autonomes (devis.html, demande.html) ---------- */
+
+/* Ces deux pages ne contiennent que le formulaire, repris tel quel de la page
+   d'accueil (mêmes classes, mêmes id) : il ne reste ici qu'à lui donner un
+   cadre de page - une barre sobre en haut, le formulaire centré, une ligne de
+   pied de page. Rien de ce qui pourrait détourner d'un envoi en cours. */
+.solo{background:var(--paper);min-height:100vh;min-height:100svh;display:flex;flex-direction:column}
+.solo__bar{display:flex;align-items:center;justify-content:space-between;gap:16px;width:min(760px,100% - 40px);margin:20px auto 0;padding:6px 6px 6px 10px;border:1px solid var(--bar-line);border-radius:16px;background:var(--bar)}
+.solo__bar .logo{margin-right:0}
+.solo__tel{display:flex;align-items:center;gap:8px;height:36px;padding:0 14px;border-radius:12px;background:#fff;color:#000;font-size:14px;font-weight:500;white-space:nowrap;transition:opacity .2s}
+.solo__tel:hover{opacity:.8}
+.solo__main{flex:1;width:min(760px,100% - 40px);margin-inline:auto;padding-block:clamp(28px,5vw,48px)}
+
+.solo__foot{display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px;width:min(760px,100% - 40px);margin-inline:auto;padding-block:26px;border-top:1px solid var(--line);font-size:14px;color:var(--muted)}
+.solo__foot a:hover{color:var(--ink)}
