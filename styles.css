@@ -320,7 +320,9 @@ section{position:relative}
 .contact .wrap{display:grid;gap:50px}
 @media (min-width:1060px){.contact .wrap{grid-template-columns:1.05fr .95fr;gap:70px;align-items:start}}
 .form{background:var(--white);border:1px solid var(--line);border-radius:30px;padding:clamp(24px,4vw,44px);display:grid;gap:18px}
-.form h2{font-size:clamp(32px,3.4vw,42px)}
+/* h1 sur devis.html / demande.html, où ce titre est le titre de la page ;
+   h2 sur l'accueil, où le h1 est celui du hero. */
+.form h1,.form h2{font-size:clamp(32px,3.4vw,42px)}
 .form__intro{color:var(--muted);margin-top:-6px}
 form{display:grid;gap:26px}
 .fs{border:0;margin:0;padding:0;display:grid;gap:14px;min-width:0}
