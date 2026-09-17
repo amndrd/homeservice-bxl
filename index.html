@@ -1,946 +1,811 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="fr-BE">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 
-  <!-- SEO -->
-  <title>HomeService BXL – Services à domicile à Bruxelles | Nettoyage, Jardinage, Déménagement</title>
-  <meta name="description" content="HomeService BXL propose des services à domicile à Bruxelles et en périphérie : nettoyage intérieur et extérieur, lavage voiture, jardinage, déménagement, livraison de courses, montage de meubles et bricolage. Devis gratuit en ligne. Disponible 7j/7." />
-  <meta name="keywords" content="services à domicile Bruxelles, nettoyage maison Bruxelles, lavage voiture à domicile, jardinage Bruxelles, déménagement Bruxelles, livraison courses Bruxelles, montage meubles Bruxelles, bricolage Bruxelles, aide à domicile Ixelles, nettoyage Schaerbeek, services Anderlecht, HomeService BXL" />
-  <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1" />
-  <meta name="author" content="HomeService BXL" />
-  <meta name="geo.region" content="BE-BRU" />
-  <meta name="geo.placename" content="Brussels" />
-  <link rel="canonical" href="https://homeservicebxl.com" />
-  <!-- Une seule version linguistique existe (fr-BE) : pas de hreflang nl-BE
-       tant qu'il n'y a pas de page en néerlandais à annoncer (déclarer une
-       URL fr comme version nl trompe Google plus que ça n'aide - cf.
-       recap de session). x-default couvre les autres locales/langues. -->
-  <link rel="alternate" hreflang="fr-BE" href="https://homeservicebxl.com" />
-  <link rel="alternate" hreflang="x-default" href="https://homeservicebxl.com" />
+<!-- SEO -->
+<title>HomeService BXL – Services à domicile à Bruxelles | Nettoyage, Jardinage, Déménagement</title>
+<meta name="description" content="HomeService BXL propose des services à domicile à Bruxelles et en périphérie : nettoyage intérieur et extérieur, lavage voiture, jardinage, déménagement, livraison de courses, montage de meubles et bricolage. Devis gratuit en ligne. Disponible 7j/7.">
+<meta name="keywords" content="services à domicile Bruxelles, nettoyage maison Bruxelles, lavage voiture à domicile, jardinage Bruxelles, déménagement Bruxelles, livraison courses Bruxelles, montage meubles Bruxelles, bricolage Bruxelles, aide à domicile Ixelles, nettoyage Schaerbeek, services Anderlecht, HomeService BXL">
+<meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">
+<meta name="author" content="HomeService BXL">
+<meta name="geo.region" content="BE-BRU">
+<meta name="geo.placename" content="Brussels">
+<link rel="canonical" href="https://homeservicebxl.com">
+<link rel="alternate" hreflang="fr-BE" href="https://homeservicebxl.com">
+<link rel="alternate" hreflang="x-default" href="https://homeservicebxl.com">
+<meta name="theme-color" content="#0f1a2c">
+<meta name="format-detection" content="telephone=yes">
+<meta name="msapplication-TileColor" content="#0f1a2c">
+<meta name="msapplication-config" content="/browserconfig.xml">
+<link rel="manifest" href="/manifest.json">
+<link rel="icon" type="image/png" sizes="32x32" href="images/favicon-32.png">
+<link rel="icon" type="image/png" sizes="192x192" href="images/icon-192.png">
+<link rel="apple-touch-icon" sizes="180x180" href="images/icon-180.png">
 
-  <!-- Métadonnées avancées -->
-  <meta name="theme-color" content="#4274D9" />
-  <meta name="format-detection" content="telephone=yes" />
-  <meta name="msapplication-TileColor" content="#4274D9" />
-  <meta name="msapplication-config" content="/browserconfig.xml" />
-  <link rel="manifest" href="/manifest.json" />
-  <link rel="icon" type="image/png" sizes="32x32" href="images/favicon-32.png" />
-  <link rel="icon" type="image/png" sizes="192x192" href="images/icon-192.png" />
-  <link rel="apple-touch-icon" sizes="180x180" href="images/icon-180.png" />
+<!-- Open Graph / Twitter -->
+<meta property="og:type" content="website">
+<meta property="og:title" content="HomeService BXL – Services à domicile à Bruxelles">
+<meta property="og:description" content="HomeService BXL propose des services à domicile à Bruxelles et en périphérie : nettoyage intérieur et extérieur, lavage voiture, jardinage, déménagement, livraison de courses, montage de meubles et bricolage. Devis gratuit en ligne. Disponible 7j/7.">
+<meta property="og:url" content="https://homeservicebxl.com">
+<meta property="og:image" content="https://homeservicebxl.com/images/og-image.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:locale" content="fr_BE">
+<meta property="og:site_name" content="HomeService BXL">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="HomeService BXL – Services à domicile à Bruxelles">
+<meta name="twitter:description" content="HomeService BXL propose des services à domicile à Bruxelles et en périphérie : nettoyage intérieur et extérieur, lavage voiture, jardinage, déménagement, livraison de courses, montage de meubles et bricolage. Devis gratuit en ligne. Disponible 7j/7.">
+<meta name="twitter:image" content="https://homeservicebxl.com/images/og-image.jpg">
 
-  <!-- Open Graph -->
-  <meta property="og:type" content="website" />
-  <meta property="og:title" content="HomeService BXL – Services à domicile à Bruxelles" />
-  <meta property="og:description" content="HomeService BXL propose des services à domicile à Bruxelles et en périphérie : nettoyage intérieur et extérieur, lavage voiture, jardinage, déménagement, livraison de courses, montage de meubles et bricolage. Devis gratuit en ligne. Disponible 7j/7." />
-  <meta property="og:url" content="https://homeservicebxl.com" />
-  <meta property="og:image" content="https://homeservicebxl.com/images/og-image.jpg" />
-  <meta property="og:image:width" content="1200" />
-  <meta property="og:image:height" content="630" />
-  <meta property="og:locale" content="fr_BE" />
-  <meta property="og:site_name" content="HomeService BXL" />
-
-  <!-- Twitter Card -->
-  <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="HomeService BXL – Services à domicile à Bruxelles" />
-  <meta name="twitter:description" content="HomeService BXL propose des services à domicile à Bruxelles et en périphérie : nettoyage intérieur et extérieur, lavage voiture, jardinage, déménagement, livraison de courses, montage de meubles et bricolage. Devis gratuit en ligne. Disponible 7j/7." />
-  <meta name="twitter:image" content="https://homeservicebxl.com/images/og-image.jpg" />
-
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="preconnect" href="https://unpkg.com" crossorigin />
-  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
-  <link rel="preconnect" href="https://api.emailjs.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=Inter:wght@400;500;600&family=Poppins:wght@600;700;800&family=Montserrat:wght@500;700;800;900&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="styles.min.css?v=1786321285" />
-  <!-- leaflet.css ne sert qu'à la carte du quiz devis (chargée bien après le
-       premier rendu) : chargement non bloquant (preload -> stylesheet au
-       onload), avec repli <noscript> pour les navigateurs sans JS. -->
-  <link rel="preload" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" as="style" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" onload="this.onload=null;this.rel='stylesheet'" />
-  <noscript><link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" /></noscript>
-  <script src="https://unpkg.com/@phosphor-icons/web@2.1.1" defer></script>
-
-  <!-- Données structurées LocalBusiness -->
-  <script type="application/ld+json">
-  {
-    "@context": "https://schema.org",
-    "@type": "LocalBusiness",
-    "name": "HomeService BXL",
-    "url": "https://homeservicebxl.com",
-    "telephone": "+32474811145",
-    "image": "https://homeservicebxl.com/images/og-image.jpg",
-    "logo": "https://homeservicebxl.com/images/logo.png?v=1786321285",
-    "description": "HomeService BXL propose des services à domicile à Bruxelles et en périphérie : nettoyage intérieur et extérieur, lavage voiture, jardinage, déménagement, livraison de courses, montage de meubles et bricolage. Devis gratuit en ligne. Disponible 7j/7.",
-    "priceRange": "€€",
-    "openingHoursSpecification": {
-      "@type": "OpeningHoursSpecification",
-      "dayOfWeek": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"],
-      "opens": "00:00",
-      "closes": "23:59"
-    },
-    "address": {
-      "@type": "PostalAddress",
-      "addressLocality": "Brussels",
-      "addressCountry": "BE"
-    },
-    "areaServed": [
-      { "@type": "City", "name": "Bruxelles" },
-      { "@type": "City", "name": "Ixelles" },
-      { "@type": "City", "name": "Schaerbeek" },
-      { "@type": "City", "name": "Etterbeek" },
-      { "@type": "City", "name": "Uccle" },
-      { "@type": "City", "name": "Anderlecht" },
-      { "@type": "City", "name": "Molenbeek" },
-      { "@type": "City", "name": "Forest" },
-      { "@type": "City", "name": "Saint-Gilles" },
-      { "@type": "City", "name": "Jette" },
-      { "@type": "City", "name": "Evere" },
-      { "@type": "City", "name": "Ganshoren" },
-      { "@type": "City", "name": "Berchem-Sainte-Agathe" },
-      { "@type": "City", "name": "Koekelberg" },
-      { "@type": "City", "name": "Woluwe-Saint-Lambert" },
-      { "@type": "City", "name": "Woluwe-Saint-Pierre" },
-      { "@type": "City", "name": "Auderghem" },
-      { "@type": "City", "name": "Watermael-Boitsfort" },
-      { "@type": "City", "name": "Waterloo" },
-      { "@type": "City", "name": "Braine-l'Alleud" },
-      { "@type": "City", "name": "La Hulpe" },
-      { "@type": "City", "name": "Zaventem" },
-      { "@type": "City", "name": "Vilvoorde" },
-      { "@type": "City", "name": "Tervuren" }
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "LocalBusiness",
+  "name": "HomeService BXL",
+  "url": "https://homeservicebxl.com",
+  "telephone": "+32474811145",
+  "image": "https://homeservicebxl.com/images/og-image.jpg",
+  "logo": "https://homeservicebxl.com/images/logo.png?v=1",
+  "description": "HomeService BXL propose des services à domicile à Bruxelles et en périphérie : nettoyage intérieur et extérieur, lavage voiture, jardinage, déménagement, livraison de courses, montage de meubles et bricolage. Devis gratuit en ligne. Disponible 7j/7.",
+  "priceRange": "€€",
+  "openingHoursSpecification": {
+    "@type": "OpeningHoursSpecification",
+    "dayOfWeek": [
+      "Monday",
+      "Tuesday",
+      "Wednesday",
+      "Thursday",
+      "Friday",
+      "Saturday",
+      "Sunday"
     ],
-    "hasOfferCatalog": {
-      "@type": "OfferCatalog",
-      "name": "Services HomeService BXL",
-      "itemListElement": [
-        { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "Nettoyage intérieur", "description": "Nettoyage de maisons, appartements et bureaux à Bruxelles." } },
-        { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "Nettoyage extérieur et jardinage", "description": "Entretien de jardins, tonte, taille de haies et nettoyage de terrasses." } },
-        { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "Lavage voiture à domicile", "description": "Lavage intérieur et extérieur de véhicules directement chez vous." } },
-        { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "Déménagement et décombrements", "description": "Aide au déménagement, débarras et évacuation d'encombrants." } },
-        { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "Livraison de courses à domicile", "description": "Livraison de courses alimentaires, pharmacie et colis." } },
-        { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "Montage de meubles", "description": "Montage de meubles, fixations et installations diverses." } },
-        { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "Bricolage et petits travaux", "description": "Peinture, réparation, plomberie, électricité et maçonnerie." } }
-      ]
+    "opens": "00:00",
+    "closes": "23:59"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "addressLocality": "Brussels",
+    "addressCountry": "BE"
+  },
+  "areaServed": [
+    {
+      "@type": "City",
+      "name": "Bruxelles"
+    },
+    {
+      "@type": "City",
+      "name": "Ixelles"
+    },
+    {
+      "@type": "City",
+      "name": "Schaerbeek"
+    },
+    {
+      "@type": "City",
+      "name": "Etterbeek"
+    },
+    {
+      "@type": "City",
+      "name": "Uccle"
+    },
+    {
+      "@type": "City",
+      "name": "Anderlecht"
+    },
+    {
+      "@type": "City",
+      "name": "Molenbeek"
+    },
+    {
+      "@type": "City",
+      "name": "Forest"
+    },
+    {
+      "@type": "City",
+      "name": "Saint-Gilles"
+    },
+    {
+      "@type": "City",
+      "name": "Jette"
+    },
+    {
+      "@type": "City",
+      "name": "Evere"
+    },
+    {
+      "@type": "City",
+      "name": "Ganshoren"
+    },
+    {
+      "@type": "City",
+      "name": "Berchem-Sainte-Agathe"
+    },
+    {
+      "@type": "City",
+      "name": "Koekelberg"
+    },
+    {
+      "@type": "City",
+      "name": "Woluwe-Saint-Lambert"
+    },
+    {
+      "@type": "City",
+      "name": "Woluwe-Saint-Pierre"
+    },
+    {
+      "@type": "City",
+      "name": "Auderghem"
+    },
+    {
+      "@type": "City",
+      "name": "Watermael-Boitsfort"
+    },
+    {
+      "@type": "City",
+      "name": "Waterloo"
+    },
+    {
+      "@type": "City",
+      "name": "Braine-l'Alleud"
+    },
+    {
+      "@type": "City",
+      "name": "La Hulpe"
+    },
+    {
+      "@type": "City",
+      "name": "Zaventem"
+    },
+    {
+      "@type": "City",
+      "name": "Vilvoorde"
+    },
+    {
+      "@type": "City",
+      "name": "Tervuren"
     }
-  }
-  </script>
-
-  <!-- FAQ : génère des rich snippets (questions dépliables) dans les
-       résultats Google si le contenu correspond bien à du texte visible
-       sur la page (cf. section FAQ ajoutée avant le footer). -->
-  <script type="application/ld+json">
-  {
-    "@context": "https://schema.org",
-    "@type": "FAQPage",
-    "mainEntity": [
+  ],
+  "hasOfferCatalog": {
+    "@type": "OfferCatalog",
+    "name": "Services HomeService BXL",
+    "itemListElement": [
       {
-        "@type": "Question",
-        "name": "Quels services proposez-vous ?",
-        "acceptedAnswer": {
-          "@type": "Answer",
-          "text": "HomeService BXL propose le nettoyage intérieur (maisons, appartements, bureaux), le nettoyage extérieur et jardinage, le lavage voiture à domicile, l'aide au déménagement et décombrements, la livraison de courses, le montage de meubles ainsi que le bricolage et les petits travaux."
+        "@type": "Offer",
+        "itemOffered": {
+          "@type": "Service",
+          "name": "Nettoyage intérieur",
+          "description": "Nettoyage de maisons, appartements et bureaux à Bruxelles."
         }
       },
       {
-        "@type": "Question",
-        "name": "Intervenez-vous le week-end ?",
-        "acceptedAnswer": {
-          "@type": "Answer",
-          "text": "Oui, HomeService BXL est disponible 7 jours sur 7, y compris le week-end et les jours fériés, à Bruxelles et dans sa périphérie."
+        "@type": "Offer",
+        "itemOffered": {
+          "@type": "Service",
+          "name": "Nettoyage extérieur et jardinage",
+          "description": "Entretien de jardins, tonte, taille de haies et nettoyage de terrasses."
         }
       },
       {
-        "@type": "Question",
-        "name": "Comment obtenir un devis ?",
-        "acceptedAnswer": {
-          "@type": "Answer",
-          "text": "Il suffit de cliquer sur le bouton \"Devis gratuit\", de répondre à quelques questions sur votre besoin et vos coordonnées : le devis est gratuit, sans engagement, et une réponse est apportée dans la journée."
+        "@type": "Offer",
+        "itemOffered": {
+          "@type": "Service",
+          "name": "Lavage voiture à domicile",
+          "description": "Lavage intérieur et extérieur de véhicules directement chez vous."
         }
       },
       {
-        "@type": "Question",
-        "name": "Dans quelles communes intervenez-vous ?",
-        "acceptedAnswer": {
-          "@type": "Answer",
-          "text": "Nous intervenons dans les 19 communes de la Région de Bruxelles-Capitale (Ixelles, Schaerbeek, Etterbeek, Uccle, Anderlecht, Molenbeek, Forest, Saint-Gilles, Jette, Evere, Ganshoren, Berchem-Sainte-Agathe, Koekelberg, Woluwe-Saint-Lambert, Woluwe-Saint-Pierre, Auderghem, Watermael-Boitsfort) ainsi qu'en périphérie (Waterloo, Braine-l'Alleud, La Hulpe, Zaventem, Vilvoorde, Tervuren)."
+        "@type": "Offer",
+        "itemOffered": {
+          "@type": "Service",
+          "name": "Déménagement et décombrements",
+          "description": "Aide au déménagement, débarras et évacuation d'encombrants."
         }
       },
       {
-        "@type": "Question",
-        "name": "Quel est le délai pour un rendez-vous ?",
-        "acceptedAnswer": {
-          "@type": "Answer",
-          "text": "Nous répondons à chaque demande de devis en moins de 24h et proposons généralement un rendez-vous rapide, adapté à votre disponibilité."
+        "@type": "Offer",
+        "itemOffered": {
+          "@type": "Service",
+          "name": "Livraison de courses à domicile",
+          "description": "Livraison de courses alimentaires, pharmacie et colis."
+        }
+      },
+      {
+        "@type": "Offer",
+        "itemOffered": {
+          "@type": "Service",
+          "name": "Montage de meubles",
+          "description": "Montage de meubles, fixations et installations diverses."
+        }
+      },
+      {
+        "@type": "Offer",
+        "itemOffered": {
+          "@type": "Service",
+          "name": "Bricolage et petits travaux",
+          "description": "Peinture, réparation, plomberie, électricité et maçonnerie."
         }
       }
     ]
   }
-  </script>
-
-  <!-- Un schéma Service par prestation principale, en plus de
-       hasOfferCatalog ci-dessus : certains outils/rich results Google
-       lisent des entités Service autonomes plus facilement qu'un catalogue
-       imbriqué. provider renvoie vers l'entité LocalBusiness par @id. -->
-  <script type="application/ld+json">
-  [
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
     {
-      "@context": "https://schema.org",
-      "@type": "Service",
-      "serviceType": "Nettoyage à domicile",
-      "name": "Nettoyage intérieur et extérieur à Bruxelles",
-      "description": "Nettoyage de maisons, appartements, bureaux, ainsi que nettoyage extérieur (terrasses, façades) à Bruxelles et en périphérie.",
-      "provider": { "@type": "LocalBusiness", "name": "HomeService BXL", "url": "https://homeservicebxl.com" },
-      "areaServed": { "@type": "City", "name": "Bruxelles" },
-      "url": "https://homeservicebxl.com/#services"
+      "@type": "Question",
+      "name": "Quels services proposez-vous ?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "HomeService BXL propose le nettoyage intérieur (maisons, appartements, bureaux), le nettoyage extérieur et jardinage, le lavage voiture à domicile, l'aide au déménagement et décombrements, la livraison de courses, le montage de meubles ainsi que le bricolage et les petits travaux."
+      }
     },
     {
-      "@context": "https://schema.org",
-      "@type": "Service",
-      "serviceType": "Jardinage",
-      "name": "Jardinage et entretien de jardin à Bruxelles",
-      "description": "Tonte de pelouse, taille de haies, désherbage et entretien complet de jardins et terrasses à Bruxelles et en périphérie.",
-      "provider": { "@type": "LocalBusiness", "name": "HomeService BXL", "url": "https://homeservicebxl.com" },
-      "areaServed": { "@type": "City", "name": "Bruxelles" },
-      "url": "https://homeservicebxl.com/#services"
+      "@type": "Question",
+      "name": "Intervenez-vous le week-end ?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Oui, HomeService BXL est disponible 7 jours sur 7, y compris le week-end et les jours fériés, à Bruxelles et dans sa périphérie."
+      }
     },
     {
-      "@context": "https://schema.org",
-      "@type": "Service",
-      "serviceType": "Lavage voiture à domicile",
-      "name": "Lavage voiture à domicile à Bruxelles",
-      "description": "Lavage intérieur et extérieur de véhicules directement chez vous, à Bruxelles et en périphérie.",
-      "provider": { "@type": "LocalBusiness", "name": "HomeService BXL", "url": "https://homeservicebxl.com" },
-      "areaServed": { "@type": "City", "name": "Bruxelles" },
-      "url": "https://homeservicebxl.com/#services"
+      "@type": "Question",
+      "name": "Comment obtenir un devis ?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Il suffit de cliquer sur le bouton \"Devis gratuit\", de répondre à quelques questions sur votre besoin et vos coordonnées : le devis est gratuit, sans engagement, et une réponse est apportée dans la journée."
+      }
     },
     {
-      "@context": "https://schema.org",
-      "@type": "Service",
-      "serviceType": "Déménagement",
-      "name": "Déménagement et décombrements à Bruxelles",
-      "description": "Aide au déménagement, débarras et évacuation d'encombrants à Bruxelles et en périphérie.",
-      "provider": { "@type": "LocalBusiness", "name": "HomeService BXL", "url": "https://homeservicebxl.com" },
-      "areaServed": { "@type": "City", "name": "Bruxelles" },
-      "url": "https://homeservicebxl.com/#services"
+      "@type": "Question",
+      "name": "Dans quelles communes intervenez-vous ?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Nous intervenons dans les 19 communes de la Région de Bruxelles-Capitale (Ixelles, Schaerbeek, Etterbeek, Uccle, Anderlecht, Molenbeek, Forest, Saint-Gilles, Jette, Evere, Ganshoren, Berchem-Sainte-Agathe, Koekelberg, Woluwe-Saint-Lambert, Woluwe-Saint-Pierre, Auderghem, Watermael-Boitsfort) ainsi qu'en périphérie (Waterloo, Braine-l'Alleud, La Hulpe, Zaventem, Vilvoorde, Tervuren)."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Quel est le délai pour un rendez-vous ?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Nous répondons à chaque demande de devis en moins de 24h et proposons généralement un rendez-vous rapide, adapté à votre disponibilité."
+      }
     }
   ]
-  </script>
+}
+</script>
+<script type="application/ld+json">
+[
+  {
+    "@context": "https://schema.org",
+    "@type": "Service",
+    "serviceType": "Nettoyage à domicile",
+    "name": "Nettoyage intérieur et extérieur à Bruxelles",
+    "description": "Nettoyage de maisons, appartements, bureaux, ainsi que nettoyage extérieur (terrasses, façades) à Bruxelles et en périphérie.",
+    "provider": {
+      "@type": "LocalBusiness",
+      "name": "HomeService BXL",
+      "url": "https://homeservicebxl.com"
+    },
+    "areaServed": {
+      "@type": "City",
+      "name": "Bruxelles"
+    },
+    "url": "https://homeservicebxl.com/#services"
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "Service",
+    "serviceType": "Jardinage",
+    "name": "Jardinage et entretien de jardin à Bruxelles",
+    "description": "Tonte de pelouse, taille de haies, désherbage et entretien complet de jardins et terrasses à Bruxelles et en périphérie.",
+    "provider": {
+      "@type": "LocalBusiness",
+      "name": "HomeService BXL",
+      "url": "https://homeservicebxl.com"
+    },
+    "areaServed": {
+      "@type": "City",
+      "name": "Bruxelles"
+    },
+    "url": "https://homeservicebxl.com/#services"
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "Service",
+    "serviceType": "Lavage voiture à domicile",
+    "name": "Lavage voiture à domicile à Bruxelles",
+    "description": "Lavage intérieur et extérieur de véhicules directement chez vous, à Bruxelles et en périphérie.",
+    "provider": {
+      "@type": "LocalBusiness",
+      "name": "HomeService BXL",
+      "url": "https://homeservicebxl.com"
+    },
+    "areaServed": {
+      "@type": "City",
+      "name": "Bruxelles"
+    },
+    "url": "https://homeservicebxl.com/#services"
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "Service",
+    "serviceType": "Déménagement",
+    "name": "Déménagement et décombrements à Bruxelles",
+    "description": "Aide au déménagement, débarras et évacuation d'encombrants à Bruxelles et en périphérie.",
+    "provider": {
+      "@type": "LocalBusiness",
+      "name": "HomeService BXL",
+      "url": "https://homeservicebxl.com"
+    },
+    "areaServed": {
+      "@type": "City",
+      "name": "Bruxelles"
+    },
+    "url": "https://homeservicebxl.com/#services"
+  }
+]
+</script>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://api.emailjs.com" crossorigin>
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.min.css?v=1">
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js" defer></script>
+<script src="script.min.js?v=1" defer></script>
+<script>document.documentElement.classList.add('js');if('scrollRestoration' in history)history.scrollRestoration='manual'</script>
 </head>
-<body class="is-loading">
+<body>
 
-  <!-- PRÉCHARGEUR : masque le site (page blanche + logo + spinner) tant que
-       le logo/les polices ne sont pas prêts. Retiré en JS (cf. initPreloader)
-       une fois tout le contenu chargé. -->
-  <div class="preloader" id="preloader" role="status" aria-live="polite">
-    <picture>
-      <source srcset="images/logo.webp?v=1786321285" type="image/webp" />
-      <img src="images/logo.png?v=1786321285" alt="" class="preloader-logo" aria-hidden="true" width="801" height="380" />
-    </picture>
-    <div class="preloader-spinner" aria-hidden="true"></div>
-    <span class="sr-only">Chargement…</span>
-  </div>
+<!-- Icônes -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
+  <symbol id="i-phone" viewBox="0 0 24 24"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7"/></symbol>
+  <symbol id="i-star" viewBox="0 0 24 24"><path d="m12 2.5 2.9 6.2 6.8.8-5 4.7 1.3 6.8L12 17.7 6 21l1.3-6.8-5-4.7 6.8-.8z"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.2 2"/></symbol>
+  <symbol id="i-pin" viewBox="0 0 24 24"><path d="M12 21s7-6.2 7-12a7 7 0 0 0-14 0c0 5.8 7 12 7 12z"/><circle cx="12" cy="9" r="2.5"/></symbol>
+  <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3 20 6v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/><path d="m8.5 12 2.5 2.5 4.5-5"/></symbol>
+  <symbol id="i-bolt" viewBox="0 0 24 24"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></symbol>
+  <symbol id="i-doc" viewBox="0 0 24 24"><path d="M6 3h8l5 5v13H6z"/><path d="M14 3v5h5M9 13h7M9 17h5"/></symbol>
+  <symbol id="i-tag" viewBox="0 0 24 24"><path d="M3 12V4h8l10 10-8 8z"/><circle cx="7.5" cy="8.5" r="1.5"/></symbol>
+  <symbol id="i-calendar" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></symbol>
+  <symbol id="i-car" viewBox="0 0 24 24"><path d="M5 17H3v-5l2-5.5A1.5 1.5 0 0 1 6.4 5.5h11.2A1.5 1.5 0 0 1 19 6.5L21 12v5h-2"/><path d="M3 12h18"/><circle cx="7.5" cy="17" r="2"/><circle cx="16.5" cy="17" r="2"/><path d="M9.5 17h5"/></symbol>
+  <symbol id="i-tree" viewBox="0 0 24 24"><path d="M12 22v-6"/><path d="M12 2 5.5 11H9l-3.5 5h13L15 11h3.5z"/></symbol>
+  <symbol id="i-trash" viewBox="0 0 24 24"><path d="M4 6h16M9 6V4h6v2M6 6l1 14h10l1-14M10 10v6M14 10v6"/></symbol>
+  <symbol id="i-cart" viewBox="0 0 24 24"><path d="M3 4h2l2.4 11h10.2L20 8H6.2"/><circle cx="9" cy="19" r="1.5"/><circle cx="17" cy="19" r="1.5"/></symbol>
+  <symbol id="i-broom" viewBox="0 0 24 24"><path d="M20 3l-7.5 7.5"/><path d="M10 9.5l4.5 4.5-2 7c-3.2-.6-6.8-2.8-9-6z"/><path d="M7.5 17.5 9.5 15M5.5 15.5l2-1.5"/></symbol>
+  <symbol id="i-wrench" viewBox="0 0 24 24"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94z"/></symbol>
+  <symbol id="i-roller" viewBox="0 0 24 24"><rect x="3" y="3" width="15" height="6" rx="1.5"/><path d="M18 6h2.5v5.5H12V14"/><rect x="10.5" y="14" width="3" height="7" rx="1"/></symbol>
+  <symbol id="i-sparkle" viewBox="0 0 24 24"><path d="M11 3l1.8 5.2L18 10l-5.2 1.8L11 17l-1.8-5.2L4 10l5.2-1.8z"/><path d="M19 14.5l.8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8z"/></symbol>
+  <symbol id="i-home" viewBox="0 0 24 24"><path d="M3 11 12 3l9 8"/><path d="M5 9.5V21h14V9.5"/><path d="M10 21v-6h4v6"/></symbol>
+</svg>
 
-  <!-- NAV -->
-  <header id="site-header" aria-label="En-tête - navigation principale HomeService BXL">
-  <nav class="nav" aria-label="Navigation principale">
-    <a href="#" class="nav-logo">
-      <picture>
-        <source srcset="images/logo.webp?v=1786321285" type="image/webp" />
-        <img src="images/logo.png?v=1786321285" alt="HomeService BXL - services à domicile à Bruxelles" class="logo-img" width="801" height="380" />
-      </picture>
-    </a>
-    <!-- Panneau "trivision" du menu mobile (cf. .nav-flip, styles.css) : 8
-         lattes horizontales empilées, chacune une face avant transparente
-         (laisse voir la page en dessous, au repos) + une face arrière
-         blanche, qui basculent en cascade de haut en bas pour révéler
-         l'écran blanc avant que .nav-links (juste après) n'affiche les
-         liens par-dessus. Purement décoratif (aria-hidden), la fermeture du
-         menu au clavier/clic reste gérée par .nav-links / .nav-burger. -->
-    <div class="nav-flip" id="navFlip" aria-hidden="true">
-      <div class="nav-flip-slat"><div class="nav-flip-slat-inner"><div class="nav-flip-face nav-flip-face-front"></div><div class="nav-flip-face nav-flip-face-back"></div></div></div>
-      <div class="nav-flip-slat"><div class="nav-flip-slat-inner"><div class="nav-flip-face nav-flip-face-front"></div><div class="nav-flip-face nav-flip-face-back"></div></div></div>
-      <div class="nav-flip-slat"><div class="nav-flip-slat-inner"><div class="nav-flip-face nav-flip-face-front"></div><div class="nav-flip-face nav-flip-face-back"></div></div></div>
-      <div class="nav-flip-slat"><div class="nav-flip-slat-inner"><div class="nav-flip-face nav-flip-face-front"></div><div class="nav-flip-face nav-flip-face-back"></div></div></div>
-      <div class="nav-flip-slat"><div class="nav-flip-slat-inner"><div class="nav-flip-face nav-flip-face-front"></div><div class="nav-flip-face nav-flip-face-back"></div></div></div>
-      <div class="nav-flip-slat"><div class="nav-flip-slat-inner"><div class="nav-flip-face nav-flip-face-front"></div><div class="nav-flip-face nav-flip-face-back"></div></div></div>
-      <div class="nav-flip-slat"><div class="nav-flip-slat-inner"><div class="nav-flip-face nav-flip-face-front"></div><div class="nav-flip-face nav-flip-face-back"></div></div></div>
-      <div class="nav-flip-slat"><div class="nav-flip-slat-inner"><div class="nav-flip-face nav-flip-face-front"></div><div class="nav-flip-face nav-flip-face-back"></div></div></div>
+<div class="cursor" aria-hidden="true"></div>
+
+<header class="header" id="header">
+  <div class="header__bar">
+    <a href="#home" class="logo" aria-label="HomeService BXL, accueil"><img src="images/logo-blanc.png" alt="HomeService BXL" width="801" height="380"></a>
+    <nav class="nav" aria-label="Navigation principale">
+      <a href="#home">Accueil</a>
+      <a href="#services">Services</a>
+      <a href="#apropos">À propos</a>
+      <a href="#fonctionnement">Fonctionnement</a>
+      <a href="#zone">Zone</a>
+      <a href="#faq">FAQ</a>
+    </nav>
+    <a href="#devis" class="header__cta">Devis gratuit</a>
+    <div class="header__m">
+      <a href="tel:+32474811145" class="hcall" aria-label="Appeler le +32 474 81 11 45"><svg class="ico"><use href="#i-phone"/></svg></a>
+      <button class="burger" aria-label="Ouvrir le menu" aria-expanded="false" aria-controls="mnav"><span></span><span></span><span></span></button>
     </div>
-    <ul class="nav-links">
-      <li><a href="#home">Accueil</a></li>
-      <li><a href="#services">Services</a></li>
-      <!-- Visible uniquement dans la carte du menu mobile (cf. .nav-links-cta,
-           styles.css) : sur ordinateur, le bouton "Devis gratuit" de la nav
-           (juste après) suffit déjà. -->
-      <li class="nav-links-cta">
-        <button type="button" class="btn-primary" onclick="openDevis()"><span class="btn-label">Devis gratuit</span> <span class="btn-arrow">→</span></button>
-      </li>
-    </ul>
-    <button class="btn-primary" onclick="openDevis()"><span class="btn-label">Devis gratuit</span> <span class="btn-arrow">→</span></button>
-    <button class="nav-burger" onclick="toggleMenu()" aria-label="Menu" aria-expanded="false">
-      <span></span><span></span><span></span>
-    </button>
+  </div>
+</header>
+
+<div class="mnav" id="mnav">
+  <nav aria-label="Menu mobile">
+    <a class="big" style="--i:0" href="#home">Accueil</a>
+    <a class="big" style="--i:1" href="#services">Services</a>
+    <a class="big" style="--i:2" href="#apropos">À propos</a>
+    <a class="big" style="--i:3" href="#zone">Zone</a>
+    <a class="big" style="--i:4" href="#faq">FAQ</a>
+    <a class="big" style="--i:5" href="#devis">Devis gratuit</a>
   </nav>
-  </header>
-
-  <main id="main-content" aria-label="Contenu principal">
-  <!-- HERO -->
-  <div class="hero-scroll-stage" id="heroScrollStage">
-    <section class="hero" id="home" aria-label="Accueil - HomeService BXL, services à domicile à Bruxelles">
-      <!-- Repère invisible pour le fondu du logo au scroll (mobile, cf.
-           initNavLogoFade, script.js) : un IntersectionObserver dessus est
-           bien plus fiable qu'un scroll+rAF sur Safari mobile, où le thread
-           JS peut accuser un retard sur le défilement (piloté par le
-           compositeur), donnant l'impression d'un changement instantané
-           plutôt que d'un fondu. -->
-      <div id="navScrollSentinel" aria-hidden="true" style="position:absolute; top:24px; left:0; width:1px; height:1px; pointer-events:none;"></div>
-
-      <!-- Grille de points : grise, fondue vers les bords. Reste inchangée
-           pendant la transition de scroll vers #services (cf. renderHeroExit
-           dans initHeroPageTransition) — seuls la carte et les lumières
-           chaudes ci-dessous bougent. -->
-      <div class="hero-grid" aria-hidden="true">
-        <div class="hero-grid-base"></div>
-      </div>
-
-      <!-- Lumières chaudes : taches orange/jaune floues qui dérivent
-           doucement en continu, indépendamment de la souris. Pendant le
-           scroll vers #services, le calque entier s'intensifie (échelle +
-           saturation, cf. renderHeroExit dans initHeroPageTransition) pour
-           signaler la transition, sans jamais s'éteindre — l'arrière-plan
-           (ciel/grille) reste constant, seules les lumières "changent". -->
-      <div class="hero-warm-light" id="heroWarmLight" aria-hidden="true">
-        <span class="warm-blob warm-blob-1" style="--drift-dur:22s;"></span>
-        <span class="warm-blob warm-blob-2" style="--drift-dur:27s;"></span>
-        <span class="warm-blob warm-blob-3" style="--drift-dur:18s;"></span>
-      </div>
-
-      <!-- Contenu : titre + description + boutons, sur une carte verre
-           flottante. #heroContent (extérieur) sort de l'écran (fondu +
-           montée) au scroll, cf. renderHeroExit dans initHeroPageTransition ;
-           .hero-card (intérieur) porte le style verre + son propre
-           flottement continu, sur SON PROPRE `transform` — deux éléments
-           distincts pour ne jamais faire cohabiter deux animations sur le
-           même `transform`. -->
-      <!-- Cartes flottantes : une icône de service par carte, sur deux
-           calques (verre légèrement plus grand qui dépasse derrière + carte
-           blanche superposée), cf. .hero-float-card plus bas (styles.css).
-           Purement décoratif (aria-hidden). Toujours affichées, mais la
-           taille et la position (autour de la carte centrale, puis
-           au-dessus/en dessous du texte sur mobile) s'adaptent par palier -
-           desktop (>1400px), tablette (769-1400px), mobile (<=768px). -->
-      <div class="hero-float-cards" id="heroFloatCards" aria-hidden="true">
-        <div class="hero-float-card hfc-1 is-entering" data-exit-order="0" style="--drift-x:5px; --drift-y:-8px; --drift-dur:9s; --delay:0s; --entrance-delay:0.32s;">
-          <div class="hfc-inner">
-            <div class="hfc-glass"></div>
-            <div class="hfc-white"><img src="images/wheelbarrow.svg" alt="" class="hfc-icon" width="64" height="52" loading="lazy" /></div>
-          </div>
-        </div>
-        <div class="hero-float-card hfc-2 is-entering" data-exit-order="1" style="--drift-x:-5px; --drift-y:-5px; --drift-dur:10.5s; --delay:0.6s; --entrance-delay:0.4s;">
-          <div class="hfc-inner">
-            <div class="hfc-glass"></div>
-            <div class="hfc-white"><img src="images/bloom.svg" alt="" class="hfc-icon" width="52" height="52" loading="lazy" /></div>
-          </div>
-        </div>
-        <div class="hero-float-card hfc-3 is-entering" data-exit-order="4" style="--drift-x:-5px; --drift-y:6px; --drift-dur:8.5s; --delay:1.2s; --entrance-delay:0s;">
-          <div class="hfc-inner">
-            <div class="hfc-glass"></div>
-            <div class="hfc-white"><img src="images/paint.svg" alt="" class="hfc-icon" width="52" height="52" loading="lazy" /></div>
-          </div>
-        </div>
-        <div class="hero-float-card hfc-4 is-entering" data-exit-order="2.55" style="--drift-x:6px; --drift-y:6px; --drift-dur:11s; --delay:0.3s; --entrance-delay:0.08s;">
-          <div class="hfc-inner">
-            <div class="hfc-glass"></div>
-            <div class="hfc-white"><img src="images/shop.svg" alt="" class="hfc-icon" width="52" height="52" loading="lazy" /></div>
-          </div>
-        </div>
-        <div class="hero-float-card hfc-5 is-entering" data-exit-order="2" style="--drift-x:3px; --drift-y:-5px; --drift-dur:9.5s; --delay:1.6s; --entrance-delay:0.16s;">
-          <div class="hfc-inner">
-            <div class="hfc-glass"></div>
-            <div class="hfc-white"><img src="images/trash.svg" alt="" class="hfc-icon" width="52" height="52" loading="lazy" /></div>
-          </div>
-        </div>
-        <div class="hero-float-card hfc-6 is-entering" data-exit-order="3" style="--drift-x:-3px; --drift-y:-6px; --drift-dur:10s; --delay:0.9s; --entrance-delay:0.24s;">
-          <div class="hfc-inner">
-            <div class="hfc-glass"></div>
-            <div class="hfc-white"><img src="images/spanner.svg" alt="" class="hfc-icon" width="52" height="52" loading="lazy" /></div>
-          </div>
-        </div>
-      </div>
-
-      <div class="hero-content" id="heroContent">
-        <div class="hero-card is-entering" id="heroCard">
-          <h1>Besoin d'un coup<br/>de main&nbsp;? <span class="sr-only">Services à domicile à Bruxelles : nettoyage, jardinage, déménagement</span></h1>
-          <p>Ménage, déménagement, montage de meubles, jardinage… On s'occupe de tout, <br class="hero-desc-break" aria-hidden="true"><span class="hero-highlight-phrase">à votre rythme<span class="hero-highlight-glow" aria-hidden="true">à votre rythme</span></span> et <span class="hero-highlight-phrase hero-highlight-phrase-2">à votre budget<span class="hero-highlight-glow" aria-hidden="true">à votre budget</span></span>.</p>
-          <div class="hero-actions">
-            <button class="btn-primary" onclick="openDevis()"><span class="btn-label">Devis gratuit</span> <span class="btn-arrow">→</span></button>
-            <a href="#services" class="btn-outline">Nos services</a>
-          </div>
-        </div>
-      </div>
-    </section>
+  <div class="mnav__foot">
+    <a href="tel:+32474811145" class="btn" style="justify-self:start;margin-bottom:18px">+32 474 81 11 45<span class="btn__ic"><svg class="ico"><use href="#i-phone"/></svg><svg class="ico"><use href="#i-phone"/></svg></span></a>
+    <span>Bruxelles &amp; périphérie</span>
+    <span>Disponible 7j/7</span>
   </div>
+</div>
 
-  <!-- SERVICES : section révélée par la vague. Les blobs lumineux et les
-       cartes sont activés via .lights-active (ajouté en JS). -->
-  <section class="section section-navy" id="services" aria-label="Nos services à domicile : nettoyage, jardinage, lavage voiture, déménagement, livraison, montage, bricolage">
-    <!-- Même grille de points que le hero (cf. .hero-grid), pour que
-         l'arrière-plan continue au lieu de disparaître d'un coup pendant la
-         transition de scroll — seules les lumières chaudes changent
-         d'intensité (cf. renderHeroExit, script.js), pas la grille. -->
-    <div class="services-grid" aria-hidden="true"></div>
-    <div class="services-ambient-light" aria-hidden="true">
-      <span class="services-ambient-blob services-ambient-blob-1"></span>
-      <span class="services-ambient-blob services-ambient-blob-2"></span>
-      <span class="services-ambient-blob services-ambient-blob-3"></span>
-      <span class="services-ambient-blob services-ambient-blob-4"></span>
+<main>
+
+<!-- HERO -->
+<section class="hero" id="home" aria-label="Accueil">
+  <div class="hero__inner wrap">
+    <h1 class="hero__title" data-split>Besoin d'un coup<br>de main&nbsp;?<span class="sr"> Services à domicile à Bruxelles : nettoyage, jardinage, déménagement</span></h1>
+    <p class="lead hero__lead" data-reveal style="--d:.25s">Ménage, déménagement, montage de meubles, jardinage… On s'occupe de tout, <span class="hero__accent">à votre rythme</span> et <span class="hero__accent">à votre budget</span>.</p>
+  </div>
+</section>
+
+<!-- BANDEAU -->
+<div class="band" aria-hidden="true">
+  <div class="band__inner alt"><div class="marquee" data-reverse style="--dur:40s"><div class="marquee__track"><div class="band__item">Devis gratuit <svg class="ico ico--fill"><use href="#i-star"/></svg> Réponse en moins de 24h <svg class="ico ico--fill"><use href="#i-star"/></svg> Disponible 7j/7 <svg class="ico ico--fill"><use href="#i-star"/></svg> Bruxelles &amp; périphérie <svg class="ico ico--fill"><use href="#i-star"/></svg></div></div></div></div>
+  <div class="band__inner"><div class="marquee" style="--dur:38s"><div class="marquee__track"><div class="band__item">Lavage voiture <svg class="ico ico--fill"><use href="#i-star"/></svg> Entretien extérieur <svg class="ico ico--fill"><use href="#i-star"/></svg> Désencombrement <svg class="ico ico--fill"><use href="#i-star"/></svg> Livraison à domicile <svg class="ico ico--fill"><use href="#i-star"/></svg> Nettoyage intérieur <svg class="ico ico--fill"><use href="#i-star"/></svg> Montage <svg class="ico ico--fill"><use href="#i-star"/></svg> Travaux <svg class="ico ico--fill"><use href="#i-star"/></svg></div></div></div></div>
+</div>
+
+<!-- À PROPOS (sous les bandes) -->
+<section class="sec about manifesto" id="apropos" aria-label="À propos de HomeService BXL">
+  <div class="wrap about__grid">
+    <div class="collage" data-reveal="scale">
+      <figure class="ph ph--a" data-parallax="-0.06"><div class="ph__in"><picture><source srcset="images/lavage-voiture.webp" type="image/webp"><img src="images/lavage-voiture.jpg" alt="Voiture lavée à domicile par HomeService BXL" width="720" height="1238" loading="lazy"></picture></div></figure>
+      <figure class="ph ph--b" data-parallax="0.07"><div class="ph__in"><picture><source srcset="images/entretien-exterieur.webp" type="image/webp"><img src="images/entretien-exterieur.jpg" alt="Jardin entretenu par HomeService BXL" width="720" height="1238" loading="lazy"></picture></div></figure>
     </div>
-    <div class="section-inner">
-      <h2 class="sr-only">Nos services à domicile à Bruxelles : nettoyage, jardinage, lavage voiture, déménagement, livraison de courses, montage de meubles et bricolage</h2>
-
-      <!-- Intro de la page contenu : titre + description (sans citer les
-           services un par un) suivis d'une rangée de 6 icônes. Ces icônes
-           sont la destination "d'atterrissage" des 6 cartes flottantes du
-           hero au scroll (cf. renderFloatCardsExit dans
-           initHeroPageTransition, script.js) : même ordre (brouette, fleur,
-           peinture, panier, poubelle, clé) que .hero-float-card plus haut,
-           pour que chaque carte rejoigne la bonne icône. La rangée
-           (.services-intro-row) reste toujours affichée pour rester en phase
-           avec l'atterrissage des cartes ; le titre + la description, eux,
-           sont regroupés dans #servicesIntroHeading et ne se révèlent qu'une
-           fois toutes les cartes posées (cf. INTRO_HEADING_REVEAL_START dans
-           initHeroPageTransition, script.js), pour ne jamais apparaître
-           pendant que les cartes sont encore en train de descendre. -->
-      <section class="services-intro" aria-label="Présentation de HomeService BXL">
-        <div class="services-intro-heading" id="servicesIntroHeading">
-          <!-- Icônes mobile uniquement (cf. .services-intro-mobile-icon,
-               styles.css) : remplacent la rangée de 6 icônes (masquée en
-               dessous de 768px) par les 2 icônes qui n'apparaissent pas dans
-               le hero mobile (trash/spanner, cf. hfc-5/hfc-6 display:none
-               au palier téléphone) - une au-dessus du titre, une en dessous
-               de la description, même recette visuelle (hfc-glass/hfc-white)
-               et même inclinaison 3D statique que les 4 icônes du hero. -->
-          <span class="services-intro-mobile-icon services-intro-mobile-icon-top" aria-hidden="true">
-            <span class="hfc-inner">
-              <span class="hfc-glass"></span>
-              <span class="hfc-white"><img src="images/trash.svg" alt="" class="hfc-icon" width="52" height="52" loading="lazy"></span>
-            </span>
-          </span>
-          <h2>Plusieurs services, une seule adresse</h2>
-          <p class="section-sub services-intro-desc">HomeService BXL réunit plusieurs services à domicile en une seule équipe, disponible partout à Bruxelles. Peu importe le besoin, on s'en occupe.</p>
-          <span class="services-intro-mobile-icon services-intro-mobile-icon-bottom" aria-hidden="true">
-            <span class="hfc-inner">
-              <span class="hfc-glass"></span>
-              <span class="hfc-white"><img src="images/spanner.svg" alt="" class="hfc-icon" width="52" height="52" loading="lazy"></span>
-            </span>
-          </span>
-        </div>
-        <!-- Chaque slot reprend exactement la structure/style des cartes
-             flottantes du hero (.hfc-glass + .hfc-white, cf. plus haut et
-             styles.css) - même --hfc-size à chaque palier desktop/tablette -
-             pour qu'une carte flottante posée ici garde son design et ses
-             dimensions d'origine, sans rétrécir ni changer d'apparence.
-             Ordre volontairement différent de celui des .hero-float-card
-             plus haut (peinture et panier en tête de rangée) : cf.
-             FLOAT_CARD_SLOT_ORDER dans initHeroPageTransition (script.js),
-             qui fait toujours atterrir la Nème .hero-float-card dans SON
-             bon slot (même icône), quelle que soit la position de ce
-             dernier dans la rangée. -->
-        <div class="services-intro-row" id="servicesIntroRow" aria-hidden="true">
-          <span class="services-intro-slot">
-            <span class="hfc-glass"></span>
-            <span class="hfc-white"><img src="images/paint.svg" alt="" class="hfc-icon" width="52" height="52" loading="lazy"></span>
-          </span>
-          <span class="services-intro-slot">
-            <span class="hfc-glass"></span>
-            <span class="hfc-white"><img src="images/shop.svg" alt="" class="hfc-icon" width="52" height="52" loading="lazy"></span>
-          </span>
-          <span class="services-intro-slot">
-            <span class="hfc-glass"></span>
-            <span class="hfc-white"><img src="images/wheelbarrow.svg" alt="" class="hfc-icon" width="64" height="52" loading="lazy"></span>
-          </span>
-          <span class="services-intro-slot">
-            <span class="hfc-glass"></span>
-            <span class="hfc-white"><img src="images/bloom.svg" alt="" class="hfc-icon" width="52" height="52" loading="lazy"></span>
-          </span>
-          <span class="services-intro-slot">
-            <span class="hfc-glass"></span>
-            <span class="hfc-white"><img src="images/trash.svg" alt="" class="hfc-icon" width="52" height="52" loading="lazy"></span>
-          </span>
-          <span class="services-intro-slot">
-            <span class="hfc-glass"></span>
-            <span class="hfc-white"><img src="images/spanner.svg" alt="" class="hfc-icon" width="52" height="52" loading="lazy"></span>
-          </span>
-        </div>
-      </section>
-
-      <!-- Grille 2×2 (pile pleine largeur sur mobile, cf. styles.css) de 4
-           cartes d'information : chacune associe une puce-icône (même
-           recette visuelle que les cartes flottantes du hero et de la
-           rangée d'icônes ci-dessus - .hfc-glass/.hfc-white - déclinée en
-           plus petit et inclinée statiquement, cf. .info-card-chip dans
-           styles.css) à un titre et une description. Sur desktop
-           uniquement (cf. media query dans styles.css - inchangé sur
-           mobile), la carte devient une "carte photo" : .info-card-lights
-           (3 taches floues colorées, une palette différente par carte,
-           purement décoratif en attendant un vrai visuel/photo par service)
-           remplit tout le fond, et titre/description se lisent sur un
-           panneau flouté (.info-card-body) plaqué en bas de la carte plutôt
-           que sur fond plat. Chaque carte se révèle indépendamment au
-           scroll via le mécanisme générique .reveal (cf. initScrollReveal,
-           script.js), avec un léger décalage entre les 4 pour un effet de
-           cascade plutôt qu'une apparition synchrone (cf. nth-child dans
-           styles.css). -->
-      <div class="info-cards" id="servicesInfoCards">
-
-        <!-- Carte 1 – vrai visuel sur desktop (carte de la région bruxelloise,
-             cf. images/bruxelles.jpg/webp) : remplace les 3 taches de lumière
-             par la photo (object-fit:cover, même conteneur/rognage arrondi
-             que .info-card-lights) + un point de localisation bleu animé
-             (.info-card-location-dot) repéré sur Bruxelles, cf. .info-card-
-             location-dot-ping dans styles.css pour l'anneau qui pulse. Les 3
-             autres cartes gardent les lumières chaudes en attendant leur
-             propre visuel. Les 3 mêmes taches que ces cartes sont aussi
-             posées ici (masquées par défaut, cf. .info-card-lights--photo
-             .info-card-light dans styles.css) : sur mobile, la photo/le point
-             sont masqués à leur place pour que cette carte ait le même rendu
-             "lumière chaude" que les 3 autres plutôt que la photo, jugée trop
-             chargée à cette taille. -->
-        <article class="info-card reveal">
-          <div class="info-card-lights info-card-lights--photo" aria-hidden="true">
-            <img src="images/bruxelles.jpg" alt="" class="info-card-photo-img" width="528" height="289" loading="lazy">
-            <span class="info-card-location-dot">
-              <span class="info-card-location-dot-ping"></span>
-              <span class="info-card-location-dot-core"></span>
-            </span>
-            <span class="info-card-light info-card-light-a"></span>
-            <span class="info-card-light info-card-light-b"></span>
-            <span class="info-card-light info-card-light-c"></span>
-          </div>
-          <span class="info-card-chip" aria-hidden="true">
-            <span class="info-card-chip-glass"></span>
-            <span class="info-card-chip-white"><img src="images/location-arrow.svg" alt="" class="info-card-chip-icon" width="16" height="16" loading="lazy"></span>
-          </span>
-          <div class="info-card-body">
-            <h3 class="info-card-title">Localisé à Bruxelles</h3>
-            <p class="info-card-sub">Nous intervenons partout dans la région bruxelloise</p>
-          </div>
-        </article>
-
-        <!-- Cartes 2-4 : mêmes dimensions/bordure blanche que la carte 1 (même
-             .info-card-lights), avec la même palette "lumière chaude" sur les
-             3 - juste plus d'illustration/puce dessus, ne restent que le
-             titre et la description. -->
-        <article class="info-card reveal">
-          <div class="info-card-lights" aria-hidden="true">
-            <span class="info-card-light info-card-light-a"></span>
-            <span class="info-card-light info-card-light-b"></span>
-            <span class="info-card-light info-card-light-c"></span>
-          </div>
-          <span class="info-card-chip" aria-hidden="true">
-            <span class="info-card-chip-glass"></span>
-            <span class="info-card-chip-white"><img src="images/fast.svg" alt="" class="info-card-chip-icon" width="16" height="16" loading="lazy"></span>
-          </span>
-          <div class="info-card-body">
-            <h3 class="info-card-title">Prise de rendez-vous en moins de 24h</h3>
-            <p class="info-card-sub">Réponse rapide garantie dès votre première demande</p>
-          </div>
-        </article>
-
-        <article class="info-card reveal">
-          <div class="info-card-lights" aria-hidden="true">
-            <span class="info-card-light info-card-light-a"></span>
-            <span class="info-card-light info-card-light-b"></span>
-            <span class="info-card-light info-card-light-c"></span>
-          </div>
-          <span class="info-card-chip" aria-hidden="true">
-            <span class="info-card-chip-glass"></span>
-            <span class="info-card-chip-white"><img src="images/quote.svg" alt="" class="info-card-chip-icon" width="16" height="16" loading="lazy"></span>
-          </span>
-          <div class="info-card-body">
-            <h3 class="info-card-title">Devis 100% gratuit</h3>
-            <p class="info-card-sub">Demandez votre devis à tout moment</p>
-          </div>
-        </article>
-
-        <article class="info-card reveal">
-          <div class="info-card-lights" aria-hidden="true">
-            <span class="info-card-light info-card-light-a"></span>
-            <span class="info-card-light info-card-light-b"></span>
-            <span class="info-card-light info-card-light-c"></span>
-          </div>
-          <span class="info-card-chip" aria-hidden="true">
-            <span class="info-card-chip-glass"></span>
-            <span class="info-card-chip-white"><img src="images/price.svg" alt="" class="info-card-chip-icon" width="16" height="16" loading="lazy"></span>
-          </span>
-          <div class="info-card-body">
-            <h3 class="info-card-title">Estimation du prix</h3>
-            <p class="info-card-sub">Obtenez votre estimation personnalisée sans engagement</p>
-          </div>
-        </article>
-
-      </div>
-
-      <!-- Texte descriptif : les mots s'allument au fur et à mesure du scroll -->
-      <div class="services-about">
-        <p class="services-about-text" id="servicesAboutText">Vous avez mieux à faire que de gérer les corvées du quotidien. HomeService intervient chez vous à Bruxelles pour tous vos besoins, on s'occupe de ce que vous n'avez pas le temps de faire, pour que vous puissiez vous concentrer sur ce qui compte vraiment.</p>
-      </div>
-
-      <!-- Carrousel des 7 services : carte centrale mise en avant (échelle/
-           opacité pleines), les 2 voisines réduites de part et d'autre, le
-           reste hors-champ - au swipe/à la flèche/au clic sur une carte
-           voisine, une nouvelle carte devient centrale (cf.
-           initServicesCarousel, script.js, qui se contente d'assigner un
-           rôle - .is-main/.is-prev/.is-next/.is-offstage-left/-right - à
-           chaque carte ; toute l'animation elle-même est une transition CSS
-           sur ce changement de classe). Carrousel EN BOUCLE (7 → 1 et
-           1 → 7) : l'index courant est calculé modulo 7, jamais borné, donc
-           il n'y a ni début ni fin. Titre + icône (puce .ph, même classe que
-           l'icône affichée sur ce même service à la 1ʳᵉ question du quiz
-           devis - cf. SERVICES dans script.js, c'est la même icône Phosphor)
-           sont déjà le vrai contenu, dans le même ordre que ce quiz - seuls
-           le fond "lumière chaude" (identique aux cartes d'info) et
-           l'absence de description restent à remplacer par la vraie
-           photo/le vrai texte de chaque service.
-
-           Apparition au scroll : PAS le .reveal générique posé sur la
-           section entière (retiré) - déclenchée précisément quand le TITRE
-           atteint le centre vertical de l'écran (cf. rootMargin: '-50% 0px
-           -50% 0px' dans initServicesCarousel, script.js), .is-revealed est
-           posée sur la section, ce qui fait apparaître (fondu + montée
-           "depuis le bas") les 3 cartes AFFICHÉES (.is-main/.is-prev/
-           .is-next - jamais les 4 hors-champ, déjà invisibles) via leur
-           .services-carousel-card-inner (cf. plus bas), puis la rangée
-           flèches+puces juste après. .services-carousel-card-inner existe
-           UNIQUEMENT pour porter cette apparition : .services-carousel-card
-           lui-même (le <li>) porte déjà son propre transform pour le rôle
-           dans le carrousel (.is-main/.is-prev/...) - lui ajouter un second
-           transform pour l'apparition les ferait entrer en conflit (une
-           seule propriété `transform` par élément), d'où ce calque
-           intermédiaire dédié. Le carrousel ne devient interactif (flèches/
-           puces/swipe/molette/clavier/clic sur une carte voisine) qu'une
-           fois ces 3 cartes réellement arrivées à leur place (cf.
-           carouselReady, initServicesCarousel). -->
-      <section class="services-carousel" id="servicesCarouselSection" aria-label="Nos 7 services à domicile">
-        <div class="services-carousel-head">
-          <h2>Quel service vous intéresse&nbsp;?</h2>
-        </div>
-
-        <div class="services-carousel-stage" id="servicesCarouselStage" tabindex="0" aria-label="Nos 7 services, glisser pour parcourir">
-          <ul class="services-carousel-track" id="servicesCarouselTrack">
-            <li class="services-carousel-card">
-              <div class="services-carousel-card-inner">
-                <div class="services-carousel-card-lights" aria-hidden="true">
-                  <span class="info-card-light services-carousel-light-a"></span>
-                  <span class="info-card-light services-carousel-light-b"></span>
-                  <span class="info-card-light services-carousel-light-c"></span>
-                </div>
-                <span class="services-carousel-card-chip" aria-hidden="true"><i class="ph ph-car"></i></span>
-                <div class="services-carousel-card-body">
-                  <h3 class="services-carousel-card-title">Lavage voiture</h3>
-                </div>
-              </div>
-            </li>
-            <li class="services-carousel-card">
-              <div class="services-carousel-card-inner">
-                <div class="services-carousel-card-lights" aria-hidden="true">
-                  <span class="info-card-light services-carousel-light-a"></span>
-                  <span class="info-card-light services-carousel-light-b"></span>
-                  <span class="info-card-light services-carousel-light-c"></span>
-                </div>
-                <span class="services-carousel-card-chip" aria-hidden="true"><i class="ph ph-tree"></i></span>
-                <div class="services-carousel-card-body">
-                  <h3 class="services-carousel-card-title">Entretien extérieur</h3>
-                </div>
-              </div>
-            </li>
-            <li class="services-carousel-card">
-              <div class="services-carousel-card-inner">
-                <div class="services-carousel-card-lights" aria-hidden="true">
-                  <span class="info-card-light services-carousel-light-a"></span>
-                  <span class="info-card-light services-carousel-light-b"></span>
-                  <span class="info-card-light services-carousel-light-c"></span>
-                </div>
-                <span class="services-carousel-card-chip" aria-hidden="true"><i class="ph ph-trash"></i></span>
-                <div class="services-carousel-card-body">
-                  <h3 class="services-carousel-card-title">Désencombrement</h3>
-                </div>
-              </div>
-            </li>
-            <li class="services-carousel-card">
-              <div class="services-carousel-card-inner">
-                <div class="services-carousel-card-lights" aria-hidden="true">
-                  <span class="info-card-light services-carousel-light-a"></span>
-                  <span class="info-card-light services-carousel-light-b"></span>
-                  <span class="info-card-light services-carousel-light-c"></span>
-                </div>
-                <span class="services-carousel-card-chip" aria-hidden="true"><i class="ph ph-shopping-cart"></i></span>
-                <div class="services-carousel-card-body">
-                  <h3 class="services-carousel-card-title">Livraison à domicile</h3>
-                </div>
-              </div>
-            </li>
-            <li class="services-carousel-card">
-              <div class="services-carousel-card-inner">
-                <div class="services-carousel-card-lights" aria-hidden="true">
-                  <span class="info-card-light services-carousel-light-a"></span>
-                  <span class="info-card-light services-carousel-light-b"></span>
-                  <span class="info-card-light services-carousel-light-c"></span>
-                </div>
-                <span class="services-carousel-card-chip" aria-hidden="true"><i class="ph ph-broom"></i></span>
-                <div class="services-carousel-card-body">
-                  <h3 class="services-carousel-card-title">Nettoyage intérieur</h3>
-                </div>
-              </div>
-            </li>
-            <li class="services-carousel-card">
-              <div class="services-carousel-card-inner">
-                <div class="services-carousel-card-lights" aria-hidden="true">
-                  <span class="info-card-light services-carousel-light-a"></span>
-                  <span class="info-card-light services-carousel-light-b"></span>
-                  <span class="info-card-light services-carousel-light-c"></span>
-                </div>
-                <span class="services-carousel-card-chip" aria-hidden="true"><i class="ph ph-wrench"></i></span>
-                <div class="services-carousel-card-body">
-                  <h3 class="services-carousel-card-title">Montage</h3>
-                </div>
-              </div>
-            </li>
-            <li class="services-carousel-card">
-              <div class="services-carousel-card-inner">
-                <div class="services-carousel-card-lights" aria-hidden="true">
-                  <span class="info-card-light services-carousel-light-a"></span>
-                  <span class="info-card-light services-carousel-light-b"></span>
-                  <span class="info-card-light services-carousel-light-c"></span>
-                </div>
-                <span class="services-carousel-card-chip" aria-hidden="true"><i class="ph ph-paint-roller"></i></span>
-                <div class="services-carousel-card-body">
-                  <h3 class="services-carousel-card-title">Travaux</h3>
-                </div>
-              </div>
-            </li>
-          </ul>
-        </div>
-
-        <div class="services-carousel-progress">
-          <button type="button" class="services-carousel-arrow services-carousel-arrow-prev" id="servicesCarouselPrev" aria-label="Service précédent">
-            <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          </button>
-          <div class="services-carousel-dots" id="servicesCarouselDots" role="tablist" aria-label="Aller à un service"></div>
-          <button type="button" class="services-carousel-arrow services-carousel-arrow-next" id="servicesCarouselNext" aria-label="Service suivant">
-            <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M9 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          </button>
-        </div>
-      </section>
-
-      <!-- Carte "service sur mesure" : seule carte de la section, entre le
-           carrousel et la FAQ. Le bouton "Voir plus" appelle
-           openDevisWithService('sur-mesure') (script.js) - cette entrée de
-           SERVICES n'a aucune question dédiée, donc le quiz saute
-           directement aux étapes communes (coordonnées/adresse/date), la
-           carte "Décrivez votre besoin" (step "description", déjà présente
-           sur TOUS les parcours) servant alors à détailler la demande
-           spécifique. Révélée via le mécanisme générique .reveal
-           (initScrollReveal, script.js) comme le reste de la page, mais
-           avec une transition dédiée plus marquée (montée depuis le bas +
-           retournement sur l'axe Y) et une cascade interne (titre → texte →
-           bouton) via .custom-service-reveal, pour marquer le ton "premium"
-           de cette carte unique - cf. styles.css. -->
-      <section class="custom-service" id="customService" aria-label="Demander un service sur mesure">
-        <div class="custom-service-card custom-service-reveal reveal">
-          <span class="custom-service-glow custom-service-glow-a" aria-hidden="true"></span>
-          <span class="custom-service-glow custom-service-glow-b" aria-hidden="true"></span>
-          <div class="custom-service-content">
-            <h2>Un besoin hors de nos services habituels&nbsp;?</h2>
-            <p class="custom-service-sub">Décrivez-nous votre projet, même s'il ne rentre dans aucune case&nbsp;: on étudie chaque demande et on revient vers vous avec une solution sur-mesure.</p>
-            <button type="button" class="custom-service-btn" onclick="openDevisWithService('sur-mesure')">
-              Voir plus
-              <span class="btn-arrow" aria-hidden="true">→</span>
-            </button>
-          </div>
-        </div>
-      </section>
-
-      <!-- FAQ visible : même contenu que le schéma FAQPage (JSON-LD, cf.
-           <head>) - Google exige que le texte structuré corresponde à du
-           contenu réellement présent sur la page pour les rich snippets.
-           <details>/<summary> natifs : accessibles, sans JS, et le contenu
-           replié reste indexable par Google (plus considéré comme "caché"
-           depuis leur évolution des consignes sur les accordéons). -->
-      <section class="seo-faq" id="faq" aria-label="Questions fréquentes sur nos services à domicile à Bruxelles">
-        <h2 class="reveal">Questions fréquentes</h2>
-        <details class="reveal">
-          <summary>Quels services proposez-vous ?</summary>
-          <p>HomeService BXL propose le nettoyage intérieur (maisons, appartements, bureaux), le nettoyage extérieur et jardinage, le lavage voiture à domicile, l'aide au déménagement et décombrements, la livraison de courses, le montage de meubles ainsi que le bricolage et les petits travaux.</p>
-        </details>
-        <details class="reveal">
-          <summary>Intervenez-vous le week-end ?</summary>
-          <p>Oui, HomeService BXL est disponible 7 jours sur 7, y compris le week-end et les jours fériés, à Bruxelles et dans sa périphérie.</p>
-        </details>
-        <details class="reveal">
-          <summary>Comment obtenir un devis ?</summary>
-          <p>Il suffit de cliquer sur le bouton « Devis gratuit », de répondre à quelques questions sur votre besoin et vos coordonnées&nbsp;: le devis est gratuit, sans engagement, et une réponse est apportée dans la journée.</p>
-        </details>
-        <details class="reveal">
-          <summary>Dans quelles communes intervenez-vous ?</summary>
-          <p>Nous intervenons dans les 19 communes de la Région de Bruxelles-Capitale (Ixelles, Schaerbeek, Etterbeek, Uccle, Anderlecht, Molenbeek, Forest, Saint-Gilles, Jette, Evere, Ganshoren, Berchem-Sainte-Agathe, Koekelberg, Woluwe-Saint-Lambert, Woluwe-Saint-Pierre, Auderghem, Watermael-Boitsfort) ainsi qu'en périphérie (Waterloo, Braine-l'Alleud, La Hulpe, Zaventem, Vilvoorde, Tervuren).</p>
-        </details>
-        <details class="reveal">
-          <summary>Quel est le délai pour un rendez-vous ?</summary>
-          <p>Nous répondons à chaque demande de devis en moins de 24h et proposons généralement un rendez-vous rapide, adapté à votre disponibilité.</p>
-        </details>
-      </section>
-
-      <!-- Contenu texte riche en mots-clés, discret (petite taille, gris,
-           dans le footer) mais bien visible/réel - volontairement pas en
-           display:none ni hors-écran : Google traite le texte caché de
-           cette façon comme une pratique trompeuse (cloaking / hidden text),
-           donc autant que ce contenu soit sobre mais authentiquement
-           consultable. -->
-      <section class="seo-content" id="services-detail" aria-label="Liste détaillée des services et des communes desservies">
-        <h2 class="reveal">Nos services à domicile en détail</h2>
-        <p class="reveal"><strong>Nettoyage intérieur :</strong> nettoyage de maisons, appartements et bureaux à Bruxelles.</p>
-        <p class="reveal"><strong>Nettoyage extérieur et jardinage :</strong> tonte de pelouse, taille de haies, désherbage, entretien de terrasses.</p>
-        <p class="reveal"><strong>Lavage voiture à domicile :</strong> lavage intérieur et extérieur de véhicules, directement chez vous.</p>
-        <p class="reveal"><strong>Déménagement et décombrements :</strong> aide au déménagement, débarras et évacuation d'encombrants.</p>
-        <p class="reveal"><strong>Livraison de courses à domicile :</strong> courses alimentaires, pharmacie, colis.</p>
-        <p class="reveal"><strong>Montage de meubles :</strong> montage, fixations et installations diverses.</p>
-        <p class="reveal"><strong>Bricolage et petits travaux :</strong> peinture, réparation, plomberie, électricité, maçonnerie.</p>
-        <p class="reveal"><strong>Communes desservies :</strong> Bruxelles, Ixelles, Schaerbeek, Etterbeek, Uccle, Anderlecht, Molenbeek, Forest, Saint-Gilles, Jette, Evere, Ganshoren, Berchem-Sainte-Agathe, Koekelberg, Woluwe-Saint-Lambert, Woluwe-Saint-Pierre, Auderghem, Watermael-Boitsfort, Waterloo, Braine-l'Alleud, La Hulpe, Zaventem, Vilvoorde, Tervuren.</p>
-      </section>
-
-      <footer class="footer" id="site-footer" aria-label="Pied de page - contact et informations HomeService BXL">
-        <div class="footer-inner reveal">
-          <div class="footer-logo">
-            <strong>HomeService BXL</strong>
-            <p>Services à domicile à Bruxelles et en périphérie. Devis gratuit en ligne, disponible 7j/7.</p>
-          </div>
-          <nav class="footer-links" aria-label="Liens utiles">
-            <a href="#home">Accueil</a>
-            <a href="#services">Nos services</a>
-            <a href="tel:+32474811145">+32 474 81 11 45</a>
-          </nav>
-        </div>
-        <div class="footer-bottom reveal">
-          <p>© 2026 HomeService BXL — Tous droits réservés.</p>
-        </div>
-      </footer>
-
+    <div class="about__txt">
+      <span class="eyebrow" data-reveal>À propos</span>
+      <p class="statement">Vous avez mieux à faire que de gérer les corvées du quotidien. <span class="accent">HomeService intervient chez vous à Bruxelles pour tous vos besoins</span>, on s'occupe de ce que vous n'avez pas le temps de faire, pour que vous puissiez vous concentrer sur ce qui compte vraiment.</p>
     </div>
-  </section>
-
-  <!-- VAGUE BLANCHE : transition vers la page Devis, miroir de la vague
-       bleue accueil → services (descend du haut au lieu de monter du bas).
-       Pilotée par initHeroPageTransition() (script.js). -->
-  <div class="devis-wave-fall" id="devisWaveFall" aria-hidden="true">
-    <svg class="devis-wave-fall-inner" id="devisWaveFallInner" viewBox="0 0 1440 1000" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
-      <path id="devisWavePath" fill="#FFFFFF" d="M0,0 L0,910 Q720,935 1440,910 L1440,0 Z"></path>
-    </svg>
   </div>
+</section>
 
-  <!-- ÉCRAN DE CHARGEMENT : retour accueil au clic sur le logo depuis
-       #services. Affiché par-dessus la vague blanche ci-dessus (réutilisée
-       telle quelle, cf. goHomeFromLogo(), script.js) une fois celle-ci
-       arrivée en bas - mêmes classes que le préchargeur initial (logo +
-       spinner) - juste avant de déclencher un vrai rechargement de la page. -->
-  <div class="logo-reload-loader" id="logoReloadLoader" aria-hidden="true">
-    <picture>
-      <source srcset="images/logo.webp?v=1786321285" type="image/webp" />
-      <img src="images/logo.png?v=1786321285" alt="" class="preloader-logo" width="801" height="380" />
-    </picture>
-    <div class="preloader-spinner"></div>
-  </div>
-
-  <!-- DEVIS : page plein écran (remplace l'ancienne modale). -->
-  <section class="devis-page" id="devisPage" aria-label="Formulaire de devis gratuit HomeService BXL">
-    <!-- Lumières douces et animées en arrière-plan du formulaire, purement
-         décoratif (cf. .devis-ambient-light dans styles.css). En
-         position:fixed (ancrées au viewport, pas à .devis-page) pour rester
-         parfaitement immobiles quand le contenu défile, tout en couvrant
-         toujours tout l'écran quelle que soit la hauteur du formulaire.
-         Deux jeux de taches (scene a/b) : à chaque question, le jeu inactif
-         est repositionné (invisible) puis basculé en actif pendant que
-         l'autre disparaît, pour un vrai fondu croisé (cf.
-         shiftDevisAmbientPosition dans script.js) plutôt qu'un glissement. -->
-    <div class="devis-ambient-light" id="devisAmbientLight" aria-hidden="true">
-      <div class="devis-ambient-scene is-active" data-scene="a">
-        <span class="devis-ambient-blob devis-ambient-blob-1"></span>
-        <span class="devis-ambient-blob devis-ambient-blob-2"></span>
-        <span class="devis-ambient-blob devis-ambient-blob-3"></span>
-        <span class="devis-ambient-blob devis-ambient-blob-4"></span>
+<!-- INTRO -->
+<section class="sec intro" aria-label="Présentation de HomeService BXL">
+  <svg class="squiggle" viewBox="0 0 560 420" aria-hidden="true"><path id="squig" d="M540 20C420 30 330 90 360 160s150 40 120-20-160-30-220 60S150 330 20 400"/></svg>
+  <div class="wrap">
+    <div class="sec-head">
+      <div>
+        <span class="eyebrow" data-reveal>HomeService BXL</span>
+        <h2 class="h2" data-split>Plusieurs services, une seule adresse.</h2>
       </div>
-      <div class="devis-ambient-scene" data-scene="b">
-        <span class="devis-ambient-blob devis-ambient-blob-1"></span>
-        <span class="devis-ambient-blob devis-ambient-blob-2"></span>
-        <span class="devis-ambient-blob devis-ambient-blob-3"></span>
-        <span class="devis-ambient-blob devis-ambient-blob-4"></span>
+      <p class="lead" data-reveal style="--d:.2s">HomeService BXL réunit plusieurs services à domicile en une seule équipe, disponible partout à Bruxelles. Peu importe le besoin, on s'en occupe.</p>
+    </div>
+    <div class="bento">
+      <article class="card b-map" data-reveal>
+        <div class="radar" aria-hidden="true">
+          <span class="radar__pin"><svg class="ico"><use href="#i-pin"/></svg></span>
+          <span class="radar__tag" style="left:12%;top:18%">Ixelles</span>
+          <span class="radar__tag" style="right:10%;top:26%;animation-delay:-1.5s">Schaerbeek</span>
+          <span class="radar__tag" style="left:16%;bottom:16%;animation-delay:-3s">Uccle</span>
+          <span class="radar__tag" style="right:14%;bottom:12%;animation-delay:-2s">Anderlecht</span>
+        </div>
+        <div class="card__body">
+          <h3>Localisé à Bruxelles</h3>
+          <p>Nous intervenons partout dans la région bruxelloise.</p>
+        </div>
+      </article>
+      <article class="card" data-reveal style="--d:.08s">
+        <span class="card__ic"><svg class="ico"><use href="#i-bolt"/></svg></span>
+        <h3>Prise de rendez-vous en moins de 24h</h3>
+        <p>Réponse rapide garantie dès votre première demande.</p>
+      </article>
+      <article class="card" data-reveal style="--d:.16s">
+        <span class="card__ic"><svg class="ico"><use href="#i-doc"/></svg></span>
+        <h3>Devis 100&nbsp;% gratuit</h3>
+        <p>Demandez votre devis à tout moment : c'est gratuit, et ça ne vous engage à rien.</p>
+      </article>
+      <article class="card b-wide" data-reveal style="--d:.24s">
+        <div>
+          <span class="card__ic"><svg class="ico"><use href="#i-tag"/></svg></span>
+          <h3>Estimation du prix en quelques minutes</h3>
+          <p>Obtenez votre estimation personnalisée sans engagement, sans surprise.</p>
+        </div>
+        <a href="#devis" class="btn" data-magnetic>Obtenir mon estimation<span class="btn__ic"><svg class="ico"><use href="#i-arrow"/></svg><svg class="ico"><use href="#i-arrow"/></svg></span></a>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- SERVICES -->
+<section class="sec dark" id="services" aria-label="Nos 7 services à domicile">
+  <div class="wrap">
+    <div class="sec-head">
+      <div>
+        <span class="eyebrow" data-reveal>Nos services</span>
+        <h2 class="h2" data-split>Quel service vous intéresse&nbsp;?</h2>
+        <p class="lead" data-reveal style="--d:.2s">Nettoyage, jardinage, lavage voiture, déménagement, livraison de courses, montage de meubles et bricolage : choisissez votre service et recevez votre devis gratuit.</p>
+      </div>
+      <div class="slider-nav" data-reveal>
+        <button class="circle-btn prev" aria-label="Service précédent"><svg class="ico"><use href="#i-arrow"/></svg></button>
+        <button class="circle-btn next" aria-label="Service suivant"><svg class="ico"><use href="#i-arrow"/></svg></button>
       </div>
     </div>
-    <div class="devis-page-inner">
-      <div class="devis-card">
-        <button class="devis-close" onclick="closeDevis()" aria-label="Fermer">✕</button>
-        <div class="devis-header devis-reveal">
-          <h2>Personnalisez votre devis</h2>
-          <p class="devis-sub">Remplissez ce formulaire, on vous répond dans la journée.</p>
-        </div>
+  </div>
+  <div class="slider" id="slider" data-reveal>
+    <article class="svc">
+      <div class="svc__media"><picture><source srcset="images/lavage-voiture.webp" type="image/webp"><img src="images/lavage-voiture.jpg" alt="Lavage d'une voiture à domicile à Bruxelles" width="720" height="1238" loading="lazy"></picture></div>
+      <div class="svc__top"><span class="svc__ic"><svg class="ico"><use href="#i-car"/></svg></span><span class="svc__num">01</span></div>
+      <div class="svc__body">
+        <h3>Lavage voiture</h3>
+        <p>Lavage intérieur et extérieur de véhicules, directement chez vous.</p>
+        <div class="svc__more"><div><ul class="tags"><li>Citadine</li><li>Berline / Break</li><li>SUV / 4x4</li><li>Utilitaire</li></ul></div></div>
+        <button class="svc__cta" data-pick="Lavage voiture">Demander un devis<span><svg class="ico"><use href="#i-arrow"/></svg></span></button>
+      </div>
+    </article>
+    <article class="svc">
+      <div class="svc__media"><picture><source srcset="images/entretien-exterieur.webp" type="image/webp"><img src="images/entretien-exterieur.jpg" alt="Entretien de jardin et ramassage de feuilles à Bruxelles" width="720" height="1238" loading="lazy"></picture></div>
+      <div class="svc__top"><span class="svc__ic"><svg class="ico"><use href="#i-tree"/></svg></span><span class="svc__num">02</span></div>
+      <div class="svc__body">
+        <h3>Entretien extérieur</h3>
+        <p>Tonte de pelouse, taille de haies, désherbage, entretien de terrasses.</p>
+        <div class="svc__more"><div><ul class="tags"><li>Jardin</li><li>Terrasse</li><li>Tonte</li><li>Taille de haies</li><li>Désherbage</li></ul></div></div>
+        <button class="svc__cta" data-pick="Entretien extérieur">Demander un devis<span><svg class="ico"><use href="#i-arrow"/></svg></span></button>
+      </div>
+    </article>
+    <article class="svc">
+      <div class="svc__media"><picture><source srcset="images/desencombrement.webp" type="image/webp"><img src="images/desencombrement.jpg" alt="Débarras et évacuation d'encombrants dans un local" width="720" height="1238" loading="lazy"></picture></div>
+      <div class="svc__top"><span class="svc__ic"><svg class="ico"><use href="#i-trash"/></svg></span><span class="svc__num">03</span></div>
+      <div class="svc__body">
+        <h3>Désencombrement</h3>
+        <p>Aide au déménagement, débarras et évacuation d'encombrants.</p>
+        <div class="svc__more"><div><ul class="tags"><li>Meubles / encombrants</li><li>Gravats / matériaux</li><li>Électroménager</li></ul></div></div>
+        <button class="svc__cta" data-pick="Désencombrement">Demander un devis<span><svg class="ico"><use href="#i-arrow"/></svg></span></button>
+      </div>
+    </article>
+    <article class="svc">
+      <div class="svc__media"><picture><source srcset="images/livraison.webp" type="image/webp"><img src="images/livraison.jpg" alt="Sacs de courses livrés devant une porte" width="720" height="1238" loading="lazy"></picture></div>
+      <div class="svc__top"><span class="svc__ic"><svg class="ico"><use href="#i-cart"/></svg></span><span class="svc__num">04</span></div>
+      <div class="svc__body">
+        <h3>Livraison à domicile</h3>
+        <p>Livraison de courses à domicile : courses alimentaires, pharmacie, colis.</p>
+        <div class="svc__more"><div><ul class="tags"><li>Alimentaire</li><li>Pharmacie</li><li>Colis</li></ul></div></div>
+        <button class="svc__cta" data-pick="Livraison à domicile">Demander un devis<span><svg class="ico"><use href="#i-arrow"/></svg></span></button>
+      </div>
+    </article>
+    <article class="svc">
+      <div class="svc__media"><picture><source srcset="images/nettoyage-interieur.webp" type="image/webp"><img src="images/nettoyage-interieur.jpg" alt="Nettoyage des vitres d'un appartement" width="720" height="1238" loading="lazy"></picture></div>
+      <div class="svc__top"><span class="svc__ic"><svg class="ico"><use href="#i-broom"/></svg></span><span class="svc__num">05</span></div>
+      <div class="svc__body">
+        <h3>Nettoyage intérieur</h3>
+        <p>Nettoyage de maisons, appartements et bureaux à Bruxelles.</p>
+        <div class="svc__more"><div><ul class="tags"><li>Appartement</li><li>Maison</li><li>Bureau / commerce</li></ul></div></div>
+        <button class="svc__cta" data-pick="Nettoyage intérieur">Demander un devis<span><svg class="ico"><use href="#i-arrow"/></svg></span></button>
+      </div>
+    </article>
+    <article class="svc">
+      <div class="svc__media"><picture><source srcset="images/montage.webp" type="image/webp"><img src="images/montage.jpg" alt="Montage d'un meuble en kit" width="720" height="1238" loading="lazy"></picture></div>
+      <div class="svc__top"><span class="svc__ic"><svg class="ico"><use href="#i-wrench"/></svg></span><span class="svc__num">06</span></div>
+      <div class="svc__body">
+        <h3>Montage</h3>
+        <p>Montage de meubles, fixations et installations diverses.</p>
+        <div class="svc__more"><div><ul class="tags"><li>Montage de meubles</li><li>Étagères</li><li>Luminaires</li></ul></div></div>
+        <button class="svc__cta" data-pick="Montage">Demander un devis<span><svg class="ico"><use href="#i-arrow"/></svg></span></button>
+      </div>
+    </article>
+    <article class="svc">
+      <div class="svc__media"><picture><source srcset="images/travaux.webp" type="image/webp"><img src="images/travaux.jpg" alt="Chambre en cours de peinture" width="720" height="1238" loading="lazy"></picture></div>
+      <div class="svc__top"><span class="svc__ic"><svg class="ico"><use href="#i-roller"/></svg></span><span class="svc__num">07</span></div>
+      <div class="svc__body">
+        <h3>Travaux</h3>
+        <p>Bricolage et petits travaux : peinture, réparation, plomberie, électricité, maçonnerie.</p>
+        <div class="svc__more"><div><ul class="tags"><li>Peinture</li><li>Réparation</li><li>Plomberie</li><li>Électricité</li><li>Maçonnerie</li></ul></div></div>
+        <button class="svc__cta" data-pick="Travaux">Demander un devis<span><svg class="ico"><use href="#i-arrow"/></svg></span></button>
+      </div>
+    </article>
+    <article class="svc svc--custom">
+      <span class="ghost" aria-hidden="true">?</span>
+      <div class="svc__top"><span class="svc__ic"><svg class="ico"><use href="#i-sparkle"/></svg></span><span class="svc__num" style="background:rgba(15,26,44,.12);border-color:rgba(15,26,44,.15)">Sur mesure</span></div>
+      <div class="svc__body">
+        <h3>Un besoin hors de nos services habituels&nbsp;?</h3>
+        <p>Décrivez-nous votre projet, même s'il ne rentre dans aucune case : on étudie chaque demande et on revient vers vous avec une solution sur-mesure.</p>
+        <button class="svc__cta" data-pick="Service sur mesure">Voir plus<span><svg class="ico"><use href="#i-arrow"/></svg></span></button>
+      </div>
+    </article>
+  </div>
+  <div class="wrap"><div class="bar"><i id="sliderBar"></i></div></div>
+</section>
 
-        <div id="formStep1">
-          <div class="devis-progress devis-reveal devis-delay-1">
-            <div class="devis-progress-track">
-              <div class="devis-progress-fill" id="devisProgressFill"></div>
+<!-- FONCTIONNEMENT -->
+<section class="sec dark" id="fonctionnement">
+  <div class="wrap">
+    <div class="sec-head">
+      <div>
+        <span class="eyebrow" data-reveal>Fonctionnement</span>
+        <h2 class="h2" data-split>Comment ça marche&nbsp;?</h2>
+      </div>
+      <p class="lead" data-reveal style="--d:.2s">Remplissez notre formulaire en quelques minutes : on vous répond dans la journée, avec un devis gratuit et sans engagement.</p>
+    </div>
+    <div class="steps" id="steps">
+      <div class="steps__line"><i></i></div>
+      <div class="step" data-reveal><span class="step__n">1</span><div><h3>Choisissez votre service</h3><p>Lavage voiture, entretien extérieur, désencombrement, livraison, nettoyage, montage ou travaux.</p><span class="step__tag">7 services + sur mesure</span></div></div>
+      <div class="step" data-reveal style="--d:.1s"><span class="step__n">2</span><div><h3>Décrivez votre besoin</h3><p>L'adresse de l'intervention, vos dates souhaitées et quelques détails sur ce qu'il faut faire.</p><span class="step__tag">Quelques minutes</span></div></div>
+      <div class="step" data-reveal style="--d:.2s"><span class="step__n">3</span><div><h3>Recevez votre devis</h3><p>Une estimation personnalisée, gratuite et sans engagement. Sans surprise.</p><span class="step__tag">Réponse en moins de 24h</span></div></div>
+      <div class="step" data-reveal style="--d:.3s"><span class="step__n">4</span><div><h3>On s'occupe de tout</h3><p>Nous intervenons chez vous, à votre rythme et à votre budget.</p><span class="step__tag">Disponible 7j/7</span></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta">
+  <div class="wrap">
+    <div class="cta__box" data-reveal="scale">
+      <span class="cta__ghost" data-parallax="-0.15" aria-hidden="true">7J/7</span>
+      <div>
+        <h2 data-split>Disponible 7 jours sur 7.</h2>
+        <p>Y compris le week-end et les jours fériés, à Bruxelles et dans sa périphérie. Appelez-nous ou demandez votre devis gratuit en ligne.</p>
+      </div>
+      <div class="cta__side">
+        <div class="badge" aria-hidden="true">
+          <svg class="ring" viewBox="0 0 200 200" style="color:var(--paper)"><defs><path id="circ2" d="M100 100m-76 0a76 76 0 1 1 152 0a76 76 0 1 1-152 0"/></defs><text><textPath href="#circ2" textLength="470" lengthAdjust="spacing">DEVIS GRATUIT • RÉPONSE EN 24H • 7J/7 •</textPath></text></svg>
+          <svg class="ico"><use href="#i-phone"/></svg>
+        </div>
+        <small>Appelez-nous</small>
+        <a href="tel:+32474811145" class="cta__tel">+32 474 81 11 45</a>
+        <a href="#devis" class="btn btn--dark" data-magnetic style="margin-top:16px">Devis gratuit<span class="btn__ic"><svg class="ico"><use href="#i-arrow"/></svg><svg class="ico"><use href="#i-arrow"/></svg></span></a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ZONE -->
+<section class="sec zone" id="zone">
+  <div class="wrap zone__grid">
+    <div class="zone__txt">
+      <span class="eyebrow" data-reveal>Zone d'intervention</span>
+      <h2 class="h2" data-split>Localisé à Bruxelles, présent en périphérie.</h2>
+      <p class="lead" data-reveal>Nous intervenons dans les communes de la Région de Bruxelles-Capitale ainsi qu'en périphérie.</p>
+      <h4 data-reveal>Région de Bruxelles-Capitale</h4>
+      <ul class="chips" data-reveal>
+        <li>Bruxelles</li><li>Ixelles</li><li>Schaerbeek</li><li>Etterbeek</li><li>Uccle</li><li>Anderlecht</li><li>Molenbeek</li><li>Forest</li><li>Saint-Gilles</li><li>Jette</li><li>Evere</li><li>Ganshoren</li><li>Berchem-Sainte-Agathe</li><li>Koekelberg</li><li>Woluwe-Saint-Lambert</li><li>Woluwe-Saint-Pierre</li><li>Auderghem</li><li>Watermael-Boitsfort</li>
+      </ul>
+      <h4 data-reveal>Périphérie</h4>
+      <ul class="chips chips--alt" data-reveal>
+        <li>Waterloo</li><li>Braine-l'Alleud</li><li>La Hulpe</li><li>Zaventem</li><li>Vilvoorde</li><li>Tervuren</li>
+      </ul>
+    </div>
+    <div class="map" data-reveal="scale">
+      <div class="map__img">
+        <img src="images/bruxelles.jpg" alt="Carte de la Région de Bruxelles-Capitale" width="528" height="289" loading="lazy">
+        <span class="map__pin" aria-hidden="true"></span>
+      </div>
+      <div class="map__foot">
+        <div><b>Bruxelles &amp; périphérie</b><small>Votre commune n'est pas listée ? Demandez-nous.</small></div>
+        <a href="#devis">Demander un devis <svg class="ico"><use href="#i-arrow"/></svg></a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- DEVIS + FAQ -->
+<section class="sec contact">
+  <div class="wrap">
+    <div class="form" id="devis" data-reveal="left">
+      <div id="formWrap" style="display:grid;gap:18px">
+        <span class="eyebrow">Devis gratuit</span>
+        <h2>Votre demande de devis</h2>
+        <p class="form__intro">Remplissez ce formulaire, on vous répond dans la journée.</p>
+        <form id="devisForm" novalidate>
+          <div class="hp" aria-hidden="true"><label>Ne remplissez pas ce champ <input type="text" name="societe" tabindex="-1" autocomplete="off"></label></div>
+
+          <fieldset class="fs">
+            <legend><span>1</span>Vos coordonnées</legend>
+            <div class="fields">
+              <div class="field"><input id="f-prenom" name="prenom" placeholder="Jean" autocomplete="given-name" required><label for="f-prenom">Prénom</label></div>
+              <div class="field"><input id="f-nom" name="nom" placeholder="Dupont" autocomplete="family-name" required><label for="f-nom">Nom</label></div>
+              <div class="field"><input id="f-tel" name="telephone" type="tel" placeholder="+32 4xx xx xx xx" autocomplete="tel" required><label for="f-tel">Téléphone</label></div>
+              <div class="field"><input id="f-mail" name="email" type="email" placeholder="jean@exemple.com" autocomplete="email" required><label for="f-mail">Email</label></div>
             </div>
-            <span class="devis-progress-label" id="devisProgressLabel">Carte 1 / 5</span>
-          </div>
+          </fieldset>
 
-          <form id="devisForm" name="devis" data-netlify="true" onsubmit="submitDevis(event)">
-            <input type="hidden" name="form-name" value="devis" />
-            <div class="devis-quiz-stage devis-reveal devis-delay-2" id="devisQuizStage"></div>
-
-            <div class="devis-quiz-nav devis-reveal devis-delay-3">
-              <button type="button" class="btn-outline devis-quiz-back" id="devisBackBtn">← Retour</button>
-              <button type="button" class="btn-primary devis-quiz-next" id="devisNextBtn">Suivant <span class="btn-arrow">→</span></button>
+          <fieldset class="fs">
+            <legend><span>2</span>Votre demande</legend>
+            <div class="fields">
+              <div class="field full sel">
+                <select id="f-service" name="service" required>
+                  <option value="" disabled selected>Choisissez un service…</option>
+                  <option>Lavage voiture</option>
+                  <option>Entretien extérieur</option>
+                  <option>Désencombrement</option>
+                  <option>Livraison à domicile</option>
+                  <option>Nettoyage intérieur</option>
+                  <option>Montage</option>
+                  <option>Travaux</option>
+                  <option>Service sur mesure</option>
+                </select><label for="f-service">Service souhaité</label>
+              </div>
+              <div class="quiz full" id="quiz" hidden aria-live="polite"></div>
+              <div class="field full"><input id="f-adresse" name="localisation" placeholder="Rue, numéro, code postal, commune" autocomplete="street-address" required><label for="f-adresse">Adresse de l'intervention</label></div>
+              <div class="field full"><input id="f-dates" name="dates" placeholder="Ex : samedi 15, en semaine, dès que possible…"><label for="f-dates">Date(s) souhaitée(s) <i>— facultatif</i></label></div>
+              <div class="field full"><textarea id="f-desc" name="description" rows="6" placeholder="Ce que vous souhaitez faire, la surface, l'étage, l'accès, le matériel disponible, vos contraintes…" required></textarea><label for="f-desc">Décrivez votre besoin</label></div>
             </div>
-          </form>
-        </div>
+          </fieldset>
 
-        <div id="formSuccess" class="form-success" style="display:none">
-          <div class="success-icon">✓</div>
-          <h3>Demande envoyée&nbsp;!</h3>
-          <p>On revient vers vous dans les 24h. Merci de votre confiance.</p>
-          <button class="btn-outline" onclick="closeDevis()">Fermer</button>
-        </div>
+          <div class="form__err" id="formErr" role="alert" hidden><b>L'envoi n'a pas fonctionné.</b> Vérifiez votre connexion et réessayez, ou appelez-nous directement au <a href="tel:+32474811145">+32 474 81 11 45</a>.</div>
+
+          <div class="form__foot">
+            <button class="btn" type="submit" id="formBtn" data-magnetic><span id="formBtnTxt">Envoyer ma demande</span><span class="btn__ic"><svg class="ico"><use href="#i-arrow"/></svg><svg class="ico"><use href="#i-arrow"/></svg></span></button>
+            <span class="form__note"><svg class="ico"><use href="#i-shield"/></svg>Vos informations servent uniquement à établir votre devis.</span>
+          </div>
+        </form>
+      </div>
+      <div class="form__ok" id="formOk" hidden>
+        <span class="ok-ic"><svg class="ico"><use href="#i-check"/></svg></span>
+        <h2>Demande envoyée&nbsp;!</h2>
+        <p>On revient vers vous dans les 24h. Merci de votre confiance.</p>
+        <button class="btn btn--dark" id="formAgain" type="button">Nouvelle demande<span class="btn__ic"><svg class="ico"><use href="#i-arrow"/></svg><svg class="ico"><use href="#i-arrow"/></svg></span></button>
       </div>
     </div>
-  </section>
 
-  <!-- defer sur les 4 : rien sur cette page n'a besoin d'eux avant le
-       premier rendu. defer préserve leur ordre d'exécution (identique à
-       avant), juste après l'analyse complète du document plutôt que pendant
-       (même pattern que devis.html). -->
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin="" defer></script>
-  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js" defer></script>
-  <script src="brussels-map-data.min.js?v=1786321285" defer></script>
-  <script src="script.min.js?v=1786321285" defer></script>
-
-  <!-- Detail overlay : s'ouvre au clic sur la carte centrale du carrousel -->
-  <div class="svc-detail-overlay" id="svcDetailOverlay" aria-hidden="true" role="dialog" aria-modal="true">
-    <div class="svc-detail-backdrop" id="svcDetailBackdrop"></div>
-    <div class="svc-detail-panel" id="svcDetailPanel">
-      <button class="svc-detail-close" id="svcDetailClose" aria-label="Fermer">✕</button>
-      <div class="svc-detail-hero" id="svcDetailHero">
-        <i class="svc-detail-hero-icon" id="svcDetailHeroIcon" aria-hidden="true"></i>
+    <div class="faq" id="faq">
+      <span class="eyebrow" data-reveal>FAQ</span>
+      <h2 class="h2" data-split style="font-size:clamp(36px,4.6vw,60px)">Questions fréquentes</h2>
+      <div class="faq__list" id="faqList">
+        <div class="qa open" data-reveal><button aria-expanded="true">Quels services proposez-vous&nbsp;?<span class="pm"></span></button><div class="qa__a"><div><p>HomeService BXL propose le nettoyage intérieur (maisons, appartements, bureaux), le nettoyage extérieur et jardinage, le lavage voiture à domicile, l'aide au déménagement et décombrements, la livraison de courses, le montage de meubles ainsi que le bricolage et les petits travaux.</p></div></div></div>
+        <div class="qa" data-reveal style="--d:.05s"><button aria-expanded="false">Intervenez-vous le week-end&nbsp;?<span class="pm"></span></button><div class="qa__a"><div><p>Oui, HomeService BXL est disponible 7 jours sur 7, y compris le week-end et les jours fériés, à Bruxelles et dans sa périphérie.</p></div></div></div>
+        <div class="qa" data-reveal style="--d:.1s"><button aria-expanded="false">Comment obtenir un devis&nbsp;?<span class="pm"></span></button><div class="qa__a"><div><p>Il suffit de cliquer sur le bouton « Devis gratuit », de répondre à quelques questions sur votre besoin et vos coordonnées : le devis est gratuit, sans engagement, et une réponse est apportée dans la journée.</p></div></div></div>
+        <div class="qa" data-reveal style="--d:.15s"><button aria-expanded="false">Dans quelles communes intervenez-vous&nbsp;?<span class="pm"></span></button><div class="qa__a"><div><p>Nous intervenons dans les 19 communes de la Région de Bruxelles-Capitale (Ixelles, Schaerbeek, Etterbeek, Uccle, Anderlecht, Molenbeek, Forest, Saint-Gilles, Jette, Evere, Ganshoren, Berchem-Sainte-Agathe, Koekelberg, Woluwe-Saint-Lambert, Woluwe-Saint-Pierre, Auderghem, Watermael-Boitsfort) ainsi qu'en périphérie (Waterloo, Braine-l'Alleud, La Hulpe, Zaventem, Vilvoorde, Tervuren).</p></div></div></div>
+        <div class="qa" data-reveal style="--d:.2s"><button aria-expanded="false">Quel est le délai pour un rendez-vous&nbsp;?<span class="pm"></span></button><div class="qa__a"><div><p>Nous répondons à chaque demande de devis en moins de 24h et proposons généralement un rendez-vous rapide, adapté à votre disponibilité.</p></div></div></div>
       </div>
-      <div class="svc-detail-body">
-        <p class="eyebrow svc-detail-eyebrow" id="svcDetailEyebrow">Nos services</p>
-        <h2 class="svc-detail-title" id="svcDetailTitle"></h2>
-        <p class="svc-detail-desc" id="svcDetailDesc"></p>
-        <button class="btn-primary svc-detail-cta" id="svcDetailCta">
-          Choisir ce service <span class="btn-arrow">→</span>
-        </button>
+      <div class="help" data-reveal>
+        <div><b>Une autre question&nbsp;?</b><small>Appelez-nous directement, 7j/7.</small></div>
+        <a href="tel:+32474811145" class="btn btn--dark" data-magnetic>+32 474 81 11 45<span class="btn__ic"><svg class="ico"><use href="#i-phone"/></svg><svg class="ico"><use href="#i-phone"/></svg></span></a>
       </div>
     </div>
   </div>
-  </main>
+</section>
+
+</main>
+
+<footer class="footer">
+  <div class="wrap">
+    <div class="foot-top">
+      <h2 data-split>Besoin d'un coup de main&nbsp;? On s'occupe de tout.</h2>
+      <div class="btns" data-reveal>
+        <a href="#devis" class="btn">Devis gratuit<span class="btn__ic"><svg class="ico"><use href="#i-arrow"/></svg><svg class="ico"><use href="#i-arrow"/></svg></span></a>
+        <a href="tel:+32474811145" class="btn btn--ghost"><svg class="ico"><use href="#i-phone"/></svg>+32 474 81 11 45</a>
+      </div>
+    </div>
+    <div class="cols">
+      <div data-reveal>
+        <a href="#home" class="logo"><img src="images/logo-blanc.png" alt="HomeService BXL" width="801" height="380" loading="lazy"></a>
+        <p>Services à domicile à Bruxelles et en périphérie. Devis gratuit en ligne, disponible 7j/7.</p>
+      </div>
+      <div data-reveal style="--d:.08s">
+        <h4>Navigation</h4>
+        <ul><li><a href="#home">Accueil</a></li><li><a href="#services">Nos services</a></li><li><a href="#apropos">À propos</a></li><li><a href="#zone">Zone d'intervention</a></li><li><a href="#faq">Questions fréquentes</a></li><li><a href="#devis">Devis gratuit</a></li></ul>
+      </div>
+      <div data-reveal style="--d:.16s">
+        <h4>Services</h4>
+        <ul>
+          <li><button data-pick="Lavage voiture">Lavage voiture</button></li>
+          <li><button data-pick="Entretien extérieur">Entretien extérieur</button></li>
+          <li><button data-pick="Désencombrement">Désencombrement</button></li>
+          <li><button data-pick="Livraison à domicile">Livraison à domicile</button></li>
+          <li><button data-pick="Nettoyage intérieur">Nettoyage intérieur</button></li>
+          <li><button data-pick="Montage">Montage</button></li>
+          <li><button data-pick="Travaux">Travaux</button></li>
+        </ul>
+      </div>
+      <div data-reveal style="--d:.24s">
+        <h4>Contact</h4>
+        <ul>
+          <li><a href="tel:+32474811145"><svg class="ico"><use href="#i-phone"/></svg>+32 474 81 11 45</a></li>
+          <li><svg class="ico"><use href="#i-pin"/></svg>Bruxelles &amp; périphérie</li>
+          <li><svg class="ico"><use href="#i-calendar"/></svg>Disponible 7j/7</li>
+          <li><svg class="ico"><use href="#i-clock"/></svg>Réponse en moins de 24h</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <div class="wordmark" data-reveal-letters aria-hidden="true">HomeService<span class="accent">BXL</span></div>
+  <div class="wrap">
+    <div class="legal">
+      <span>© <span id="year">2026</span> HomeService BXL — Tous droits réservés.</span>
+      <a href="#home">Retour en haut ↑</a>
+    </div>
+  </div>
+</footer>
+
+<button class="totop" id="totop" aria-label="Revenir en haut">
+  <svg class="pr" viewBox="0 0 54 54"><circle cx="27" cy="27" r="25" pathLength="1"/></svg>
+  <svg class="ico"><use href="#i-arrow"/></svg>
+</button>
+
 </body>
 </html>
