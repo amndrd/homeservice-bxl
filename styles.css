@@ -422,3 +422,15 @@ form{display:grid;gap:26px}
   *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;transition-delay:0s!important}
   html{scroll-behavior:auto}
 }
+
+/* ---------- Contenu SEO détaillé (bas de pied de page) ---------- */
+
+/* Repris tel quel de l'ancienne version du site : la liste complète des
+   services et des 24 communes desservies est le seul endroit où ces
+   mots-clés apparaissent en toutes lettres (le carrousel et les puces de la
+   section « Zone » n'en montrent qu'une partie). Volontairement discret mais
+   lisible - jamais masqué (cf. commentaire dans index.html). */
+.seo-detail{padding-block:36px;border-top:1px solid var(--line-l);font-size:13px;line-height:1.75;color:rgba(246,241,233,.42);max-width:100ch}
+.seo-detail h2{font-family:var(--body);font-size:13px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:rgba(246,241,233,.45);margin-bottom:16px}
+.seo-detail p+p{margin-top:6px}
+.seo-detail strong{color:rgba(246,241,233,.62);font-weight:600}
