@@ -11,8 +11,9 @@
 # remplacer le logo vert par le noir sous le même nom n'a rien changé chez
 # les visiteurs qui l'avaient déjà en cache). Un paramètre ?v=<timestamp>
 # est donc ajouté aux références locales (styles.min.css, script.min.js,
-# brussels-map-data.min.js, logo.png, logo.webp) dans index.html et
-# devis.html, régénéré à chaque exécution de ce script : une URL différente
+# brussels-map-data.min.js, logo.png, logo.webp) dans index.html,
+# devis.html et demande.html, régénéré à chaque exécution de ce script :
+# une URL différente
 # = une requête réseau différente, jamais servie depuis le cache immutable
 # précédent.
 set -e
@@ -22,7 +23,7 @@ npx --yes terser brussels-map-data.js -c -m --comments false -o brussels-map-dat
 npx --yes clean-css-cli -O2 styles.css -o styles.min.css
 
 VERSION=$(date +%s)
-for FILE in index.html devis.html; do
+for FILE in index.html devis.html demande.html; do
   sed -E -i '' \
     -e "s/(script\.min\.js)(\?v=[0-9]+)?/\\1?v=${VERSION}/g" \
     -e "s/(styles\.min\.css)(\?v=[0-9]+)?/\\1?v=${VERSION}/g" \
