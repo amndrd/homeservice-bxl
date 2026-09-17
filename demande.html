@@ -1,334 +1,126 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="fr-BE">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Demande de devis – HomeService BXL</title>
-  <meta name="description" content="Décrivez votre demande en une minute : on vous répond avec un devis dans la journée." />
-  <meta name="theme-color" content="#4274D9" />
-  <meta name="format-detection" content="telephone=yes" />
-  <!-- Page destinée à être envoyée par lien direct (WhatsApp, SMS, mail) à
-       un client précis, pas à être trouvée sur Google : elle ferait doublon
-       avec le parcours devis du site (devis.html) dans les résultats. -->
-  <meta name="robots" content="noindex, nofollow" />
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 
-  <!-- Aperçu de lien (WhatsApp, Messenger, SMS iOS…) : sans ces balises, le
-       lien partagé n'affiche qu'une URL nue, ce qui inspire nettement moins
-       confiance à un client qui reçoit le message. -->
-  <meta property="og:type" content="website" />
-  <meta property="og:title" content="Demande de devis – HomeService BXL" />
-  <meta property="og:description" content="Remplissez vos informations et décrivez votre besoin : réponse dans la journée." />
-  <meta property="og:image" content="https://homeservicebxl.com/images/og-image.jpg" />
-  <meta property="og:url" content="https://homeservicebxl.com/demande" />
+<title>Demande de devis – HomeService BXL</title>
+<meta name="description" content="Décrivez votre demande en une minute : on vous répond avec un devis dans la journée.">
+<!-- Page destinée à être envoyée par lien direct (WhatsApp, SMS, mail) à un
+     client précis, pas à être trouvée sur Google : elle ferait doublon avec
+     le parcours devis du site (devis.html) dans les résultats. -->
+<meta name="robots" content="noindex, nofollow">
 
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="preconnect" href="https://api.emailjs.com" crossorigin />
-  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
-  <link rel="manifest" href="/manifest.json" />
-  <link rel="icon" type="image/png" sizes="32x32" href="images/favicon-32.png" />
-  <link rel="apple-touch-icon" sizes="180x180" href="images/icon-180.png" />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Poppins:wght@600;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="styles.min.css?v=1786321285" />
+<!-- Aperçu de lien (WhatsApp, Messenger, SMS iOS…) : sans ces balises, le lien
+     partagé n'affiche qu'une URL nue, ce qui inspire nettement moins confiance
+     à un client qui reçoit le message. -->
+<meta property="og:type" content="website">
+<meta property="og:title" content="Demande de devis – HomeService BXL">
+<meta property="og:description" content="Remplissez vos informations et décrivez votre besoin : réponse dans la journée.">
+<meta property="og:image" content="https://homeservicebxl.com/images/og-image.jpg">
+<meta property="og:url" content="https://homeservicebxl.com/demande">
+<meta name="theme-color" content="#0f1a2c">
+<meta name="format-detection" content="telephone=yes">
+<meta name="msapplication-TileColor" content="#0f1a2c">
+<meta name="msapplication-config" content="/browserconfig.xml">
+<link rel="manifest" href="/manifest.json">
+<link rel="icon" type="image/png" sizes="32x32" href="images/favicon-32.png">
+<link rel="icon" type="image/png" sizes="192x192" href="images/icon-192.png">
+<link rel="apple-touch-icon" sizes="180x180" href="images/icon-180.png">
 
-  <style>
-    /* Pas de nav sur cette page : le contenu peut commencer plus haut que le
-       padding-top de .devis-page-inner (styles.css), pensé pour dégager la
-       barre de nav fixe d'index.html. */
-    .devis-standalone .devis-page-inner {
-      padding-top: 3rem;
-    }
-
-    /* En-tête de marque : le client arrive ici depuis un lien reçu par
-       message, sans avoir vu le site — le logo est le seul repère qui
-       rattache la page à l'entreprise. */
-    .demande-brand {
-      display: inline-block;
-      margin-bottom: 1.4rem;
-    }
-
-    .demande-brand img {
-      display: block;
-      height: 34px;
-      width: auto;
-    }
-
-    .demande-submit {
-      width: 100%;
-      justify-content: center;
-    }
-
-    /* Message d'erreur : contrairement au quiz du site, un échec d'envoi est
-       affiché tel quel plutôt que masqué derrière un faux écran de succès —
-       sur un lien envoyé à un client précis, une demande perdue en silence
-       coûte le chantier. */
-    .demande-error {
-      display: none;
-      gap: 0.4rem;
-      flex-direction: column;
-      background: rgba(220, 60, 60, 0.08);
-      border: 1.5px solid rgba(220, 60, 60, 0.25);
-      border-radius: var(--radius-sm);
-      padding: 0.9rem 1.1rem;
-      color: #8c2020;
-      font-size: 0.88rem;
-    }
-
-    .demande-error.is-visible {
-      display: flex;
-    }
-
-    /* nowrap : sans lui, le numéro se coupe en fin de ligne sur les petits
-       écrans et devient illisible, alors que c'est le repli le plus utile
-       du message. */
-    .demande-error a {
-      color: #8c2020;
-      font-weight: 600;
-      white-space: nowrap;
-    }
-
-    /* Piège à robots : rempli uniquement par les scripts qui remplissent
-       aveuglément tous les champs d'un formulaire — un humain ne le voit
-       jamais. Une soumission avec ce champ non vide est ignorée. */
-    .demande-hp {
-      position: absolute;
-      left: -9999px;
-      width: 1px;
-      height: 1px;
-      overflow: hidden;
-    }
-
-    .demande-legal {
-      color: var(--grey);
-      font-size: 0.78rem;
-      text-align: center;
-      margin-top: 0.2rem;
-    }
-  </style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://api.emailjs.com" crossorigin>
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.min.css?v=1">
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js" defer></script>
+<script src="script.min.js?v=1" defer></script>
+<script>document.documentElement.classList.add('js');if('scrollRestoration' in history)history.scrollRestoration='manual'</script>
 </head>
-<body>
+<body class="solo">
 
-  <!-- Formulaire de devis simple, sans questionnaire : une seule page, tous
-       les champs visibles d'un coup (cf. devis.html pour le parcours guidé
-       en plusieurs cartes, lui rattaché au site). Réutilise la mise en page
-       .devis-page/.devis-card-group de styles.css pour rester visuellement
-       cohérent avec le reste du site. -->
-  <section class="devis-page devis-standalone" id="demandePage">
-    <!-- Lumières d'ambiance : purement décoratives, animées en CSS seul
-         (devisAmbientDrift, styles.css) — aucune dépendance à script.js,
-         volontairement pas chargé ici (il pilote l'accueil et suppose des
-         éléments qui n'existent pas sur cette page). -->
-    <div class="devis-ambient-light" aria-hidden="true">
-      <div class="devis-ambient-scene is-active">
-        <span class="devis-ambient-blob devis-ambient-blob-1"></span>
-        <span class="devis-ambient-blob devis-ambient-blob-2"></span>
-        <span class="devis-ambient-blob devis-ambient-blob-3"></span>
-        <span class="devis-ambient-blob devis-ambient-blob-4"></span>
-      </div>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
+  <symbol id="i-phone" viewBox="0 0 24 24"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7"/></symbol>
+  <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3 20 6v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/><path d="m8.5 12 2.5 2.5 4.5-5"/></symbol>
+</svg>
+
+<!-- Le client arrive ici depuis un lien reçu par message, sans avoir vu le
+     site : le logo en haut est son seul repère, et le lien vers l'accueil en
+     bas sa seule porte d'entrée s'il veut en savoir plus. Le formulaire est
+     repris à l'identique de la page d'accueil (mêmes id), donc script.js le
+     câble ici sans traitement particulier - y compris ?service=<slug>, qui
+     permet d'envoyer un lien ouvrant déjà sur le bon service. -->
+<header class="solo__bar">
+  <a href="index.html" class="logo" aria-label="HomeService BXL, accueil"><img src="images/logo-blanc.png" alt="HomeService BXL" width="801" height="380"></a>
+  <a href="tel:+32474811145" class="solo__tel"><svg class="ico"><use href="#i-phone"/></svg>+32 474 81 11 45</a>
+</header>
+
+<main class="solo__main">
+  <div class="form" id="devis">
+    <div id="formWrap" style="display:grid;gap:18px">
+      <span class="eyebrow">Devis gratuit</span>
+      <h2>Votre demande de devis</h2>
+      <p class="form__intro">Remplissez vos informations et décrivez votre besoin : on vous répond avec un devis dans la journée.</p>
+      <form id="devisForm" novalidate>
+        <div class="hp" aria-hidden="true"><label>Ne remplissez pas ce champ <input type="text" name="societe" tabindex="-1" autocomplete="off"></label></div>
+
+        <fieldset class="fs">
+          <legend><span>1</span>Vos coordonnées</legend>
+          <div class="fields">
+            <div class="field"><input id="f-prenom" name="prenom" placeholder="Jean" autocomplete="given-name" required><label for="f-prenom">Prénom</label></div>
+            <div class="field"><input id="f-nom" name="nom" placeholder="Dupont" autocomplete="family-name" required><label for="f-nom">Nom</label></div>
+            <div class="field"><input id="f-tel" name="telephone" type="tel" placeholder="+32 4xx xx xx xx" autocomplete="tel" required><label for="f-tel">Téléphone</label></div>
+            <div class="field"><input id="f-mail" name="email" type="email" placeholder="jean@exemple.com" autocomplete="email" required><label for="f-mail">Email</label></div>
+          </div>
+        </fieldset>
+
+        <fieldset class="fs">
+          <legend><span>2</span>Votre demande</legend>
+          <div class="fields">
+            <div class="field full sel">
+              <select id="f-service" name="service" required>
+                <option value="" disabled selected>Choisissez un service…</option>
+                <option>Lavage voiture</option>
+                <option>Entretien extérieur</option>
+                <option>Désencombrement</option>
+                <option>Livraison à domicile</option>
+                <option>Nettoyage intérieur</option>
+                <option>Montage</option>
+                <option>Travaux</option>
+                <option>Service sur mesure</option>
+              </select><label for="f-service">Service souhaité</label>
+            </div>
+            <div class="quiz full" id="quiz" hidden aria-live="polite"></div>
+            <div class="field full"><input id="f-adresse" name="localisation" placeholder="Rue, numéro, code postal, commune" autocomplete="street-address" required><label for="f-adresse">Adresse de l'intervention</label></div>
+            <div class="field full"><input id="f-dates" name="dates" placeholder="Ex : samedi 15, en semaine, dès que possible…"><label for="f-dates">Date(s) souhaitée(s) <i>— facultatif</i></label></div>
+            <div class="field full"><textarea id="f-desc" name="description" rows="6" placeholder="Ce que vous souhaitez faire, la surface, l'étage, l'accès, le matériel disponible, vos contraintes…" required></textarea><label for="f-desc">Décrivez votre besoin</label></div>
+          </div>
+        </fieldset>
+
+        <div class="form__err" id="formErr" role="alert" hidden><b>L'envoi n'a pas fonctionné.</b> Vérifiez votre connexion et réessayez, ou appelez-nous directement au <a href="tel:+32474811145">+32 474 81 11 45</a>.</div>
+
+        <div class="form__foot">
+          <button class="btn" type="submit" id="formBtn" data-magnetic><span id="formBtnTxt">Envoyer ma demande</span><span class="btn__ic"><svg class="ico"><use href="#i-arrow"/></svg><svg class="ico"><use href="#i-arrow"/></svg></span></button>
+          <span class="form__note"><svg class="ico"><use href="#i-shield"/></svg>Vos informations servent uniquement à établir votre devis.</span>
+        </div>
+      </form>
     </div>
-
-    <div class="devis-page-inner">
-      <div class="devis-card">
-
-        <div class="devis-header devis-reveal">
-          <a href="index.html" class="demande-brand" aria-label="HomeService BXL - accueil">
-            <picture>
-              <source srcset="images/logo.webp?v=1786321285" type="image/webp" />
-              <img src="images/logo.png?v=1786321285" alt="HomeService BXL" width="801" height="380" />
-            </picture>
-          </a>
-          <h2>Votre demande de devis</h2>
-          <p class="devis-sub">Remplissez ce formulaire, on vous répond dans la journée.</p>
-        </div>
-
-        <div id="demandeFormWrap">
-          <form id="demandeForm">
-
-            <div class="demande-hp" aria-hidden="true">
-              <label>Ne remplissez pas ce champ
-                <input type="text" name="societe" tabindex="-1" autocomplete="off" />
-              </label>
-            </div>
-
-            <div class="devis-card-group devis-reveal devis-delay-1">
-              <div class="devis-card-group-head">
-                <span class="devis-card-group-num">1</span>
-                <span class="devis-card-group-title">Vos coordonnées</span>
-              </div>
-
-              <div class="form-row">
-                <div class="form-group">
-                  <label for="prenom">Prénom</label>
-                  <input type="text" id="prenom" name="prenom" placeholder="Jean" autocomplete="given-name" required />
-                </div>
-                <div class="form-group">
-                  <label for="nom">Nom</label>
-                  <input type="text" id="nom" name="nom" placeholder="Dupont" autocomplete="family-name" required />
-                </div>
-              </div>
-
-              <div class="form-group">
-                <label for="telephone">Téléphone</label>
-                <input type="tel" id="telephone" name="telephone" placeholder="+32 4xx xx xx xx" autocomplete="tel" required />
-              </div>
-
-              <div class="form-group">
-                <label for="email">Email</label>
-                <input type="email" id="email" name="email" placeholder="jean@exemple.com" autocomplete="email" required />
-              </div>
-            </div>
-
-            <div class="devis-card-group devis-reveal devis-delay-2">
-              <div class="devis-card-group-head">
-                <span class="devis-card-group-num">2</span>
-                <span class="devis-card-group-title">Votre demande</span>
-              </div>
-
-              <div class="form-group">
-                <label for="service">Service souhaité</label>
-                <!-- Mêmes intitulés que SERVICES (script.js) : les demandes
-                     arrivent ainsi dans la boîte mail sous les mêmes noms de
-                     service que celles du quiz du site. -->
-                <select id="service" name="service" required>
-                  <option value="" selected disabled>Choisissez un service…</option>
-                  <option>Lavage voiture</option>
-                  <option>Entretien extérieur</option>
-                  <option>Désencombrement</option>
-                  <option>Livraison à domicile</option>
-                  <option>Nettoyage intérieur</option>
-                  <option>Montage</option>
-                  <option>Travaux</option>
-                  <option>Service sur mesure</option>
-                </select>
-              </div>
-
-              <div class="form-group">
-                <label for="localisation">Adresse de l'intervention</label>
-                <input type="text" id="localisation" name="localisation" placeholder="Rue, numéro, code postal, commune" autocomplete="street-address" required />
-              </div>
-
-              <div class="form-group">
-                <label for="dates">Date(s) souhaitée(s) <span style="font-weight:400;color:var(--grey)">— facultatif</span></label>
-                <input type="text" id="dates" name="dates" placeholder="Ex : samedi 15, en semaine, dès que possible…" />
-              </div>
-
-              <div class="form-group">
-                <label for="description">Décrivez votre besoin</label>
-                <textarea id="description" name="description" rows="7" placeholder="Ce que vous souhaitez faire, la surface, l'étage, l'accès, le matériel disponible, vos contraintes…" required></textarea>
-              </div>
-            </div>
-
-            <div class="demande-error" id="demandeError" role="alert">
-              <strong>L'envoi n'a pas fonctionné.</strong>
-              <span>Vérifiez votre connexion et réessayez, ou appelez-nous directement au <a href="tel:+32474811145">+32 474 81 11 45</a>.</span>
-            </div>
-
-            <div class="devis-reveal devis-delay-3">
-              <button type="submit" class="btn-primary demande-submit" id="demandeSubmit">
-                Envoyer ma demande <span class="btn-arrow">→</span>
-              </button>
-              <p class="demande-legal">Vos informations servent uniquement à établir votre devis.</p>
-            </div>
-          </form>
-        </div>
-
-        <div id="demandeSuccess" class="form-success" style="display:none">
-          <div class="success-icon">✓</div>
-          <h3>Demande envoyée&nbsp;!</h3>
-          <p>On revient vers vous dans les 24h. Merci de votre confiance.</p>
-          <a href="index.html" class="btn-outline">Découvrir HomeService</a>
-        </div>
-
-      </div>
+    <div class="form__ok" id="formOk" hidden>
+      <span class="ok-ic"><svg class="ico"><use href="#i-check"/></svg></span>
+      <h2>Demande envoyée&nbsp;!</h2>
+      <p>On revient vers vous dans les 24h. Merci de votre confiance.</p>
+      <button class="btn btn--dark" id="formAgain" type="button">Nouvelle demande<span class="btn__ic"><svg class="ico"><use href="#i-arrow"/></svg><svg class="ico"><use href="#i-arrow"/></svg></span></button>
     </div>
-  </section>
+  </div>
+</main>
 
-  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js" defer></script>
+<footer class="solo__foot">
+  <span>© <span id="year">2026</span> HomeService BXL — Tous droits réservés.</span>
+  <a href="index.html">Découvrir HomeService BXL →</a>
+</footer>
 
-  <script>
-    // ── Config EmailJS ───────────────────────────────────────────────────────
-    // Identiques à ceux de script.js (submitDevis) : les demandes envoyées
-    // depuis cette page arrivent donc dans la même boîte mail, via le même
-    // gabarit d'email, que celles du quiz du site. Le gabarit attend les
-    // variables service / prenom / nom / email / telephone / localisation /
-    // dates / details / description — toutes remplies ci-dessous, y compris
-    // `details` (sans quoi la ligne correspondante du mail resterait vide).
-    const EMAILJS_SERVICE_ID  = 'service_j033nwf';
-    const EMAILJS_TEMPLATE_ID = 'template_11x7mes';
-    const EMAILJS_PUBLIC_KEY  = '78ucBOdPpFs89A31U';
-
-    document.addEventListener('DOMContentLoaded', () => {
-      if (typeof emailjs !== 'undefined') emailjs.init(EMAILJS_PUBLIC_KEY);
-
-      const form    = document.getElementById('demandeForm');
-      const btn     = document.getElementById('demandeSubmit');
-      const errBox  = document.getElementById('demandeError');
-      const wrap    = document.getElementById('demandeFormWrap');
-      const success = document.getElementById('demandeSuccess');
-
-      // Même mécanique que devis.html : .is-open déclenche le fondu + léger
-      // slide des blocs (.devis-reveal, styles.css). Le court délai force un
-      // premier rendu à l'état de repos, sans quoi le navigateur applique les
-      // deux états dans le même tick et la transition ne se joue pas.
-      setTimeout(() => {
-        document.getElementById('demandePage').classList.add('is-open');
-      }, 30);
-
-      form.addEventListener('submit', (event) => {
-        event.preventDefault();
-
-        // Filet de sécurité : le navigateur bloque déjà la soumission d'un
-        // champ requis vide ou d'un email mal formé (aucun attribut novalidate
-        // sur le formulaire), avec ses propres bulles de message — plus
-        // familières pour le visiteur que des messages réécrits ici.
-        if (!form.reportValidity()) return;
-
-        // Piège à robots (cf. .demande-hp) : rempli = envoi automatisé. On
-        // affiche l'écran de succès sans rien envoyer, pour ne pas signaler
-        // au script qu'il a été détecté.
-        if (form.societe.value.trim() !== '') {
-          wrap.style.display = 'none';
-          success.style.display = 'flex';
-          return;
-        }
-
-        const val = (name) => form[name].value.trim();
-
-        const templateParams = {
-          service:      val('service'),
-          prenom:       val('prenom'),
-          nom:          val('nom'),
-          email:        val('email'),
-          telephone:    val('telephone') || 'Non renseigné',
-          localisation: val('localisation'),
-          dates:        val('dates') || 'Non précisée',
-          // Le quiz du site remplit ce champ avec les réponses aux questions
-          // propres au service ; ici il n'y en a pas, donc il sert à indiquer
-          // d'où vient la demande — utile pour distinguer les deux sources
-          // dans la boîte mail.
-          details:      'Demande envoyée depuis le formulaire direct (lien partagé), sans questionnaire.',
-          description:  val('description'),
-        };
-
-        errBox.classList.remove('is-visible');
-        btn.disabled = true;
-        btn.textContent = 'Envoi en cours…';
-
-        emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, templateParams)
-          .then(() => {
-            wrap.style.display = 'none';
-            success.style.display = 'flex';
-            success.scrollIntoView({ behavior: 'smooth', block: 'center' });
-          })
-          .catch((err) => {
-            console.error('[Demande] Erreur EmailJS →', err);
-            errBox.classList.add('is-visible');
-            errBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            btn.disabled = false;
-            btn.innerHTML = 'Réessayer <span class="btn-arrow">→</span>';
-          });
-      });
-    });
-  </script>
 </body>
 </html>
